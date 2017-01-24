@@ -8,8 +8,8 @@ LD_FLAGS += $(DEBUG) $(OPENMP)
 
 LIBS = $(BOOST_SYSTEM) -lpqxx -lm
 
-werkzeug: $(OBJECTS)
-	$(CXX) $(LD_FLAGS) -o werkzeug $(OBJECTS) $(LIBS)  
+instrumentum: $(OBJECTS)
+	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
 
 main.o: main.cpp grid.cpp node.cpp atom.cpp atom.h node.h grid.h
 	$(CXX) $(CXX_FLAGS) -c main.cpp
@@ -37,7 +37,7 @@ token.o: token.cpp token.h
 
 clean:
 	rm -f $(OBJECTS)
-	rm -f werkzeug
+	rm -f instrumentum
 
 
 
