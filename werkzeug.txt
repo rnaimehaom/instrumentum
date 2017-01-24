@@ -1,0 +1,97 @@
+The goal:
+1) a C++-based molecular assembler that has a nice, integrated, portable 
+graphical interface (probably using Qt) and writes its output to some SD 
+file for further study and manipulation. 
+2) for this graphical interface, the following controls will be needed:
+internode distance (double) slider
+number of molecules to create (integer) textbox (ensure > 0)
+steric radius (double) slider
+number of pharmacophoric points (integer) spinbox
+output filename (string) pushbutton
+number of initial deletion attempts (integer) spinbox
+percentage deleted in initial phase (double) slider
+use pharmacophoric point as start for path selection (integer) radiobutton
+number of secondary deletion attempts (integer) spinbox
+number of quaternary carbons (integer) spinbox
+number of four-ring carbons (integer) spinbox
+number of rings (integer) spinbox
+percentage of methyls to be eliminated (double) slider
+minimum number of rings (integer) spinbox
+maximum number of rings (integer) spinbox (ensure that max > min)
+strip axial methyls (integer) checkbox
+create aromatic rings (integer) checkbox
+create double bonds (integer) checkbox
+create triple bonds (integer) checkbox (grayed out if dbonds not checked)
+create penta-atomic rings (integer) checkbox
+create amides, esters and sulfonamides (integer) checkbox (grayed out if dbonds not checked)
+substitute oxygen atoms (integer) checkbox
+substitute nitrogen atoms (integer) checkbox
+substitute sulfur atoms (integer) checkbox
+substitute functional groups (P, F, Cl) (integer) checkbox
+number of initial deletion iterations (integer) spinbox
+number of path selection iterations (integer) spinbox
+number of secondary deletion iterations (integer) spinbox
+number of demethylation/rationalization iterations (integer) spinbox
+number of desaturation/heteroatom substitution iterations (integer) spinbox
+create molecules pushbutton
+exit pushbutton
+
+Once user hits "create molecules", the app throws up a dialog box containing a label saying 
+how many molecules have been created, a progress bar showing how close we are to the desired 
+number and a "cancel" pushbutton to exit the computation. 
+
+3) Problems:
+a) write Python script to read parameters from HTML form via CGI, and 
+   create new record in job table of Werkzeug database
+b) write Python script to check job table of Werkzeug database and 
+   if it finds a new job, start up a MASM process with job id
+c) Javascript code to check input values from HTML form
+d) Python script to accept job id from HTML form and snoop into the 
+   Werkzeug database to give info out as HTML document 
+
+4) Other ideas:
+a) add multithreading (pthreads or OpenMP) to Werkzeug code
+b) add parallel (via MPI-2) support to Werkzeug
+c) consider allowing ligand-based models for the pharmacophore
+
+
+Database Considerations:
+1) Postgresql database called "alchemy" with two tables, "parameters" and "compound", having 
+   structure
+   parameters -> pid (PRIMARY,serial)
+                 max_attempts (integer) 
+                 nrings (integer)
+                 nc4 (integer)
+                 nc4rings (integer)
+                 min_rings (integer)
+                 max_rings (integer)
+                 n_hardening (integer)
+                 n_initial (integer)
+                 n_secondary (integer)
+                 n_path (integer)
+                 max_secondary (integer)
+                 n_demethylate (integer)
+                 n_desaturate (integer)
+                 npharm (integer)
+                 path_hardening (boolean)
+                 subs_oxy (boolean)
+                 subs_sul (boolean)
+                 subs_nit (boolean)
+                 subs_fun (boolean)
+                 create_exotic (boolean)
+                 create_penta (boolean)
+                 create_double (boolean)
+                 create_triple (boolean)
+                 kill_axial (boolean)
+                 percent (double)
+                 percent_methyl (double)
+                 bond_length (double)
+                 pharm_radius (double)
+                 pharm_fname (string)
+
+   compound -> id (PRIMARY,serial)
+               pid (integer, refers to parameters table)
+               opstring (string)
+               rms (double)
+               raw_structure (string)
+               minimized_structure (string)
