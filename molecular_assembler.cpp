@@ -293,7 +293,7 @@ void Molecular_Assembler::create_database() const
 
   query = "CREATE TABLE Compound(";
   query += "raw_structure TEXT,";
-  query += "opstring TEXT,";
+  query += "op_string TEXT,";
   query += "minimized_structure TEXT,";
   query += "root_mean_square DOUBLE,";
   query += "synthetic_feasibility DOUBLE,";
