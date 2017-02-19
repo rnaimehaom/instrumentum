@@ -8,8 +8,11 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <pqxx/pqxx>
+#include <sqlite3.h>
+#include <boost/filesystem.hpp>
+#include <boost/timer/timer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -24,8 +27,7 @@
 void ename(int,char*);
 unsigned int irandom(unsigned int);
 double rrandom();
-void trim(std::string&);
-void initialize_rand(unsigned int);
+void initialize_generator(unsigned int);
 bool g_connected(const std::vector<int>&);
 int get_index(int,const std::vector<int>&);
 void shuffle(std::vector<int>&);

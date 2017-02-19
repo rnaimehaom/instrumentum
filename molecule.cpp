@@ -3009,31 +3009,3 @@ double Molecule::minimize(unsigned int nsteps,double max_error)
   rms /= double(atoms.size());
   return std::sqrt(rms);
 }
-
-void Molecule::write2db(unsigned int p,pqxx::connection& c)
-{
-  double rms;
-  std::string sdf_raw,sdf_min,q;
-  std::ostringstream s;
-
-  pqxx::work w(c);
-
-  sdf_raw = write2string();
-  rms = minimize(250,1.0e-5);
-  sdf_min = write2string();
-
-  s << "INSERT INTO compound (pid,opstring,rms,raw_structure,minimized_structure) VALUES (" << p;
-  s << ",\'" << opstring << "\'," << rms << ",\'" << sdf_raw << "\',\'" << sdf_min << "\')";
-  q =  s.str();
-
-  w.exec(q.c_str());
-  w.commit();
-}
-
-void Molecule::write2sdf(const char* filename) const
-{
-  std::string sdf_string = write2string();
-  std::ofstream s(filename,std::ios::app | std::ios::out);
-  s << sdf_string;
-  s.close();
-}

@@ -5,7 +5,7 @@ base_generator_type generator(42u);
 boost::uniform_real<> uni_dist(0,1);
 boost::variate_generator<base_generator_type&,boost::uniform_real<> > brandom(generator,uni_dist);
 
-void initialize_rand(unsigned int seed)
+void initialize_generator(unsigned int seed)
 {
   unsigned int s = seed*((unsigned int) std::time(NULL));
   generator.seed(s);
@@ -34,17 +34,6 @@ bool parallel(const double* x,const double* y)
   delta = std::sqrt(out[0]*out[0] + out[1]*out[1] + out[2]*out[2]);
   if (delta < 0.001) return true;
   return false;
-}
-
-void trim(std::string& str)
-{
-  std::string::size_type pos = str.find_last_not_of(' ');
-  if (pos != std::string::npos) {
-    str.erase(pos+1);
-    pos = str.find_first_not_of(' ');
-    if (pos != std::string::npos) str.erase(0,pos);
-  }
-  else str.erase(str.begin(),str.end());
 }
 
 void shuffle(std::vector<int>& v)

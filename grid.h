@@ -52,6 +52,6 @@ class Grid {
   void blank_pharmacophore(double);
   bool create_scaffold();
   void write_scaffold(Molecule*) const;
-  friend class MASM;
+  friend class Molecular_Assembler;
 };
 #endif

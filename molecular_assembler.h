@@ -1,12 +1,8 @@
 #include "molecule.h"
 #include "grid.h"
 
-class MASM {
+class Molecular_Assembler {
  private:
-  enum VTYPE {INT,BOOL,STRING,FLOAT};
-
-  unsigned int snumber;
-
   unsigned int max_attempts;
   unsigned int nrings;
   unsigned int nc4;
@@ -21,34 +17,35 @@ class MASM {
   unsigned int n_demethylate;
   unsigned int n_desaturate;
   unsigned int n_mols;
-  unsigned int npharm;
+  unsigned int npharmacophore;
+  unsigned int parameter_id;
     
   bool path_hardening;
-  bool subs_oxy;
-  bool subs_nit;
-  bool subs_sul;
-  bool subs_fun;
+  bool subs_oxygen;
+  bool subs_nitrogen;
+  bool subs_sulphur;
+  bool subs_functional;
   bool create_exotic;
   bool create_penta;
   bool create_double;
   bool create_triple;
   bool kill_axial;
   
-  std::string filename;
-  std::string pharm_fname;
+  std::string database;
+  std::string pharmacophore_filename;
 
   double percent;
   double percent_methyl;
   double bond_length;
-  double pharm_radius;
+  double pharmacophore_radius;
 
   void set_default_values();
-
-  std::string create_pstring() const;  
+  void write2disk(const std::string&,const std::string&,sqlite3*) const;
+  void create_parameter_string(std::string&) const;
+  void create_database() const;  
  public:
-  MASM();
-  MASM(const char*);
-  void set_jobid(unsigned int);
-  void retrieve_db();
+  Molecular_Assembler();
+  Molecular_Assembler(const char*);
+  ~Molecular_Assembler();
   void run() const;
 };

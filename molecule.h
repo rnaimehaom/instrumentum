@@ -47,20 +47,19 @@ class Molecule {
   void connected_components(unsigned int);
   void propagate(std::vector<unsigned int>&,unsigned int) const;
   double minimize(unsigned int,double);
-  std::string write2string() const;
 
  public:
   Molecule();
   Molecule(const Molecule&);
   ~Molecule();
   Molecule& operator =(const Molecule&);
-  void write2sdf(const char*) const;
-  void write2db(unsigned int,pqxx::connection&);
   void add_atom(int,int);
   void add_atom(int,int,const double*,int);
   void add_bond(int,int,int);
   void dump_molecule() const;
   void clear();
-  bool decorate(const bool*); 
+  bool decorate(const bool*);
+  std::string write2string() const;
+  inline std::string get_opstring() const {return opstring;}; 
 };
 #endif

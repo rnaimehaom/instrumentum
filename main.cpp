@@ -1,23 +1,15 @@
-#include "masm.h"
+#include "molecular_assembler.h"
 
 int main(int argc,char** argv)
 {
-  time_t t1,t2;
-  MASM* m;
-#if DBASE
-  m = new MASM;
-  m->set_jobid(boost::lexical_cast<int>(argv[1]));
-  m->retrieve_db();
-#else
-  m = new MASM(argv[1]);
-#endif
+  if (argc != 2) {
+    std::cout << "Usage: ./instrumentum parameter_file" << std::endl;
+    return 0;
+  }
+  boost::timer::auto_cpu_timer timer(3);
 
-  t1 = std::time(NULL);
-  m->run();
-  t2 = std::time(NULL);
-  std::cout << "The total runtime for this version of Werkzeug is " << t2 - t1 << " seconds." << std::endl;
-
-  delete m;
+  Molecular_Assembler masm(argv[1]);
+  masm.run();
 
   return 0;
 }

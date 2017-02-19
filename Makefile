@@ -1,12 +1,12 @@
-OBJECTS = main.o node.o grid.o molecule.o masm.o global.o 
+OBJECTS = main.o node.o grid.o molecule.o molecular_assembler.o global.o
 
-#CXX_FLAGS += $(CXX_OPT) $(OPENMP) -DBASE
-CXX_FLAGS += $(DEBUG) $(OPENMP) -DDBASE
+#CXX_FLAGS += $(CXX_OPT) $(OPENMP) 
+CXX_FLAGS += $(DEBUG) $(OPENMP)
 
 #LD_FLAGS += $(CXX_OPT) $(OPENMP)
 LD_FLAGS += $(DEBUG) $(OPENMP)
 
-LIBS = $(BOOST_SYSTEM) -lpqxx -lm
+LIBS = $(BOOST_TIMER) $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lsqlite3 -lm
 
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
@@ -29,8 +29,8 @@ global.o: global.h global.cpp
 molecule.o: molecule.cpp node.cpp atom.cpp global.cpp molecule.h node.h atom.h global.h 
 	$(CXX) $(CXX_FLAGS) -c molecule.cpp
 
-masm.o: grid.cpp masm.cpp molecule.cpp masm.h grid.h molecule.h node.h 
-	$(CXX) $(CXX_FLAGS) -c masm.cpp
+molecular_assembler.o: grid.cpp molecular_assembler.cpp molecule.cpp molecular_assembler.h grid.h molecule.h node.h 
+	$(CXX) $(CXX_FLAGS) -c molecular_assembler.cpp
 
 token.o: token.cpp token.h
 	$(CXX) $(CXX_FLAGS) -c token.cpp
