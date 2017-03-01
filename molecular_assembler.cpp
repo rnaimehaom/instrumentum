@@ -516,7 +516,7 @@ void Molecular_Assembler::run() const
 
 void Molecular_Assembler::write2disk(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const
 {
-  std::string query = "INSERT INTO Compound (parameter_id,opstring,raw_structure) VALUES (";
+  std::string query = "INSERT INTO Compound (parameter_id,op_string,raw_structure) VALUES (";
   std::stringstream sstream;
   sstream << parameter_id;
   query += sstream.str() + ",\'" + opstring + "\',\'" + molecule + "\');";
