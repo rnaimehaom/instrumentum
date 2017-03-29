@@ -7,7 +7,7 @@ boost::variate_generator<base_generator_type&,boost::uniform_real<> > brandom(ge
 
 void initialize_generator(unsigned int seed)
 {
-  unsigned int s = seed*((unsigned int) std::time(NULL));
+  unsigned int s = 87; //seed*((unsigned int) std::time(NULL));
   generator.seed(s);
 }
 

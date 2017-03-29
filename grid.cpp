@@ -822,7 +822,9 @@ bool Grid::rationalize(double percent_methyl,unsigned int rings_min,unsigned int
     }
   } while(true);
   // Now the ring counting...
+#ifdef DEBUG
   assert(connected());
+#endif
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
@@ -990,8 +992,10 @@ unsigned int Grid::ring_analysis()
   for(l=0; l<ring_edges.size(); l+=2) {
     in1 = get_index(ring_edges[l],ring_vertices);
     in2 = get_index(ring_edges[l+1],ring_vertices);
-    //assert(in1 >= 0 && in1 < (signed) (4*ring_vertices.size()));
-    //assert(in2 >= 0 && in1 < (signed) (4*ring_vertices.size()));
+#ifdef DEBUG
+    assert(in1 >= 0 && in1 < (signed) (4*ring_vertices.size()));
+    assert(in2 >= 0 && in1 < (signed) (4*ring_vertices.size()));
+#endif
     for(j=0; j<4; ++j) {
       if (redges[4*in1+j] == -1) {
         redges[4*in1+j] = in2;
@@ -1063,7 +1067,9 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
           nodes[vertices[m]].atomic_number = 0;
         }
       }
+#ifdef DEBUG
       assert(connected());
+#endif
       silver = 0;
       for(i=-rs1; i<=rs1; ++i) {
         for(j=-rs2; j<=rs2; ++j) {
@@ -1209,7 +1215,9 @@ bool Grid::path_selection(bool random)
           }
         }
       }
+#ifdef DEBUG
       assert(winner.size() > 0);
+#endif
       next_node = winner[irandom(winner.size())];
       if (nodes[next_node].locale == 6) {
         for(l=0; l<pathback.size(); ++l) {

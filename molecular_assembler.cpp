@@ -411,7 +411,7 @@ void Molecular_Assembler::run() const
 #endif
   unsigned int build,i,j,k,l,q;
   bool test;
-  unsigned long seed = std::time(NULL);
+  unsigned long seed = 87; //std::time(NULL);
   std::string mstring,ops;
   Grid* g = new Grid(bond_length,npharmacophore);
   Molecule* m = new Molecule;

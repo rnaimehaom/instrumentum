@@ -3,6 +3,7 @@
 Molecule::Molecule()
 {
   nrings = 0;
+  natoms = 0;
   p_allocated = 0;
   ops[0] = 'P';
   ops[1] = 'N';
@@ -13,23 +14,23 @@ Molecule::Molecule()
   ops[6] = 'A';
 }
 
-Molecule::Molecule(const Molecule& q)
+Molecule::Molecule(const Molecule& source)
 {
-  atoms = q.atoms;
-  atom_type = q.atom_type;
-  locale = q.locale;
-  bonds = q.bonds;
-  btype = q.btype;
-  rbonds = q.rbonds;
-  rings = q.rings;
-  coords = q.coords;
-  opstring = q.opstring;
-  if (q.p_allocated > 0) {
+  natoms = source.natoms;
+  atom_type = source.atom_type;
+  locale = source.locale;
+  bonds = source.bonds;
+  btype = source.btype;
+  rbonds = source.rbonds;
+  rings = source.rings;
+  coords = source.coords;
+  opstring = source.opstring;
+  if (source.p_allocated > 0) {
     unsigned int i;
-    p_allocated = q.p_allocated;
+    p_allocated = source.p_allocated;
     pieces = new std::vector<int>[p_allocated];
     for(i=0; i<p_allocated; ++i) {
-      pieces[i] = q.pieces[i];
+      pieces[i] = source.pieces[i];
     }
   }
   ops[0] = 'P';
@@ -46,24 +47,24 @@ Molecule::~Molecule()
   if (p_allocated > 0) delete[] pieces;
 }
 
-Molecule& Molecule::operator =(const Molecule& q)
+Molecule& Molecule::operator =(const Molecule& source)
 {
-  if (this == &q) return *this;
-  atoms = q.atoms;
-  atom_type = q.atom_type;
-  locale = q.locale;
-  bonds = q.bonds;
-  btype = q.btype;
-  rbonds = q.rbonds;
-  rings = q.rings;
-  coords = q.coords;
-  opstring = q.opstring;
-  if (q.p_allocated > 0) {
+  if (this == &source) return *this;
+  natoms = source.natoms;
+  atom_type = source.atom_type;
+  locale = source.locale;
+  bonds = source.bonds;
+  btype = source.btype;
+  rbonds = source.rbonds;
+  rings = source.rings;
+  coords = source.coords;
+  opstring = source.opstring;
+  if (source.p_allocated > 0) {
     unsigned int i;
-    p_allocated = q.p_allocated;
+    p_allocated = source.p_allocated;
     pieces = new std::vector<int>[p_allocated];
     for(i=0; i<p_allocated; ++i) {
-      pieces[i] = q.pieces[i];
+      pieces[i] = source.pieces[i];
     }
     ops[0] = 'P';
     ops[1] = 'N';
@@ -74,15 +75,6 @@ Molecule& Molecule::operator =(const Molecule& q)
     ops[6] = 'A';
   }
   return *this;
-}
-
-int Molecule::atom_index(int index) const
-{
-  unsigned int i;
-  for(i=0; i<atoms.size(); ++i) {
-    if (atoms[i] == index) return i;
-  }
-  return -1;
 }
 
 int Molecule::get_rindex(int n,int s) const
@@ -101,115 +93,100 @@ int Molecule::get_bindex(int n,int s) const
   return -1;
 }
 
-void Molecule::add_atom(int index,int anumber)
+void Molecule::set_coordinates(int atom,const double* xc)
 {
-  int out = atom_index(index);
-  if (out == -1) {
-    atoms.push_back(index);
-    atom_type.push_back(anumber);
-    locale.push_back(0);
-    coords.push_back(-5000.0);
-    coords.push_back(-5000.0);
-    coords.push_back(-5000.0);
-    for(int i=0; i<4; ++i) {
-      bonds.push_back(-1);
-      btype.push_back(-1);
-    }
+  int l = (signed) coords.size()/3;
+  if (atom < l) {
+    coords[3*atom] = xc[0];
+    coords[3*atom+1] = xc[1];
+    coords[3*atom+2] = xc[2];
   }
   else {
-    atom_type[out] = anumber;
+    coords.push_back(xc[0]);
+    coords.push_back(xc[1]);
+    coords.push_back(xc[2]);
   }
 }
 
-void Molecule::add_atom(int index,int anumber,const double* x,int ltype)
+void Molecule::add_atom(int atomic_number)
 {
-  int out = atom_index(index);
-  if (out == -1) {
-    atoms.push_back(index);
-    atom_type.push_back(anumber);
-    locale.push_back(ltype);
-    coords.push_back(x[0]);
-    coords.push_back(x[1]);
-    coords.push_back(x[2]);
-    for(int i=0; i<4; ++i) {
-      bonds.push_back(-1);
-      btype.push_back(-1);
-    }
-  }
-  else {
-    atom_type[out] = anumber;
-    locale[out] = ltype;
-    coords[3*out] = x[0];
-    coords[3*out+1] = x[1];
-    coords[3*out+2] = x[2];
+  natoms++;
+  atom_type.push_back(atomic_number);
+  locale.push_back(0);
+  coords.push_back(-5000.0);
+  coords.push_back(-5000.0);
+  coords.push_back(-5000.0);
+  for(int i=0; i<4; ++i) {
+    bonds.push_back(-1);
+    btype.push_back(-1);
   }
 }
 
-void Molecule::add_bond(int index1,int index2,int valence)
+void Molecule::add_atom(int atomic_number,const double* x,int ltype)
 {
-  int out,aindex1,aindex2;
+  natoms++;
+  atom_type.push_back(atomic_number);
+  locale.push_back(ltype);
+  coords.push_back(x[0]);
+  coords.push_back(x[1]);
+  coords.push_back(x[2]);
+  for(int i=0; i<4; ++i) {
+    bonds.push_back(-1);
+    btype.push_back(-1);
+  }
+}
+
+void Molecule::add_bond(int atom1,int atom2,int valence)
+{
   unsigned int i,next;
   bool done;
 
-  out = atom_index(index1);
-  if (out == -1) {
-    add_atom(index1,0);
-    aindex1 = atom_index(index1);
-  }
-  else {
-    aindex1 = out;
-  }
-
-  out = atom_index(index2);
-  if (out == -1) {
-    add_atom(index2,0);
-    aindex2 = atom_index(index2);
-  }
-  else {
-    aindex2 = out;
-  }
+#ifdef DEBUG
+  assert(atom1 >= 0 && atom1 < natoms);
+  assert(atom2 >= 0 && atom2 < natoms);
+#endif
 
   done = false;
   for(i=0; i<4; ++i) {
-    if (bonds[4*aindex1+i] == aindex2) {
+    if (bonds[4*atom1+i] == atom2) {
       done = true;
       break;
     }
-    else if (bonds[4*aindex1+i] == -1) {
+    else if (bonds[4*atom1+i] == -1) {
       next = i;
       break;
     }
   }
   if (!done) {
-    bonds[4*aindex1+next] = aindex2;
-    btype[4*aindex1+next] = valence;
+    bonds[4*atom1+next] = atom2;
+    btype[4*atom1+next] = valence;
   }
 
   done = false;
   for(i=0; i<4; ++i) {
-    if (bonds[4*aindex2+i] == aindex1) {
+    if (bonds[4*atom2+i] == atom1) {
       done = true;
       break;
     }
-    else if (bonds[4*aindex2+i] == -1) {
+    else if (bonds[4*atom2+i] == -1) {
       next = i;
       break;
     }
   }
   if (!done) {
-    bonds[4*aindex2+next] = aindex1;
-    btype[4*aindex2+next] = valence;
+    bonds[4*atom2+next] = atom1;
+    btype[4*atom2+next] = valence;
   }
 }
 
 void Molecule::dump_molecule() const
 {
   unsigned int i,j;
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     std::cout << i << "  " << atom_type[i] << "  " << locale[i] << std::endl;
     std::cout << "       " << coords[3*i] << "  " << coords[3*i+1] << "  " << coords[3*i+2] << std::endl;
   }
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       if (bonds[4*i+j] != -1) {
         std::cout << i << "  " << bonds[4*i+j] << "  " << btype[4*i+j] << std::endl;
@@ -228,7 +205,7 @@ void Molecule::resequence(int breakpt)
 {
   int temp;
   unsigned int i,j;
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       temp = bonds[4*i+j];
       if (temp > breakpt) {
@@ -251,10 +228,10 @@ void Molecule::saturation_check() const
   bool found;
   unsigned int i,j,k,nz,bcount;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     if (atom_type[i] == 1) {
       bcount = 0;
-      for(j=0; j<atoms.size(); ++j) {
+      for(j=0; j<natoms; ++j) {
         found = false;
         for(k=0; k<4; ++k) {
           if (bonds[4*j+k] == (signed) i) {
@@ -280,7 +257,7 @@ void Molecule::saturation_check() const
     }
     else if (atom_type[i] == 6) {
       bcount = 0;
-      for(j=0; j<atoms.size(); ++j) {
+      for(j=0; j<natoms; ++j) {
         found = false;
         for(k=0; k<4; ++k) {
           if (bonds[4*j+k] == (signed) i) {
@@ -315,7 +292,7 @@ void Molecule::saturation_check() const
 void Molecule::valence_check() const
 {
   unsigned int i,j,bcount;
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     bcount = 0;
 #ifdef VERBOSE
     std::cout << i << "  " << atom_type[i] << ": ";
@@ -371,7 +348,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
   // Next we need to make a deep copy of the original set of bonds, rings
   // and so forth
   for(i=0; i<nkill; ++i) {
-    for(j=0; j<atoms.size(); ++j) {
+    for(j=0; j<natoms; ++j) {
       in1 = get_bindex(kill[i],j);
       if (in1 >= 0) {
         bonds[4*j+in1] = -1;
@@ -395,10 +372,9 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
         }
       }
     }
-    atoms.erase(atoms.begin()+kill[i],atoms.begin()+kill[i]+1);
+    natoms -= 1;
     // Now we need to do a lot of re-indexing:
-    for(j=kill[i]; j<atoms.size(); ++j) {
-      atoms[j] = atoms[j+1];
+    for(j=kill[i]; j<natoms; ++j) {
       atom_type[j] = atom_type[j+1];
       for(k=0; k<4; ++k) {
         bonds[4*j+k] = bonds[4*(j+1)+k];
@@ -410,7 +386,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
     }
     resequence(kill[i]);
     // Stick the "-1" at the end of bonds and rings
-    for(j=0; j<atoms.size(); ++j) {
+    for(j=0; j<natoms; ++j) {
       do {
         nafter = 0;
         nminus = 0;
@@ -423,7 +399,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
           else if (bonds[4*j+k] == -1 && fminus >= 0 && nafter == 0) {
             nminus++;
           }
-          else if (bonds[4*j+k] > 0 && fminus >= 0) {
+          else if (bonds[4*j+k] >= 0 && fminus >= 0) {
             nafter++;
           }
         }
@@ -455,6 +431,8 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
       }
     }
   }
+
+  assert(consistent());
   return 1;
 }
 
@@ -470,9 +448,12 @@ int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
   int i,in1,temp,neg,fminus;
   bool change;
   unsigned int j,k,nafter,nminus;
+
+#ifdef DEBUG
   for(i=0; i<nkill; ++i) {
     assert(kill[i] >= 0);
   }
+#endif
 
   do {
     change = false;
@@ -490,7 +471,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
   // Next we need to make a deep copy of the original set of bonds, rings
   // and so forth
   for(i=0; i<nkill; ++i) {
-    for(j=0; j<atoms.size(); ++j) {
+    for(j=0; j<natoms; ++j) {
       in1 = get_bindex(kill[i],j);
       if (in1 != -1) {
         bonds[4*j+in1] = -1;
@@ -517,13 +498,13 @@ int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
         }
       }
     }
-    atoms.erase(atoms.begin()+kill[i],atoms.begin()+kill[i]+1);
+    natoms -= 1;
     // Now we need to do a lot of re-indexing:
     for(j=0; j<6*nrings; ++j) {
       temp = axial[j];
       if (temp > kill[i]) axial[j] = temp-1;
     }
-    for(j=kill[i]; j<atoms.size(); ++j) {
+    for(j=kill[i]; j<natoms; ++j) {
       atoms[j] = atoms[j+1];
       atom_type[j] = atom_type[j+1];
       for(k=0; k<4; ++k) {
@@ -536,7 +517,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
     }
     resequence(kill[i]);
     // Stick the "-1" at the end of bonds and rings
-    for(j=0; j<atoms.size(); ++j) {
+    for(j=0; j<natoms; ++j) {
       do {
         nafter = 0;
         nminus = 0;
@@ -596,11 +577,11 @@ bool Molecule::add_nitrogen()
   int candidate_hneighbours[3][1],hh,aroma_neighbours[3],to_die[2];
   unsigned int i,j,k,l,h,c,con,hcount,alpha,nb,naroma;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
   shuffle(indices);
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natom; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
@@ -651,10 +632,14 @@ bool Molecule::add_nitrogen()
               }
             }
           }
+#ifdef DEBUG
           assert(nb == 3);
+#endif
           if (exotic) continue;
           if (h == 0) {
+#ifdef DEBUG
             assert(c == 3);
+#endif
             naroma = 0;
             for(j=0; j<c; ++j) {
               if (in_aromatic(carbon[j])) {
@@ -662,20 +647,23 @@ bool Molecule::add_nitrogen()
                 naroma++;
               }
             }
+#ifdef DEBUG
             assert(naroma >= 2);
+#endif
             if (naroma == 3) continue;
             // Also check that this isn't already a five-membered ring!
             the_ring = -1;
             carb1 = aroma_neighbours[0];
             carb2 = aroma_neighbours[1];
             for(j=0; j<nrings; ++j) {
-              if (get_rindex(temp1,j) != -1 && get_rindex(carb1,j) != -1 &&
-                  get_rindex(carb2,j) != -1) {
+              if (get_rindex(temp1,j) != -1 && get_rindex(carb1,j) != -1 && get_rindex(carb2,j) != -1) {
                 the_ring = j;
                 break;
               }
             }
+#ifdef DEBUG
             assert(the_ring >= 0);
+#endif
             if (rings[6*the_ring+5] == -1) continue;
             // So now we need to find another carbon in this ring that can be
             // sacrificed
@@ -806,11 +794,11 @@ bool Molecule::add_sulfur()
   std::vector<int> indices;
   unsigned int i,j,k,h,con,hcount,nb;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natom; ++i) {
     indices.push_back(i);
   }
   shuffle(indices);
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
@@ -875,11 +863,11 @@ bool Molecule::add_oxygen()
   unsigned int i,j,k,h,nb,hcount,con;
   bool problem,exotic;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natom; ++i) {
     indices.push_back(i);
   }
   shuffle(indices);
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
@@ -940,8 +928,9 @@ bool Molecule::create_tbond()
   double L1[3],L2[3];
   bool found;
   unsigned int i,j,l,k,h1,h2,candidate = 0;
+
   // First see if we can find any carbon-carbon double bonds
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     if (atom_type[i] == 6) {
       found = false;
       for(j=0; j<4; ++j) {
@@ -1060,7 +1049,9 @@ void Molecule::aromatize(std::vector<int>& axial)
             }
           }
         }
-        assert(c==2);
+#ifdef DEBUG
+        assert(c == 2);
+#endif
         for(j=0; j<c; ++j) {
           btype[4*rindex+change[j]] = 4;
           in1 = bonds[4*rindex+change[j]];
@@ -1098,7 +1089,7 @@ void Molecule::get_rings()
 
   wcopy = bonds;
 
-  for(i=0; i<(signed) atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       if (wcopy[4*i+j] == -1) break;
       k = wcopy[4*i+j];
@@ -1183,11 +1174,11 @@ bool Molecule::fungrp()
   double p1[3],p2[3];
   unsigned int i,j,alpha;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
   shuffle(indices);
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 1) {
       // Now see if this hydrogen is bonded to a carbon
@@ -1204,18 +1195,29 @@ bool Molecule::fungrp()
         else {
           // Phosphorus - so we need to add two hydrogens that will bond to this
           // P atom, since it has a valence of three, like nitrogen.
+          // Something broken here with the bonds I think!!!
           atom_type[temp1] = 15;
+          std::cout << "Converting " << temp1 << " to phosphorus with added hydrogens " << natom << " and " << natom + 1 << std::endl;
+          std::cout << coords[3*temp1] << "  " << coords[3*temp1+1] << "  " << coords[3*temp1+2] << std::endl;
+          std::cout << coords[3*temp2] << "  " << coords[3*temp2+1] << "  " << coords[3*temp2+2] << std::endl;
+
           atoms.push_back(0);
           atom_type.push_back(1);
           p1[0] = coords[3*temp2];
           p1[1] = coords[3*temp2+1];
           p1[2] = coords[3*temp2+2];
-          p2[0] = coords[3*temp1]-coords[3*temp2];
-          p2[1] = coords[3*temp1+1]-coords[3*temp2+1];
-          p2[2] = coords[3*temp1+2]-coords[3*temp2+2];
+          p2[0] = coords[3*temp1] - coords[3*temp2];
+          p2[1] = coords[3*temp1+1] - coords[3*temp2+1];
+          p2[2] = coords[3*temp1+2] - coords[3*temp2+2];
+          xc[0] = p1[0] + 2.2*p2[0];
+          xc[1] = p1[1] + 2.2*p2[1] + 0.3;
+          xc[2] = p1[2] + 2.2*p2[2];
+          set_coordinates(natom-1,xc);
+          /*
           coords.push_back(p1[0] + 2.2*p2[0]);
-          coords.push_back(p1[1]+2.2*p2[1]+0.3);
-          coords.push_back(p1[2]+2.2*p2[2]);
+          coords.push_back(p1[1] + 2.2*p2[1] + 0.3);
+          coords.push_back(p1[2] + 2.2*p2[2]);
+          */
           locale.push_back(0);
           bonds.push_back(temp1);
           bonds.push_back(-1);
@@ -1227,16 +1229,18 @@ bool Molecule::fungrp()
           btype.push_back(-1);
           for(j=0; j<4; ++j) {
             if (bonds[4*temp1+j] == -1) {
-              bonds[4*temp1+j] = atoms.size();
+              bonds[4*temp1+j] = natom - 1;
               btype[4*temp1+j] = 1;
               break;
             }
           }
+          std::cout << coords[3*(natom-1)] << "  " << coords[3*(natom-1)+1] << "  " << coords[3*(natom-1)+2] << std::endl;
+
           atoms.push_back(0);
           atom_type.push_back(1);
-          coords.push_back(p1[0]+2.2*p2[0]);
-          coords.push_back(p1[1]+2.2*p2[1]-0.3);
-          coords.push_back(p1[2]+2.2*p2[2]);
+          coords.push_back(p1[0] + 2.2*p2[0]);
+          coords.push_back(p1[1] + 2.2*p2[1] - 0.3);
+          coords.push_back(p1[2] + 2.2*p2[2]);
           locale.push_back(0);
           bonds.push_back(temp1);
           bonds.push_back(-1);
@@ -1248,12 +1252,14 @@ bool Molecule::fungrp()
           btype.push_back(-1);
           for(j=0; j<4; ++j) {
             if (bonds[4*temp1+j] == -1) {
-              bonds[4*temp1+j] = atoms.size();
+              bonds[4*temp1+j] = natom - 1;
               btype[4*temp1+j] = 1;
               break;
             }
           }
         }
+        std::cout << natom << std::endl;
+        assert(consistent());
         return true;
       }
     }
@@ -1269,13 +1275,13 @@ bool Molecule::create_dbond()
   std::vector<int> indices,candidate,h1,h2;
   unsigned int i,j,k,l,m,kount;
 
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
   shuffle(indices);
   // First we enumerate all of the carbon-carbon sp3 bonds
   // in the molecule
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     temp = indices[i];
     if (atom_type[temp] == 6) {
       for(j=0; j<4; ++j) {
@@ -1371,7 +1377,9 @@ bool Molecule::create_dbond()
           }
           kount++;
         }
+#ifdef DEBUG
         assert(kount == 2);
+#endif
         for(k=0; k<h2.size(); ++k) {
           for(l=0; l<4; ++l) {
             temp = bonds[4*candidate[i+1]+l];
@@ -1381,7 +1389,9 @@ bool Molecule::create_dbond()
             }
             kount++;
           }
+#ifdef DEBUG
           assert(kount == 4);
+#endif
           A = p[0][1]*(p[1][2]-p[2][2])-p[0][2]*(p[1][1]-p[2][1])+(p[1][1]*p[2][2]-p[2][1]*p[1][2]);
           B = -1.0*(p[0][0]*(p[1][2]-p[2][2])-p[0][2]*(p[1][0]-p[2][0])+(p[1][0]*p[2][2]-p[2][0]*p[1][2]));
           C = p[0][0]*(p[1][1]-p[2][1])-p[0][1]*(p[1][0]-p[2][0])+(p[1][0]*p[2][1]-p[2][0]*p[1][1]);
@@ -1443,6 +1453,8 @@ bool Molecule::create_penta1()
   int c1,c2,temp,in1,in2,to_die[3],the_nitro,hydro[2];
   double p2[3],rcentre[3];
   unsigned int i,j,k,cand,nitro,n_atoms[3],bcount1,bcount2,n,alpha,alpha1,alpha2,h;
+
+  assert(consistent());
 
   for(i=0; i<nrings; ++i) {
     if (rings[6*i+5] == -1) continue;
@@ -1589,7 +1601,7 @@ bool Molecule::create_penta1()
         }
         for(j=0; j<4; ++j) {
           if (bonds[4*the_nitro+j] == -1) {
-            bonds[4*the_nitro+j] = atoms.size();
+            bonds[4*the_nitro+j] = natom;
             btype[4*the_nitro+j] = 1;
             break;
           }
@@ -1648,13 +1660,17 @@ bool Molecule::create_penta1()
             bcount1++;
           }
         }
+#ifdef DEBUG
         assert(bcount1 == 2);
+#endif
         for(k=0; k<4; ++k) {
           if (bonds[4*n_atoms[1]+k] >= 0) {
             bcount2++;
           }
         }
+#ifdef DEBUG
         assert(bcount2 == 2);
+#endif
         if (cand < 1) continue;
         // Choose two at random, and do the necessary changes
         alpha1 = irandom(cand);
@@ -1689,7 +1705,7 @@ bool Molecule::create_penta1()
         }
         for(j=0; j<4; ++j) {
           if (bonds[4*n_atoms[alpha2]+j] == -1) {
-            bonds[4*n_atoms[alpha2]+j] = atoms.size();
+            bonds[4*n_atoms[alpha2]+j] = natom;
             btype[4*n_atoms[alpha2]+j] = 1;
             break;
           }
@@ -1775,7 +1791,7 @@ bool Molecule::create_amide()
   int candidate,temp,in1,a,hydro1[4],hydro2[4];
   unsigned int i,j,h1,c1,h2,c2,alpha;
   // First see if we can find any carbon-carbon double bonds
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     if (atom_type[i] == 6) {
       candidate = -1;
       for(j=0; j<4; ++j) {
@@ -1989,8 +2005,9 @@ void Molecule::axial_ring_bonds(std::vector<int>& axial) const
         }
       }
     }
-    assert(n1 == 2);
-    assert(n2 == 2);
+#ifdef DEBUG
+    assert(n1 == 2 && n2 == 2);
+#endif
     // Now we simply need to compare these lines to see which is parallel
     a1 = -1;
     a2 = -1;
@@ -2037,7 +2054,9 @@ void Molecule::axial_ring_bonds(std::vector<int>& axial) const
           }
         }
       }
+#ifdef DEBUG
       assert(n == 2);
+#endif
       for(j=0; j<2; ++j) {
         for(k=0; k<3; ++k) {
           l2[k] = coords[3*rindex+k] - coords[3*neighbours[j]+k];
@@ -2049,6 +2068,33 @@ void Molecule::axial_ring_bonds(std::vector<int>& axial) const
       }
     }
   }
+}
+
+bool Molecule::consistent() const
+{
+  int i,j;
+
+  if ((signed) coords.size() != 3*natoms) return false;
+  if ((signed) bonds.size() != 4*natoms) return false;
+  if ((signed) btype.size() != 4*natoms) return false;
+  if ((signed) atom_type.size() != natoms) return false;
+  if ((signed) locale.size() != natoms) return false;
+  for(i=0; i<natoms; ++i) {
+    for(j=0; j<4; ++j) {
+      if (bonds[4*i+j] == -1) continue;
+      if (bonds[4*i+j] < 0 || bonds[4*i+j] >= natom) {
+        std::cout << "Illegal bond value " << i << "  " << j << "  " << bonds[4*i+j] << "  " << natom << std::endl;
+        return false;
+      }
+    }
+    for(j=0; j<3; ++j) {
+      if (std::abs(coords[3*i+j]) > 1000.0) {
+        std::cout << "Illegal coordinate value " << i << "  " << j << "  " << coords[3*i+j] << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 bool Molecule::decorate(const bool* ornaments)
@@ -2076,10 +2122,12 @@ bool Molecule::decorate(const bool* ornaments)
 #ifdef VERBOSE
   std::cout << "There are " << nrings << " rings" << std::endl;
 #endif
+  assert(consistent());
   if (kill_axial) {
     do {
       methyl = false;
       axial_ring_bonds(axial);
+      assert(consistent());
       for(i=0; i<nrings; ++i) {
         for(j=0; j<6; ++j) {
           temp = axial[6*i+j];
@@ -2153,7 +2201,9 @@ bool Molecule::decorate(const bool* ornaments)
     if (create_penta == false && alpha == 0) continue;
     opstring += ops[alpha];
   } while(opstring.length() < nops);
+
   for(i=0; i<opstring.length(); ++i) {
+    assert(consistent());
     if (opstring[i] == 'T') {
       test = create_tbond();
     }
@@ -2176,6 +2226,7 @@ bool Molecule::decorate(const bool* ornaments)
     else if (opstring[i] == 'A') {
       test = create_amide();
     }
+    std::cout << i << "  " << opstring[i] << "  " << test << std::endl;
   }
   test = normalize_aromatic_bonds();
   if (!test) {
@@ -2211,8 +2262,10 @@ void Molecule::normalize_free_ring(int the_aring)
       if (atom_type[rings[6*the_aring+i]] == 16) sul++;
       if (atom_type[rings[6*the_aring+i]] == 7) nit++;
     }
+#ifdef DEBUG
     assert(oxy <= 1);
     assert(sul <= 1);
+#endif
     if (oxy == 1) {
       for(i=0; i<5; ++i) {
         if (atom_type[rings[6*the_aring+i]] == 8) {
@@ -2287,7 +2340,9 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
+#ifdef DEBUG
       assert(rn == 2);
+#endif
       btype[4*sulfur+rneighbour[0]] = 1;
       btype[4*sulfur+rneighbour[1]] = 1;
       v1 = bonds[4*sulfur+rneighbour[0]];
@@ -2349,7 +2404,9 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
+#ifdef DEBUG
       assert(rn == 2);
+#endif
       btype[4*nitrogen+rneighbour[0]] = 1;
       btype[4*nitrogen+rneighbour[1]] = 1;
       v1 = bonds[4*nitrogen+rneighbour[0]];
@@ -2449,9 +2506,9 @@ void Molecule::normalize_free_ring(int the_aring)
 void Molecule::clear()
 {
   nrings = 0;
+  natoms = 0;
   bonds.clear();
   btype.clear();
-  atoms.clear();
   atom_type.clear();
   locale.clear();
   rings.clear();
@@ -2543,8 +2600,10 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
 #ifdef VERBOSE
           std::cout << "For atom " << atom << " type = " << atom_type[atom] << " we have nringp " << nringp << " and valence " << valence << std::endl;
 #endif
+#ifdef DEBUG
           assert(nringp == 2);
           assert(valence < 3);
+#endif
           atype = atom_type[atom];
           btype1 = btype[4*atom+ring_partners[0]];
           btype2 = btype[4*atom+ring_partners[1]];
@@ -2767,7 +2826,7 @@ bool Molecule::normalize_aromatic_bonds()
   // First need to look for ring clusters: we will remove all
   // non-ring atoms from the molecule, and see what the connected
   // components are.
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natom; ++i) {
     for(j=0; j<nrings; ++j) {
       found = false;
       for(k=0; k<6; ++k) {
@@ -2785,7 +2844,7 @@ bool Molecule::normalize_aromatic_bonds()
 #ifdef VERBOSE
   std::cout << "Number of ring atoms is " << ratom.size() << std::endl;
 #endif
-  for(i=0; i<4*atoms.size(); ++i) {
+  for(i=0; i<4*natom; ++i) {
     rbonds.push_back(-1);
   }
 
@@ -2847,7 +2906,9 @@ bool Molecule::normalize_aromatic_bonds()
     for(j=0; j<nrings; ++j) {
       if (ring_cluster[nrings*i+j]) sum++;
     }
+#ifdef DEBUG
     assert(sum > 0);
+#endif
     if (sum > 1) {
       for(j=0; j<nrings; ++j) {
         if (ring_cluster[nrings*i+j]) {
@@ -2955,23 +3016,25 @@ std::string Molecule::write2string() const
   std::ostringstream s;
   time_t seconds = std::time(NULL);
 
+  assert(consistent());
+
   s << "mol_" << opstring << "_" << seconds << std::endl;
   s << "  MOE2000" << std::endl;
   s << std::endl;
   element[0] = '\0';
   element[1] = '\0';
   element[2] = '\0';
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       if (bonds[4*i+j] > (signed) i) bnumber++;
     }
   }
-  s << std::setw(3) << atoms.size() << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
-  for(i=0; i<atoms.size(); ++i) {
+  s << std::setw(3) << natoms << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
+  for(i=0; i<natoms; ++i) {
     ename(atom_type[i],element);
     s << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+1] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+2] << " " << std::setw(3) << std::setiosflags(std::ios::left) << element << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;
   }
-  for(i=0; i<atoms.size(); ++i) {
+  for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       if (bonds[4*i+j] > (signed) i) {
         s << std::setw(3) << (i+1) << std::setw(3) << (1+bonds[4*i+j]) << std::setw(3) << btype[4*i+j] << "  0  0  0  0  0" << std::endl;
@@ -2981,31 +3044,4 @@ std::string Molecule::write2string() const
   s << "M  END" << std::endl;
   s << "$$$$" << std::endl;
   return s.str();
-}
-
-double Molecule::minimize(unsigned int nsteps,double max_error)
-{
-  // A method to perform the geometric minimization of the molecule
-  // using a conjugate gradient algorithm, where max_error is the
-  // error cut-off in this algorithm and nsteps is the maximum number
-  // of steps to perform in the energy minimization of this error
-  // cut-off is never attained.
-  unsigned int i,j;
-  double sum,delta,rms = 0.0;
-  // Make a copy of the old co-ordinates so that we can later calculate
-  // the RMS of the co-ordinate difference between the raw scaffold and
-  // its energy-minimized form.
-  std::vector<double> rcoords = coords;
-
-
-  for(i=0; i<atoms.size(); ++i) {
-    sum = 0.0;
-    for(j=0; j<3; ++j) {
-      delta = rcoords[3*i+j] - coords[3*i+j];
-      sum += delta*delta;
-    }
-    rms += sum;
-  }
-  rms /= double(atoms.size());
-  return std::sqrt(rms);
 }
