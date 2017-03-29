@@ -27,7 +27,7 @@
 void ename(int,char*);
 unsigned int irandom(unsigned int);
 double rrandom();
-void initialize_generator(unsigned int);
+void initialize_generator(unsigned long);
 bool g_connected(const std::vector<int>&);
 int get_index(int,const std::vector<int>&);
 void shuffle(std::vector<int>&);

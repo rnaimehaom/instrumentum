@@ -42,6 +42,7 @@ void Molecular_Assembler::set_default_values()
   database = "";
   pharmacophore_filename = ""; 
   parameter_id = 0;
+  seed = 0;
 }
 
 Molecular_Assembler::Molecular_Assembler(const char* filename)
@@ -95,6 +96,9 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     }
     else if (name == "PharmacophoreFilename") {
       pharmacophore_filename = value;
+    }
+    else if (name == "RandomSeed") {
+      seed = boost::lexical_cast<long>(value);
     }
     else if (name == "MaximumAttempts") {
       max_attempts = boost::lexical_cast<int>(value);
@@ -200,6 +204,8 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   assert(pharmacophore_radius > std::numeric_limits<double>::epsilon());
   assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
+
+  if (seed == 0) seed = (unsigned long) std::time(NULL);
 
   // Check if the database exists, if not the tables need to be created!
   if (!boost::filesystem::exists(database)) create_database();
@@ -411,7 +417,6 @@ void Molecular_Assembler::run() const
 #endif
   unsigned int build,i,j,k,l,q;
   bool test;
-  unsigned long seed = 87; //std::time(NULL);
   std::string mstring,ops;
   Grid* g = new Grid(bond_length,npharmacophore);
   Molecule* m = new Molecule;
@@ -481,7 +486,6 @@ void Molecular_Assembler::run() const
               test = m->decorate(ornaments);
               if (test) {
                 build++;
-                std::cout << build << std::endl;
                 mstring = m->write2string();
                 ops = m->get_opstring();
 #ifdef _OPENMP

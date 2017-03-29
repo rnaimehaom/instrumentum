@@ -29,7 +29,7 @@ global.o: global.h global.cpp
 molecule.o: molecule.cpp node.cpp atom.cpp global.cpp molecule.h node.h atom.h global.h 
 	$(CXX) $(CXX_FLAGS) -c molecule.cpp
 
-molecular_assembler.o: grid.cpp molecular_assembler.cpp molecule.cpp molecular_assembler.h grid.h molecule.h node.h 
+molecular_assembler.o: grid.cpp molecular_assembler.cpp molecule.cpp molecular_assembler.h grid.h molecule.h node.h global.h
 	$(CXX) $(CXX_FLAGS) -c molecular_assembler.cpp
 
 token.o: token.cpp token.h

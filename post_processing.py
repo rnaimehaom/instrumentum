@@ -3,9 +3,9 @@
 import time
 import sqlite3
 import pybel
-import sys
 import math
 import os
+import sys
 import random
 
 def parse_molecule(molecule):
@@ -35,15 +35,9 @@ def energy_minimization(raw_molecule):
 	natom = output[0]
 	raw_coords = output[1]
 
-	fhandle_out = open('temp.mol','w')
-	fhandle_out.write(raw_molecule)
-	fhandle_out.close()
-	os.system("obminimize -o mol temp.mol 1> out.mol 2> foo.txt") 
-	fhandle_in = open('out.mol','r')
-	min_molecule = ''
-	for line in fhandle_in:
-		min_molecule = min_molecule + line
-	fhandle_in.close()
+	mol = pybel.readstring("mol",raw_molecule)
+	mol.localopt('mmff94',2500)
+	min_molecule = mol.write("mol")
 	output = parse_molecule(min_molecule)
 	min_coords = output[1]
 	assert natom == output[0]    

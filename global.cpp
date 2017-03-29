@@ -5,10 +5,9 @@ base_generator_type generator(42u);
 boost::uniform_real<> uni_dist(0,1);
 boost::variate_generator<base_generator_type&,boost::uniform_real<> > brandom(generator,uni_dist);
 
-void initialize_generator(unsigned int seed)
+void initialize_generator(unsigned long seed)
 {
-  unsigned int s = 87; //seed*((unsigned int) std::time(NULL));
-  generator.seed(s);
+  generator.seed(seed);
 }
 
 unsigned int irandom(unsigned int nmax)

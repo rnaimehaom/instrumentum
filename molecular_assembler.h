@@ -33,6 +33,7 @@ class Molecular_Assembler {
   
   std::string database;
   std::string pharmacophore_filename;
+  unsigned long seed;
 
   double percent;
   double percent_methyl;

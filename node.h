@@ -9,6 +9,7 @@ class Node {
   int state;
   double x,y,z;
   int atomic_number;
+  int atom_index;
   int locale;
   int visited;
   int path_hop;

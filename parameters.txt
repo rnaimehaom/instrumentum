@@ -27,4 +27,5 @@ NumberPath = 3
 NumberSecondary = 3
 NumberDemethylate = 3
 NumberDesaturate = 4
+RandomSeed = 0
 DatabaseFile = alchemy.db

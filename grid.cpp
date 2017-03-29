@@ -1375,46 +1375,55 @@ bool Grid::create_scaffold()
 
 void Grid::write_scaffold(Molecule* output) const
 {
-  int i,j,k,cc,temp,in1,in2,ltype;
+  int i,j,k,cc,in1,in2,na = 0;
   unsigned int l;
   double x[3];
   std::vector<int> carbon;
 
+  // First add the atoms...
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
         if (nodes[in1].atomic_number > 0) {
-          temp = nodes[in1].atomic_number;
-          ltype = nodes[in1].locale;
           x[0] = nodes[in1].x;
           x[1] = nodes[in1].y;
           x[2] = nodes[in1].z;
-          output->add_atom(in1,temp,x,ltype);
-          if (temp == 1) {
-            // Hydrogen - among your four neighbours, which contains
-            // a heavy atom?
-            cc = 0;
-            for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-              in2 = nodes[in1].neighbours[l];
-              if (nodes[in2].atomic_number == 6) {
-                cc = in2;
-                break;
-              }
+          output->add_atom(nodes[in1].atomic_number,x,nodes[in1].locale);
+          nodes[in1].atom_index = na; na++;
+        }
+      }
+    }
+  }
+  // Now do the bonds...
+  for(i=-D1; i<=D1; ++i) {
+    for(j=-D2; j<=D2; ++j) {
+      for(k=-D3; k<=D3; ++k) {
+        in1 = index1(i,j,k);
+        if (nodes[in1].atomic_number <= 0) continue;
+        if (nodes[in1].atomic_number == 1) {
+          // Hydrogen - among your four neighbours, which contains
+          // a heavy atom?
+          cc = 0;
+          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
+            in2 = nodes[in1].neighbours[l];
+            if (nodes[in2].atomic_number == 6) {
+              cc = in2;
+              break;
             }
-            output->add_bond(in1,cc,1);
           }
-          else {
-            // Heavy atom, probably carbon, should be bonded to all
-            // of its non-empty neighbours
-            carbon.clear();
-            for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-              in2 = nodes[in1].neighbours[l];
-              if (nodes[in2].atomic_number > 0) carbon.push_back(in2);
-            }
-            for(l=0; l<carbon.size(); ++l) {
-              output->add_bond(in1,carbon[l],1);
-            }
+          output->add_bond(nodes[in1].atom_index,nodes[cc].atom_index,1);
+        }
+        else {
+          // Heavy atom, probably carbon, should be bonded to all
+          // of its non-empty neighbours
+          carbon.clear();
+          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
+            in2 = nodes[in1].neighbours[l];
+            if (nodes[in2].atomic_number > 0) carbon.push_back(in2);
+          }
+          for(l=0; l<carbon.size(); ++l) {
+            output->add_bond(nodes[in1].atom_index,nodes[carbon[l]].atom_index,1);
           }
         }
       }

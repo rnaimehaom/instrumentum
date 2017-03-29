@@ -5,9 +5,9 @@
 
 class Molecule {
  private:
-  unsigned int natoms;
-  unsigned int nrings;
-  unsigned int p_allocated;
+  int natoms;
+  int nrings;
+  int p_allocated;
   char ops[7];
   std::string opstring;
   std::vector<int> atom_type;
@@ -20,6 +20,7 @@ class Molecule {
   std::vector<double> coords;
 
   bool consistent() const;
+  bool valence_check() const;
   bool add_oxygen();
   bool add_sulfur();
   bool add_nitrogen();
@@ -29,9 +30,7 @@ class Molecule {
   bool create_amide();
   void aromatize(std::vector<int>&);
   bool fungrp();
-  void valence_check() const;
   void get_rings();
-  void set_coordinates(int,const double*);
   void axial_ring_bonds(std::vector<int>&) const;
   int get_bindex(int,int) const;
   int get_rindex(int,int) const;
@@ -41,12 +40,11 @@ class Molecule {
   bool in_aromatic(int) const;
   bool is_aromatic(int) const;
   bool normalize_aromatic_bonds();
-  void resequence(int);
   void saturation_check() const;
   void normalize_free_ring(int);
   bool normalize_safe(const std::vector<int>&,bool*);
-  void connected_components(unsigned int);
-  void propagate(std::vector<unsigned int>&,unsigned int) const;
+  void connected_components(int);
+  void propagate(std::vector<int>&,int) const;
 
  public:
   Molecule();
@@ -56,6 +54,7 @@ class Molecule {
   void add_atom(int);
   void add_atom(int,const double*,int);
   void add_bond(int,int,int);
+  void drop_atom(int);
   void dump_molecule() const;
   void clear();
   bool decorate(const bool*);
