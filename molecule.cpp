@@ -1199,8 +1199,8 @@ void Molecule::aromatize(std::vector<int>& axial)
 void Molecule::get_rings()
 {
   int i,j,k,in1,in2;
+  unsigned int l;
   bool found;
-  int l;
   std::vector<int> ring_vertices,ring_edges,redges,ring_data,wcopy;
 
   wcopy = bonds;
@@ -1251,7 +1251,7 @@ void Molecule::get_rings()
     }
   }
 
-  if (ring_vertices.size() == 0) {
+  if (ring_vertices.empty()) {
     nrings = 0;
     return;
   }
@@ -1341,11 +1341,11 @@ bool Molecule::fungrp()
 
 bool Molecule::create_dbond()
 {
-  int temp,q,in1,in2,to_die[2];
+  int i,temp,q,in1,in2,to_die[2];
+  unsigned int j,k,l,m,kount;
   double p[4][3],A,B,C,D,delta;
   bool done,problem,ring1,ring2;
   std::vector<int> indices,candidate,h1,h2;
-  int i,j,k,l,m,kount;
 
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
@@ -1358,7 +1358,7 @@ bool Molecule::create_dbond()
     if (atom_type[temp] == 6) {
       for(j=0; j<4; ++j) {
         q = bonds[4*temp+j];
-        if (q > 0) {
+        if (q >= 0) {
           if (atom_type[q] == 6 && btype[4*temp+j] == 1) {
             if (temp < q) {
               done = false;
@@ -1399,14 +1399,15 @@ bool Molecule::create_dbond()
   // hydrogen neighbours, this will eliminate either one from already participating in a double,
   // aromatic or triple bond, and we are not concerned with one of the carbons being bonded to a
   // heteroatom.
-  for(i=0; i<candidate.size(); i+=2) {
+  int nc = (signed) candidate.size();
+  for(i=0; i<nc; i+=2) {
     problem = false;
-    for(j=0; j<nrings; ++j) {
+    for(q=0; q<nrings; ++q) {
       ring1 = false;
       ring2 = false;
       for(k=0; k<6; ++k) {
-        if (candidate[i] == rings[6*j+k]) ring1 = true;
-        if (candidate[i+1] == rings[6*j+k]) ring2 = true;
+        if (candidate[i] == rings[6*q+k]) ring1 = true;
+        if (candidate[i+1] == rings[6*q+k]) ring2 = true;
       }
       if (ring1 && ring2) {
         problem = true;
@@ -1435,7 +1436,7 @@ bool Molecule::create_dbond()
         if (btype[4*candidate[i+1]+j] != 1) problem = true;
       }
     }
-    if (h1.size() >= 1 && h2.size() >= 1 && !problem) {
+    if (h1.size() > 0 && h2.size() > 0 && !problem) {
       // Now, two of these hydrogens, along with the two carbons themselves, need to be
       // coplanar in order to form a double bond. The two remaining hydrogens are the ones
       // which will be deleted.
@@ -1647,7 +1648,7 @@ bool Molecule::create_penta1()
         rcentre[1] = 0.0;
         rcentre[2] = 0.0;
         for(j=0; j<6; ++j) {
-          if (rings[6*i+j] > 0) {
+          if (rings[6*i+j] >= 0) {
             for(k=0; k<3; ++k) {
               rcentre[k] += coords[3*rings[6*i+j]+k];
             }
@@ -2144,9 +2145,8 @@ bool Molecule::decorate(const bool* ornaments)
   // The first thing we will want to do here is to determine all of the rings
   // contained in this molecule, and then if specified, to eliminate all of
   // their axial methyl groups.
-  int i,j,k,ndouble,nops,alpha;
+  int i,j,k,h,temp,ndouble,nops,alpha,hydrogen[3];
   bool methyl,test;
-  int h,temp,hydrogen[3];
   std::vector<int> axial;
 
   bool kill_axial = ornaments[0];
@@ -2226,7 +2226,6 @@ bool Molecule::decorate(const bool* ornaments)
 #endif
     }
   }
-  assert(consistent());
  
   // Next step here involves creating an "op string" of a random sequence of the
   // following: T, O, S, N, P, F, A.
@@ -2242,9 +2241,9 @@ bool Molecule::decorate(const bool* ornaments)
     if (subs_nit == false && alpha == 1) continue;
     if (create_penta == false && alpha == 0) continue;
     opstring += ops[alpha];
-  } while(opstring.length() < nops);
+  } while((signed) opstring.length() < nops);
 
-  for(i=0; i<opstring.length(); ++i) {
+  for(i=0; i<nops; ++i) {
     if (opstring[i] == 'T') {
       test = create_tbond();
     }
@@ -2267,8 +2266,9 @@ bool Molecule::decorate(const bool* ornaments)
     else if (opstring[i] == 'A') {
       test = create_amide();
     }
-    std::cout << opstring[i] << "  " << test << std::endl;
+#ifdef DEBUG
     assert(consistent());
+#endif
   }
   test = normalize_aromatic_bonds();
   if (!test) {
@@ -2565,13 +2565,13 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
   // This routine will go searching for aromatic bonds to convert from 4 to
   // 1 or 2, but in a very careful manner to make sure that no contradictions
   // arise - if so, return -1.
-  int atype,winner,test1,test2,ratom,atom,atom2,btype1,btype2;
-  int i,j,k,l,valence,nringp,ring_partners[2];
+  int i,j,k,l,atype,winner,test1,test2,ratom,atom,atom2,btype1,btype2;
+  int valence,nringp,ring_partners[2];
   bool found,change;
 
   do {
     winner = -1;
-    for(i=0; i<aromatic.size(); ++i) {
+    for(i=0; i<(signed) aromatic.size(); ++i) {
       if (done[i]) continue;
       // Now see if this ring has any bonds which have been converted to
       // one or two
@@ -2809,17 +2809,16 @@ void Molecule::connected_components(int vertices)
 
 void Molecule::propagate(std::vector<int>& visited,int kount) const
 {
-  int i,j;
-  int temp;
-  std::vector<int> convert;
+  unsigned int i,j;
+  std::vector<unsigned int> convert;
+
   do {
     convert.clear();
     for(i=0; i<visited.size(); ++i) {
       if (visited[i] == 0) {
         for(j=0; j<4; ++j) {
-          temp = rbonds[4*i+j];
-          if (temp < 0) continue;
-          if (visited[temp] == kount) {
+          if (rbonds[4*i+j] < 0) continue;
+          if (visited[rbonds[4*i+j]] == kount) {
             convert.push_back(i);
             break;
           }
@@ -2845,10 +2844,9 @@ bool Molecule::normalize_aromatic_bonds()
   // aromatic rings contained within it, if no, pass, if
   // yes, see if any of the aromatic are five-membered.
   // First some simple escape routes:
-  int i,j,k,sum,leave = 0;
+  int i,j,k,a,temp,delta,need_to_do,kount,the_ring,fiver,sum,leave = 0,the_aring = -1;
   bool found,test,done[6];
   bool* ring_cluster;
-  int temp,need_to_do,delta,kount,a,the_ring,fiver,the_aring = -1;
   std::vector<int> aromatic,ratom;
 
   for(i=0; i<nrings; ++i) {
@@ -2892,7 +2890,7 @@ bool Molecule::normalize_aromatic_bonds()
     rbonds.push_back(-1);
   }
 
-  for(i=0; i<ratom.size(); ++i) {
+  for(i=0; i<(signed) ratom.size(); ++i) {
     a = ratom[i];
     kount = 0;
     for(j=0; j<4; ++j) {
@@ -2922,7 +2920,7 @@ bool Molecule::normalize_aromatic_bonds()
     return true;
   }
   for(i=0; i<p_allocated; ++i) {
-    for(j=0; j<pieces[i].size(); ++j) {
+    for(j=0; j<(signed) pieces[i].size(); ++j) {
       pieces[i][j] = ratom[pieces[i][j]];
     }
   }
@@ -2931,7 +2929,7 @@ bool Molecule::normalize_aromatic_bonds()
     for(j=0; j<nrings; ++j) {
       ring_cluster[nrings*i+j] = false;
       found = false;
-      for(k=0; k<pieces[i].size(); ++k) {
+      for(k=0; k<(signed) pieces[i].size(); ++k) {
         if (rings[6*j] == pieces[i][k]) {
           found = true;
           break;
@@ -2969,10 +2967,10 @@ bool Molecule::normalize_aromatic_bonds()
         // The hard case... see if any of the aromatic rings are
         // five-membered
         fiver = -1;
-        for(j=0; j<aromatic.size(); ++j) {
+        for(j=0; j<(signed) aromatic.size(); ++j) {
           done[j] = false;
         }
-        for(j=0; j<aromatic.size(); ++j) {
+        for(j=0; j<(signed) aromatic.size(); ++j) {
           if (rings[6*aromatic[j]+5] == -1) {
             fiver = j;
             break;
@@ -2989,7 +2987,7 @@ bool Molecule::normalize_aromatic_bonds()
             }
             else {
               need_to_do = -1;
-              for(k=0; k<aromatic.size(); ++k) {
+              for(k=0; k<(signed) aromatic.size(); ++k) {
                 if (!done[k]) {
                   need_to_do = k;
                   break;
@@ -3019,7 +3017,7 @@ bool Molecule::normalize_aromatic_bonds()
             }
             else {
               need_to_do = -1;
-              for(k=0; k<aromatic.size(); ++k) {
+              for(k=0; k<(signed) aromatic.size(); ++k) {
                 if (!done[k]) {
                   need_to_do = k;
                   break;

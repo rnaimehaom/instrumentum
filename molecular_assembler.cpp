@@ -416,16 +416,17 @@ void Molecular_Assembler::run() const
   {
 #endif
   unsigned int build,i,j,k,l,q;
+  unsigned long s = seed;
   bool test;
   std::string mstring,ops;
   Grid* g = new Grid(bond_length,npharmacophore);
   Molecule* m = new Molecule;
 
 #ifdef _OPENMP
-  seed *= (1 + omp_get_thread_num());
+  s *= (1 + omp_get_thread_num());
 #endif
 
-  initialize_generator(seed);
+  initialize_generator(s);
 
   while(mol_created < n_mols) {
 #if VERBOSE
