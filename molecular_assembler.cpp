@@ -31,7 +31,7 @@ void Molecular_Assembler::set_default_values()
   path_hardening = true;
   subs_oxygen = true;
   subs_nitrogen = true;
-  subs_sulphur = false;
+  subs_sulfur = false;
   subs_functional = false;
   create_double = true;
   create_triple = false;
@@ -177,9 +177,9 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
       boost::to_upper(value);
       subs_nitrogen = (value == "YES") ? true : false;
     }
-    else if (name == "SubstituteSulphur") {
+    else if (name == "SubstituteSulfur") {
       boost::to_upper(value);
-      subs_sulphur = (value == "YES") ? true : false;
+      subs_sulfur = (value == "YES") ? true : false;
     }
     else if (name == "StripAxialMethyls") {
       boost::to_upper(value);
@@ -230,7 +230,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   query += "npharmacophore,";
   query += "path_hardening,";
   query += "subs_oxygen,";
-  query += "subs_sulphur,";
+  query += "subs_sulfur,";
   query += "subs_nitrogen,";
   query += "subs_functional,";
   query += "create_exotic,";
@@ -280,7 +280,7 @@ void Molecular_Assembler::create_database() const
   query += "npharmacophore INTEGER,";
   query += "path_hardening BOOLEAN,";
   query += "subs_oxygen BOOLEAN,";
-  query += "subs_sulphur BOOLEAN,";
+  query += "subs_sulfur BOOLEAN,";
   query += "subs_nitrogen BOOLEAN,";
   query += "subs_functional BOOLEAN,";
   query += "create_exotic BOOLEAN,";
@@ -342,7 +342,7 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   else {
     s << "0,";
   } 
-  if (subs_sulphur) {
+  if (subs_sulfur) {
     s << "1,";
   }
   else {
@@ -407,7 +407,7 @@ void Molecular_Assembler::run() const
 {
   sqlite3* dbase;
   unsigned int mol_created = 0;
-  bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulphur,subs_nitrogen,subs_functional};
+  bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
 
   sqlite3_open(database.c_str(),&dbase);
 

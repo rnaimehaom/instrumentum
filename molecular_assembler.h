@@ -23,7 +23,7 @@ class Molecular_Assembler {
   bool path_hardening;
   bool subs_oxygen;
   bool subs_nitrogen;
-  bool subs_sulphur;
+  bool subs_sulfur;
   bool subs_functional;
   bool create_exotic;
   bool create_penta;

@@ -374,29 +374,63 @@ bool Molecule::valence_check() const
   int i,j,bcount;
   for(i=0; i<natoms; ++i) {
     bcount = 0;
-#ifdef VERBOSE
-    std::cout << i << "  " << atom_type[i] << ": ";
-#endif
     for(j=0; j<4; ++j) {
-#ifdef VERBOSE
-      std::cout << bonds[4*i+j] << " ";
-#endif
       if (btype[4*i+j] > 0) bcount += btype[4*i+j];
     }
+    if (atom_type[i] == 1 && bcount != 1) {
 #ifdef VERBOSE
-    std::cout << std::endl;
+      std::cout << "Hydrogen valence error for " << i << " with " << bcount << std::endl;
 #endif
-    if (atom_type[i] == 1) {
-#ifdef VERBOSE
-      if (bcount != 1) std::cout << "Error on H" << std::endl;
-#endif
+      return false;
     }
-    else if (atom_type[i] == 6) {
+    /*
+    else if (atom_type[i] == 6 && bcount != 4) {
 #ifdef VERBOSE
-      if (bcount != 4) std::cout << "Error on C" << std::endl;
+      std::cout << "Carbon valence error for " << i <<  " with " << bcount << std::endl;
 #endif
+      return false;
+    }
+    else if (atom_type[i] == 7 && bcount != 3) {
+#ifdef VERBOSE
+      std::cout << "Nitrogen valence error for " << i << " with " << bcount <<std::endl;
+#endif
+      return false;
+    }
+    else if (atom_type[i] == 8 && bcount != 2) {
+#ifdef VERBOSE
+      std::cout << "Oxygen valence error for " << i << " with " << bcount << std::endl;
+#endif
+      return false;
+    }
+    */
+    else if (atom_type[i] == 9 && bcount != 1) {
+#ifdef VERBOSE
+      std::cout << "Fluorine valence error for " << i << " with " << bcount << std::endl;
+#endif
+      return false;
+    }
+    else if (atom_type[i] == 15 && bcount != 3) {
+#ifdef VERBOSE
+      std::cout << "Phosphorus valence error for " << i << " with " << bcount << std::endl;
+#endif
+      return false;
+    }
+    /*
+    else if (atom_type[i] == 16 && bcount != 2) {
+#ifdef VERBOSE
+      std::cout << "Sulfur valence error for " << i << " with " << bcount << std::endl;
+#endif
+      return false;
+    }
+    */
+    else if (atom_type[i] == 17 && bcount != 1) {
+#ifdef VERBOSE
+      std::cout << "Chlorine valence error for " << i << " with " << bcount << std::endl;
+#endif
+      return false;
     }
   }
+  return true;
 }
 
 int Molecule::eliminate_atoms(int* kill,int nkill)
@@ -857,7 +891,7 @@ bool Molecule::in_ring(int x) const
 
 bool Molecule::in_aromatic(int x) const
 {
-  // Return one if this atom is contained inside at least one ring
+  // Return one if this atom is contained inside at least one aromatic ring
   int i;
   for(i=0; i<4; ++i) {
     if (btype[4*x+i] == 4) return true;
@@ -869,7 +903,7 @@ bool Molecule::add_sulfur()
 {
   // This routine searches for a carbon atom with at least two hydrogen atom
   // bonds, and which is not beside any other heteroatoms or involved in any
-  // unsaturated bonds. It will then seek to convert it to an oxygen atom.
+  // unsaturated bonds. It will then seek to convert it to a sulfur atom.
 
   int hydrogen[3],temp1,temp2,tt;
   bool exotic,problem;
@@ -1798,64 +1832,54 @@ bool Molecule::create_amide()
   // C - O - C = O
   //         |           ESTER
   //         C
-  int candidate,temp,in1,a,hydro1[4],hydro2[4];
-  int i,j,h1,c1,h2,c2,alpha;
+  int i,j,a,in1,h1,c1,h2,c2,alpha,candidate,hydro1[4],hydro2[4];
+
   // First see if we can find any carbon-carbon double bonds
   for(i=0; i<natoms; ++i) {
     if (atom_type[i] == 6) {
       candidate = -1;
       for(j=0; j<4; ++j) {
-        temp = bonds[4*i+j];
-        if (temp >= 0) {
-          if (atom_type[j] == 6 && btype[4*i+j] == 2) {
-            // It's a carbon-carbon double bond, so let's see if each carbon has
-            // at least one hydrogen
-            candidate = j;
-          }
+        if (bonds[4*i+j] < 0) continue;
+        if (atom_type[j] == 6 && btype[4*i+j] == 2) {
+          // It's a carbon-carbon double bond, so let's see if each carbon has
+          // at least one hydrogen
+          candidate = j;
         }
       }
       if (candidate == -1) continue;
       h1 = 0;
       c1 = 0;
-      //int carbon1[4];
       a = bonds[4*i+candidate];
       for(j=0; j<4; ++j) {
-        temp = bonds[4*i+j];
-        if (temp >= 0) {
-          if (temp == a) continue;
-          if (atom_type[temp] == 1) {
-            hydro1[h1] = temp;
-            h1++;
-          }
-          else if (atom_type[temp] == 6) {
-            //carbon1[c1] = temp;
-            c1++;
-          }
+        if (bonds[4*i+j] < 0 || bonds[4*i+j] == a) continue;
+        if (atom_type[bonds[4*i+j]] == 1) {
+          hydro1[h1] = bonds[4*i+j];
+          h1++;
+        }
+        else if (atom_type[bonds[4*i+j]] == 6) {
+          c1++;
         }
       }
       h2 = 0;
       c2 = 0;
-      //int carbon2[4];
       for(j=0; j<4; ++j) {
-        temp = bonds[4*a+j];
-        if (temp >= 0) {
-          if (temp == (signed) i) continue;
-          if (atom_type[temp] == 1) {
-            hydro2[h2] = temp;
-            h2++;
-          }
-          else if (atom_type[temp] == 6) {
-            //carbon2[c2] = temp;
-            c2++;
-          }
+        if (bonds[4*a+j] < 0 || bonds[4*a+j] == i) continue;
+        if (atom_type[bonds[4*a+j]] == 1) {
+          hydro2[h2] = bonds[4*a+j];
+          h2++;
+        }
+        else if (atom_type[bonds[4*a+j]] == 6) {
+          c2++;
         }
       }
-      if (c1 >= 1 && c2 >= 1) {
-        // For an amide, the hydrogen becomes an oxygen, the other carbon becomes a nitrogen, and
-        // what was a carbon-carbon double bond becomes a nitrogen-carbon single bond.
+      if (c1 > 0 && c2 > 0) {
+        // For an amide, the hydrogen becomes an oxygen, the other carbon becomes a nitrogen, 
+        // and what was a carbon-carbon double bond becomes a nitrogen-carbon single bond.
         // So, first find out who has a hydrogen
-        if ((h1+h2) == 1) {
+        std::cout << i << "  " << a << std::endl;
+        if ((h1 + h2) == 1) {
           alpha = irandom(2);
+          std::cout << "Amide 1 " << h1 << "  " << h2 << "  " << alpha << std::endl;
           if (alpha == 0) {
             if (h1 > 0) {
               atom_type[a] = 7;
@@ -1899,7 +1923,7 @@ bool Molecule::create_amide()
               atom_type[hydro2[0]] = 16;
               in1 = get_bindex(hydro2[0],a);
               btype[4*a+in1] = 2;
-              btype[hydro2[0]] = 2;
+              btype[4*hydro2[0]] = 2;
               in1 = get_bindex(a,i);
               btype[4*i+in1] = 1;
               in1 = get_bindex(i,a);
@@ -1908,14 +1932,15 @@ bool Molecule::create_amide()
             return true;
           }
         }
-        else if ((h1+h2) == 2) {
+        else if ((h1 + h2) == 2) {
           alpha = irandom(3);
+          std::cout << "Amide 3 " << h1 << "  " << h2 << "  " << c1 << "  " << c2 << "  " << alpha << std::endl;
           if (alpha == 0) {
             atom_type[a] = 7;
             atom_type[hydro1[0]] = 16;
             in1 = get_bindex(hydro1[0],i);
             btype[4*i+in1] = 2;
-            btype[hydro1[0]] = 2;
+            btype[4*hydro1[0]] = 2;
             in1 = get_bindex(a,i);
             btype[4*i+in1] = 1;
             in1 = get_bindex(i,a);
@@ -1926,7 +1951,7 @@ bool Molecule::create_amide()
             atom_type[hydro1[0]] = 8;
             in1 = get_bindex(hydro1[0],i);
             btype[4*i+in1] = 2;
-            btype[hydro1[0]] = 2;
+            btype[4*hydro1[0]] = 2;
             in1 = get_bindex(a,i);
             btype[4*i+in1] = 1;
             in1 = get_bindex(i,a);
@@ -1934,16 +1959,23 @@ bool Molecule::create_amide()
           }
           else {
             // An ester
+            assert(h1 > 0 && h2 > 0);
+            //std::cout << a << "  " << i << "  " << hydro1[0] << "  " << hydro2[0] << std::endl;
             atom_type[a] = 8;
             atom_type[hydro1[0]] = 8;
             in1 = get_bindex(hydro1[0],i);
+            //assert(in1 >= 0);
             btype[4*i+in1] = 2;
-            btype[hydro1[0]] = 2;
+            btype[4*hydro1[0]] = 2;
             in1 = get_bindex(a,i);
+            //assert(in1 >= 0);
             btype[4*i+in1] = 1;
             in1 = get_bindex(i,a);
+            //assert(in1 >= 0);
             btype[4*a+in1] = 1;
             eliminate_atoms(hydro2,1);
+            //std::cout << bonds[4*1] << " " << bonds[4*1+1] << "  " << bonds[4*1+2] << "  " << bonds[4*1+3] << std::endl;
+            //drop_atom(hydro2[0]);
           }
           return true;
         }
@@ -2104,7 +2136,7 @@ bool Molecule::consistent() const
       }
     }
   }
-  return true;
+  return valence_check();
 }
 
 bool Molecule::decorate(const bool* ornaments)
@@ -2135,8 +2167,7 @@ bool Molecule::decorate(const bool* ornaments)
   if (kill_axial) {
     do {
       methyl = false;
-      axial_ring_bonds(axial);
-      assert(consistent());
+      axial_ring_bonds(axial);     
       for(i=0; i<nrings; ++i) {
         for(j=0; j<6; ++j) {
           temp = axial[6*i+j];
@@ -2196,7 +2227,7 @@ bool Molecule::decorate(const bool* ornaments)
     }
   }
   assert(consistent());
-  valence_check();
+ 
   // Next step here involves creating an "op string" of a random sequence of the
   // following: T, O, S, N, P, F, A.
   nops = 3 + irandom(6);
@@ -2238,7 +2269,6 @@ bool Molecule::decorate(const bool* ornaments)
     }
     std::cout << opstring[i] << "  " << test << std::endl;
     assert(consistent());
-    valence_check();
   }
   test = normalize_aromatic_bonds();
   if (!test) {
