@@ -32,12 +32,12 @@ class Molecule {
   bool fungrp();
   void get_rings();
   void axial_ring_bonds(std::vector<int>&) const;
-  int get_bindex(int,int) const;
-  int get_rindex(int,int) const;
   int eliminate_atoms(int*,int);
   int eliminate_atoms(int*,int,std::vector<int>&);
-  bool in_ring(int) const;
-  bool in_aromatic(int) const;
+  inline int get_bindex(int,int) const;
+  inline int get_rindex(int,int) const;
+  inline bool in_ring(int) const;
+  inline bool in_aromatic(int) const;
   bool is_aromatic(int) const;
   bool normalize_aromatic_bonds();
   void saturation_check() const;
@@ -45,20 +45,57 @@ class Molecule {
   bool normalize_safe(const std::vector<int>&,bool*);
   void connected_components(int);
   void propagate(std::vector<int>&,int) const;
-
+  void add_atom(int);
+  void add_atom(int,const double*,int);
+  void add_bond(int,int,int);
+  void drop_atom(int);
+  void write2screen() const;
  public:
   Molecule();
   Molecule(const Molecule&);
   ~Molecule();
   Molecule& operator =(const Molecule&);
-  void add_atom(int);
-  void add_atom(int,const double*,int);
-  void add_bond(int,int,int);
-  void drop_atom(int);
-  void dump_molecule() const;
   void clear();
   bool decorate(const bool*);
   std::string write2string() const;
   inline std::string get_opstring() const {return opstring;}; 
+  friend class Grid;
 };
+
+int Molecule::get_rindex(int n,int s) const
+{
+  for(int i=0; i<6; ++i) {
+    if (rings[6*s+i] == n) return i;
+  }
+  return -1;
+}
+
+int Molecule::get_bindex(int n,int s) const
+{
+  for(int i=0; i<4; ++i) {
+    if (bonds[4*s+i] == n) return i;
+  }
+  return -1;
+}
+
+bool Molecule::in_ring(int x) const
+{
+  // Return one if this atom is contained inside at least one ring
+  int i,j;
+  for(i=0; i<nrings; ++i) {
+    for(j=0; j<6; ++j) {
+      if (x == rings[6*i+j]) return true;
+    }
+  }
+  return false;
+}
+
+bool Molecule::in_aromatic(int x) const
+{
+  // Return one if this atom is contained inside at least one aromatic ring
+  for(int i=0; i<4; ++i) {
+    if (btype[4*x+i] == 4) return true;
+  }
+  return false;
+}
 #endif

@@ -26,13 +26,15 @@ bool parallel(const double* x,const double* y)
 {
   // We take the cross product of these two 3-vectors and see if
   // it's approximately zero
+  bool output = false;
   double delta,out[3];
+  
   out[0] = x[1]*y[2]-x[2]*y[1];
   out[1] = x[2]*y[0]-x[0]*y[2];
   out[2] = x[0]*y[1]-x[1]*y[0];
   delta = std::sqrt(out[0]*out[0] + out[1]*out[1] + out[2]*out[2]);
-  if (delta < 0.001) return true;
-  return false;
+  if (delta < epsilon) output = true;
+  return output;
 }
 
 void shuffle(std::vector<int>& v)
@@ -61,59 +63,56 @@ void shuffle(std::vector<int>& v)
   } while(true);
 }
 
-int get_index(int element,const std::vector<int>& v)
+int get_index(int x,const std::vector<int>& v)
 {
-  unsigned int i;
-  for(i=0; i<v.size(); ++i) {
-    if (v[i] == element) return i;
-  }
-  return -1;
+  std::vector<int>::const_iterator it = std::find(v.begin(),v.end(),x);
+  if (it == v.end()) return -1;
+  int output = std::distance(v.begin(),it);
+  return output;
 }
 
-bool g_connected(const std::vector<int>& bonds)
+bool connected(const std::vector<int>& bonds)
 {
-  unsigned int i,j,n = bonds.size()/4;
-  int in1;
-  bool output = true;
-  bool* visited = new bool[n];
-  std::vector<int> convert;
+  int i,j;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it;
+  const int n = bonds.size()/4;
+  bool visited[n];
 
   for(i=0; i<n; ++i) {
     visited[i] = false;
   }
-
   visited[0] = true;
+  current.insert(0);
+
   do {
-    convert.clear();
-    for(i=0; i<n; ++i) {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
       if (visited[i]) {
         for(j=0; j<4; ++j) {
-          in1 = bonds[4*i+j];
-          if (in1 >= 0) {
-            if (!visited[in1]) convert.push_back(in1);
-          }
+          if (bonds[4*i+j] < 0) continue;
+          if (!visited[bonds[4*i+j]]) next.insert(bonds[4*i+j]);
         }
       }
     }
-    if (convert.empty()) break;
-    for(i=0; i<convert.size(); ++i) {
-      visited[convert[i]] = true;
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      visited[*it] = true;
     }
+    current = next;
+    next.clear();
   } while(true);
 
   for(i=0; i<n; ++i) {
-    if (!visited[i]) {
-      output = false;
-      break;
-    }
+    if (!visited[i]) return false;
   }
-  delete[] visited;
-  return output;
+
+  return true;
 }
 
-void ename(int anumber,char* element)
+void element(int atomic_number,char* element)
 {
-  switch(anumber) {
+  switch(atomic_number) {
   case 0:
     element[0] = '\0';
     break;
@@ -167,7 +166,7 @@ void ename(int anumber,char* element)
   }
 }
 
-void rperception(const std::vector<int>& rbonds,std::vector<int>& rings)
+void ring_perception(const std::vector<int>& rbonds,std::vector<int>& rings)
 {
   unsigned int i,j,k,l,m;
   int in1,last,first,current;

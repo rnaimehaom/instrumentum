@@ -1,11 +1,5 @@
 #include "grid.h"
 
-int Grid::index1(int i,int j,int k) const
-{
-  int output = (k+D3) + (1+2*D3)*(j+D2) + (1+2*D3)*(1+2*D2)*(i+D1);
-  return output;
-}
-
 void Grid::next_door(int m,int n,int k,int i,const double* deltas)
 {
   int in1,in2,x_new,y_new,z_new,n_state;
@@ -472,18 +466,13 @@ void Grid::initialize()
   }
 }
 
-void Grid::process_pharmacophore(const char* filename)
-{
-
-
-}
-
 void Grid::blank_pharmacophore(double radius)
 {
   double delta,x[3];
   int i,j,k,in1,in2,temp;
   unsigned int test,m,l,kount = 0;
   bool bad,done;
+  const double r2 = radius*radius;
 
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -492,8 +481,8 @@ void Grid::blank_pharmacophore(double radius)
         x[0] = nodes[in1].x;
         x[1] = nodes[in1].y;
         x[2] = nodes[in1].z;
-        delta = std::sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
-        if (delta <= radius) nodes[in1].locale = 2;
+        delta = x[0]*x[0] + x[1]*x[1] + x[2]*x[2];
+        if (delta < r2) nodes[in1].locale = 2;
       }
     }
   }
@@ -580,20 +569,7 @@ void Grid::fill_interior()
 #endif
 }
 
-double Grid::distance(int in1,int in2) const
-{
-  double x[3],y[3],output;
-  x[0] = nodes[in1].x;
-  x[1] = nodes[in1].y;
-  x[2] = nodes[in1].z;
-  y[0] = nodes[in2].x;
-  y[1] = nodes[in2].y;
-  y[2] = nodes[in2].z;
-  output = std::sqrt((x[0]-y[0])*(x[0]-y[0])+(x[1]-y[1])*(x[1]-y[1])+(x[2]-y[2])*(x[2]-y[2]));
-  return output;
-}
-
-bool Grid::connected()
+bool Grid::connect_pharmacophores()
 {
   // To do this, we're first going to paint all of the carbon nodes,
   // and the pharmacophore nodes, as unvisited, and then choose one
@@ -671,7 +647,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
   // "max_attempts" of deletions has been exhausted
   int i,j,k,alpha1,alpha2,alpha3,target,in1;
   unsigned int nheavy,kount,nkill,iterations = 0;
-  double radius,delta,n_debut;
+  double r2,radius,delta,n_debut;
 
   nheavy = 0;
   for(i=-rs1; i<=rs1; ++i) {
@@ -688,7 +664,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
   std::cout << "Beginning deletions with " << n_debut << " carbon atoms" << std::endl;
 #endif
 
-  if (!connected()) {
+  if (!connect_pharmacophores()) {
 #ifdef VERBOSE
     std::cout << "Bad initial connectivity..." << std::endl;
 #endif
@@ -700,6 +676,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
     alpha3 = -rs3 + irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
     radius = 1.0 + rrandom();
+    r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
@@ -707,7 +684,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
           in1 = index1(i,j,k);
           if (nodes[in1].locale != 2 || nodes[in1].atomic_number == 0) continue;
           delta = distance(in1,target);
-          if (delta <= radius) {
+          if (delta <= r2) {
             nodes[in1].atomic_number = 47;
             nkill++;
           }
@@ -720,7 +697,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
 #ifdef VERBOSE
     std::cout << "Checking connectivity..." << std::endl;
 #endif
-    if (connected()) {
+    if (connect_pharmacophores()) {
       // It's alright to get rid of the silver...
       kount = 0;
       for(i=-rs1; i<=rs1; ++i) {
@@ -823,7 +800,7 @@ bool Grid::rationalize(double percent_methyl,unsigned int rings_min,unsigned int
   } while(true);
   // Now the ring counting...
 #ifdef DEBUG
-  assert(connected());
+  assert(connect_pharmacophores());
 #endif
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -928,7 +905,7 @@ unsigned int Grid::ring_analysis()
   wcopy = bonds;
 
   // A sanity check...
-  if (!g_connected(bonds)) {
+  if (!connected(bonds)) {
 #ifdef VERBOSE
     std::cout << "Error raised..." << std::endl;
 #endif
@@ -949,7 +926,7 @@ unsigned int Grid::ring_analysis()
           break;
         }
       }
-      if (g_connected(wcopy)) {
+      if (connected(wcopy)) {
         found = false;
         for(l=0; l<ring_vertices.size(); ++l) {
           if (ring_vertices[l] == i) {
@@ -1009,7 +986,7 @@ unsigned int Grid::ring_analysis()
       }
     }
   }
-  rperception(redges,rings);
+  ring_perception(redges,rings);
   ring_info.clear();
   for(l=0; l<rings.size(); ++l) {
     ring_info.push_back(vertices[ring_vertices[rings[l]]]);
@@ -1022,7 +999,7 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
   int i,j,k,alpha1,alpha2,alpha3,target,in1,in2,temp;
   unsigned int m,l,q,nkill,cring,ring_count,ring_member,ncarbon,silver,nbonds,iterations = 0;
   std::vector<int> vertices,c4;
-  double radius,delta;
+  double r2,radius,delta;
 
   do {
     alpha1 = -rs1 + irandom(2*rs1);
@@ -1030,6 +1007,7 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
     alpha3 = -rs3 + irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
     radius = 2.0 + 2.5*rrandom();
+    r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
@@ -1037,7 +1015,7 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
           in1 = index1(i,j,k);
           if (nodes[in1].locale > 2 || nodes[in1].atomic_number == 0) continue;
           delta = distance(in1,target);
-          if (delta <= radius) {
+          if (delta <= r2) {
             nodes[in1].atomic_number = 0;
             nkill++;
           }
@@ -1067,9 +1045,7 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
           nodes[vertices[m]].atomic_number = 0;
         }
       }
-#ifdef DEBUG
-      assert(connected());
-#endif
+      assert(connect_pharmacophores());
       silver = 0;
       for(i=-rs1; i<=rs1; ++i) {
         for(j=-rs2; j<=rs2; ++j) {
@@ -1216,7 +1192,7 @@ bool Grid::path_selection(bool random)
         }
       }
 #ifdef DEBUG
-      assert(winner.size() > 0);
+      assert(!winner.empty());
 #endif
       next_node = winner[irandom(winner.size())];
       if (nodes[next_node].locale == 6) {
@@ -1280,7 +1256,7 @@ bool Grid::path_selection(bool random)
     }
   }
   // A sanity check...
-  if (!g_connected(bonds)) {
+  if (!connected(bonds)) {
 #ifdef VERBOSE
     std::cout << "Error raised in path routine..." << std::endl;
 #endif

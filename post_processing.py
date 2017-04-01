@@ -4,9 +4,7 @@ import time
 import sqlite3
 import pybel
 import math
-import os
 import sys
-import random
 
 def parse_molecule(molecule):
 	# A function to extract the atomic coordinates from an MDL MOL string
@@ -50,9 +48,16 @@ def energy_minimization(raw_molecule):
 	return output
 
 def synthetic_feasibility(molecule):
-	sigma = random.random()
+	# This should be a function which computes the synthetic feasibility of a molecule from 
+	# its energy-minimized form, with 0 corresponding to a molecule which is impossible to 
+	# create in a lab and 1 denoting a compound that can be purchased off the shelf from a 
+	# commercial supplier.
+	sigma = 0.5
 	return sigma
 
+if (len(sys.argv) != 2):
+	print "Usage: ./post-processing.py database file"
+	sys.exit(0)
 dbname = sys.argv[1]
 rms_cutoff = 10.0
 query1 = "SELECT compound_id,raw_structure FROM Compound WHERE minimized_structure IS NULL;"

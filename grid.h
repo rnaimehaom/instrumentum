@@ -23,7 +23,8 @@ class Grid {
   std::vector<int> pnodes;
   double bond_length;
 
-  int index1(int,int,int) const;
+  inline int index1(int,int,int) const;
+  inline double distance(int,int) const;
   void next_door(int,int,int,int,const double*);
   void initialize();
   void allocate(unsigned int);
@@ -39,19 +40,35 @@ class Grid {
   void fill_interior();
   void restore(int);
   void save_state(int);
-  bool connected();
-  double distance(int,int) const;
-
+  bool connect_pharmacophores();
+  void blank_pharmacophore(double);
+  bool create_scaffold();
+  void write_scaffold(Molecule*) const;
  public:
   Grid(unsigned int);
   Grid(double,unsigned int);
   Grid(int,int,int,unsigned int);
   Grid(int,int,int,double,unsigned int);
   ~Grid();
-  void process_pharmacophore(const char*);
-  void blank_pharmacophore(double);
-  bool create_scaffold();
-  void write_scaffold(Molecule*) const;
   friend class Molecular_Assembler;
 };
+
+int Grid::index1(int i,int j,int k) const
+{
+  int output = (k+D3) + (1+2*D3)*(j+D2) + (1+2*D3)*(1+2*D2)*(i+D1);
+  return output;
+}
+
+double Grid::distance(int in1,int in2) const
+{
+  double x[3],y[3],output;
+  x[0] = nodes[in1].x;
+  x[1] = nodes[in1].y;
+  x[2] = nodes[in1].z;
+  y[0] = nodes[in2].x;
+  y[1] = nodes[in2].y;
+  y[2] = nodes[in2].z;
+  output = (x[0]-y[0])*(x[0]-y[0]) + (x[1]-y[1])*(x[1]-y[1]) + (x[2]-y[2])*(x[2]-y[2]);
+  return output;
+}
 #endif

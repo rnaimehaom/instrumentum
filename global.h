@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+#include <set>
 #include <cassert>
 #include <vector>
 #include <string>
@@ -23,15 +24,16 @@
 
 #ifndef __globalh
 #define __globalh
+const double epsilon = 0.001;
 
-void ename(int,char*);
+void element(int,char*);
 unsigned int irandom(unsigned int);
 double rrandom();
 void initialize_generator(unsigned long);
-bool g_connected(const std::vector<int>&);
+bool connected(const std::vector<int>&);
 int get_index(int,const std::vector<int>&);
 void shuffle(std::vector<int>&);
 bool parallel(const double*,const double*);
-void rperception(const std::vector<int>&,std::vector<int>&);
+void ring_perception(const std::vector<int>&,std::vector<int>&);
 #endif
 
