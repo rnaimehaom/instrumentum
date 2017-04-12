@@ -43,6 +43,7 @@ void Molecular_Assembler::set_default_values()
   pharmacophore_filename = ""; 
   parameter_id = 0;
   seed = 0;
+  nthread = 1;
 }
 
 Molecular_Assembler::Molecular_Assembler(const char* filename)
@@ -207,6 +208,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   assert(n_initial > 0);
   assert(max_rings > 0);
   assert(min_rings >= 0);
+  assert(max_rings >= min_rings);
   assert(max_attempts > 0);
   assert(nc4 >= 0);
   assert(nc4rings >= 0);
@@ -216,6 +218,10 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
 
   if (seed == 0) seed = (unsigned long) std::time(NULL);
+
+#ifdef _OPENMP
+  nthread = atoi(std::getenv("OMP_NUM_THREADS"));
+#endif
 
   // Check if the database exists, if not the tables need to be created!
   if (!file_exists(database)) create_database();
@@ -253,6 +259,8 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   query += "bond_length,";
   query += "pharmacophore_radius,";
   query += "pharmacophore_filename,";
+  query += "rng_seed,";
+  query += "nthread,";
   query += "timestamp) ";
   query +=  "VALUES " + parameter_string + ";";
   sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL);
@@ -298,11 +306,13 @@ void Molecular_Assembler::create_database() const
   query += "create_double BOOLEAN,";
   query += "create_triple BOOLEAN,";
   query += "kill_axial BOOLEAN,";
-  query += "percent DOUBLE,";
-  query += "percent_methyl DOUBLE,";
-  query += "bond_length DOUBLE,";
-  query += "pharmacophore_radius DOUBLE,";
+  query += "percent REAL,";
+  query += "percent_methyl REAL,";
+  query += "bond_length REAL,";
+  query += "pharmacophore_radius REAL,";
   query += "pharmacophore_filename CHAR(80),";
+  query += "rng_seed INTEGER,";
+  query += "nthread INTEGER,";
   query += "timestamp DATETIME,";
   query += "parameter_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL);";
   sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL);
@@ -311,8 +321,8 @@ void Molecular_Assembler::create_database() const
   query += "raw_structure TEXT,";
   query += "op_string TEXT,";
   query += "minimized_structure TEXT,";
-  query += "root_mean_square DOUBLE,";
-  query += "synthetic_feasibility DOUBLE,";
+  query += "root_mean_square REAL,";
+  query += "synthetic_feasibility REAL,";
   query += "parameter_id INTEGER,";
   query += "compound_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,";
   query += "FOREIGN KEY(parameter_id) REFERENCES Parameter_Set(parameter_id));";
@@ -326,7 +336,7 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   std::ostringstream s; 
 
   s << "(" << max_attempts << ",";
-  s << nrings <<",";
+  s << nrings << ",";
   s << nc4 << ",";
   s << nc4rings << ",";
   s << min_rings << ",";
@@ -405,11 +415,14 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   s << bond_length << ",";
   s << pharmacophore_radius << ",";
   if (pharmacophore_filename == "") {
-    s << "NULL,DATETIME(\'NOW\'))";
+    s << "NULL,";
   }
   else {
-    s << "\'" << pharmacophore_filename << "\',DATETIME(\'NOW\'))";
+    s << "\'" << pharmacophore_filename << "\',";
   }
+  s << seed << ",";
+  s << nthread << ",";
+  s << "\'DATETIME(\'NOW\')\')";
   output = s.str();
 }
 

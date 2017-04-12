@@ -48,7 +48,7 @@ number of four-ring carbons (integer) spinbox
 number of rings (integer) spinbox
 percentage of methyls to be eliminated (double) slider
 minimum number of rings (integer) spinbox
-maximum number of rings (integer) spinbox (ensure that max > min)
+maximum number of rings (integer) spinbox (ensure that max >= min)
 strip axial methyls (integer) checkbox
 create aromatic rings (integer) checkbox
 create double bonds (integer) checkbox
