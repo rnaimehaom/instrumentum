@@ -1,25 +1,41 @@
 #include "global.h"
 
-typedef boost::mt19937 base_generator_type;
-base_generator_type generator(42u);
-boost::uniform_real<> uni_dist(0,1);
-boost::variate_generator<base_generator_type&,boost::uniform_real<> > brandom(generator,uni_dist);
+// Random number variables
+std::random_device rd;  
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> VRG(0.0,1.0);
 
 void initialize_generator(unsigned long seed)
 {
-  generator.seed(seed);
+  gen.seed(seed);
 }
 
 unsigned int irandom(unsigned int nmax)
 {
-  unsigned int output = (unsigned) int(double(nmax)*rrandom());
+  unsigned int output = (unsigned) int(double(nmax)*drandom());
   return output;
 }
 
-double rrandom()
+double drandom()
 {
-  double output = double(brandom());
-  return output;
+  double out = VRG(gen);
+  return out;
+}
+
+bool file_exists(const std::string& fname)
+{
+  std::ifstream infile(fname.c_str());
+  return infile.good();
+}
+
+void capitalize(std::string& s)
+{
+  //std::transform(s.begin(),s.end(),s.begin(),::to_upper);
+  // This algorithm assumes the incoming string is pure ASCII text!
+  unsigned int i;
+  for(i=0; i<s.size(); ++i) {
+    if (s[i] <= 122 && s[i] >= 97) s[i] -= 32;
+  }
 }
 
 bool parallel(const double* x,const double* y)
@@ -29,38 +45,34 @@ bool parallel(const double* x,const double* y)
   bool output = false;
   double delta,out[3];
   
-  out[0] = x[1]*y[2]-x[2]*y[1];
-  out[1] = x[2]*y[0]-x[0]*y[2];
-  out[2] = x[0]*y[1]-x[1]*y[0];
-  delta = std::sqrt(out[0]*out[0] + out[1]*out[1] + out[2]*out[2]);
-  if (delta < epsilon) output = true;
+  out[0] = x[1]*y[2] - x[2]*y[1];
+  out[1] = x[2]*y[0] - x[0]*y[2];
+  out[2] = x[0]*y[1] - x[1]*y[0];
+  delta = out[0]*out[0] + out[1]*out[1] + out[2]*out[2];
+
+  if (delta < epsilon*epsilon) output = true;
+
   return output;
 }
 
 void shuffle(std::vector<int>& v)
 {
-  int test;
-  bool good;
-  unsigned int i,kount = 0;
+  // Fisher-Yates shuffle algorithm
+#ifdef DEBUG
+  assert(v.size() > 1);
+#endif
+  int i,j,q;
+  const int n = (signed) v.size();
 
-  for(i=0; i<v.size(); ++i) {
+  for(i=0; i<n; ++i) {
     v[i] = i;
   }
-  do {
-    test = irandom(v.size());
-    good = true;
-    for(i=0; i<kount; ++i) {
-      if (v[i] == test) {
-        good = false;
-        break;
-      }
-    }
-    if (good) {
-      v[kount] = test;
-      kount++;
-      if (kount == v.size()) break;
-    }
-  } while(true);
+  for(i=n-1; i>0; --i) {
+    j = irandom(1+i);
+    q = v[j];
+    v[j] = v[i];
+    v[i] = q;
+  }
 }
 
 int get_index(int x,const std::vector<int>& v)

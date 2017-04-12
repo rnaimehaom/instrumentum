@@ -51,7 +51,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   // of which is passed in as an argument to the method
   // The file format should be '#' for a comment, otherwise 
   // varname = value
-  std::vector<std::string> ppair;
+  unsigned int i,n,bpoint;
   std::string line,name,value,parameter_string;
 
   set_default_values();
@@ -71,25 +71,35 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     if (line[0] == '#') continue;
     // If there's no equals sign in this line, continue
     if (line.find('=') == std::string::npos) continue;
-    boost::split(ppair,line,boost::is_any_of("="));
-    name = ppair[0];
-    value = ppair[1];
-    boost::algorithm::trim(name);
-    boost::algorithm::trim(value);
+    n = line.size();
+    name = "";
+    for(i=0; i<n; ++i) {
+      if (line[i] == ' ') continue;
+      if (line[i] == '=') {
+        bpoint = i;
+        break;
+      }
+      name += line[i];
+    }
+    value = "";
+    for(i=bpoint+1; i<n; ++i) {
+      if (line[i] == ' ') continue;
+      value += line[i];
+    }
     // Now that we have the parameter name, see if it matches
     // any of the known parameters. If so, read in the value and
     // assign it
     if (name == "PharmacophoreRadius") {
-      pharmacophore_radius =  boost::lexical_cast<double>(value);
+      pharmacophore_radius = stod(value);
     }
     else if (name == "InitialPercentage") {
-      percent =  boost::lexical_cast<double>(value);
+      percent = stod(value);
     }
     else if (name == "PercentMethyl") {
-      percent_methyl =  boost::lexical_cast<double>(value);
+      percent_methyl = stod(value);
     }
     else if (name == "BondLength") {
-      bond_length = boost::lexical_cast<double>(value);
+      bond_length = stod(value);
     }
     else if (name == "DatabaseFile") {
       database = value;
@@ -98,91 +108,91 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
       pharmacophore_filename = value;
     }
     else if (name == "RandomSeed") {
-      seed = boost::lexical_cast<long>(value);
+      seed = stol(value);
     }
     else if (name == "MaximumAttempts") {
-      max_attempts = boost::lexical_cast<int>(value);
+      max_attempts = stoi(value);
     }
     else if (name == "NumberRings") {
-      nrings =  boost::lexical_cast<int>(value);
+      nrings = stoi(value);
     }
     else if (name == "NumberC4Atoms") {
-      nc4 =  boost::lexical_cast<int>(value);
+      nc4 = stoi(value);
     }
     else if (name == "NumberC4Rings") {
-      nc4rings =  boost::lexical_cast<int>(value);
+      nc4rings = stoi(value);
     }
     else if (name == "MinimumRings") { 
-      min_rings =  boost::lexical_cast<int>(value);
+      min_rings = stoi(value);
     }
     else if (name == "MaximumRings") {
-      max_rings =  boost::lexical_cast<int>(value);
+      max_rings = stoi(value);
     }
     else if (name == "NumberInitial") { 
-      n_initial =  boost::lexical_cast<int>(value);
+      n_initial = stoi(value);
     }
     else if (name == "NumberSecondary") {
-      n_secondary =  boost::lexical_cast<int>(value);
+      n_secondary = stoi(value);
     }
     else if (name == "NumberPath") {
-      n_path =  boost::lexical_cast<int>(value);
+      n_path = stoi(value);
     }
     else if (name == "MaximumSecondary") {
-      max_secondary =  boost::lexical_cast<int>(value);
+      max_secondary = stoi(value);
     }
     else if (name == "NumberDemethylate") {
-      n_demethylate =  boost::lexical_cast<int>(value);
+      n_demethylate = stoi(value);
     }
     else if (name == "NumberDesaturate") {
-      n_desaturate =  boost::lexical_cast<int>(value);
+      n_desaturate = stoi(value);
     }
     else if (name == "NumberMolecules") {
-      n_mols =  boost::lexical_cast<int>(value);
+      n_mols = stoi(value);
     }
     else if (name == "NumberPharmacophores") {
-      npharmacophore =  boost::lexical_cast<int>(value);
+      npharmacophore = stoi(value);
     }
     else if (name == "NumberHardening") {
-      n_hardening =  boost::lexical_cast<int>(value);
+      n_hardening = stoi(value);
     }
     else if (name == "CreateFiveMemberRings") {
-      boost::to_upper(value);
+      capitalize(value);
       create_penta = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteFunctionalGroups") {
-      boost::to_upper(value);
+      capitalize(value);
       subs_functional = (value == "YES") ? true : false;
     }
     else if (name == "CreateDoubleBonds") { 
-      boost::to_upper(value);
+      capitalize(value);
       create_double = (value == "YES") ? true : false;
     }
     else if (name == "CreateTripleBonds") {
-      boost::to_upper(value);
+      capitalize(value);
       create_triple = (value == "YES") ? true : false;
     }
     else if (name == "CreateExotic") {
-      boost::to_upper(value);
+      capitalize(value);
       create_exotic = (value == "YES") ? true : false;
     }
     else if (name == "PathHardening") {
-      boost::to_upper(value);
+      capitalize(value);
       path_hardening = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteOxygen") {
-      boost::to_upper(value);
+      capitalize(value);
       subs_oxygen = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteNitrogen") {
-      boost::to_upper(value);
+      capitalize(value);
       subs_nitrogen = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteSulfur") {
-      boost::to_upper(value);
+      capitalize(value);
       subs_sulfur = (value == "YES") ? true : false;
     }
     else if (name == "StripAxialMethyls") {
-      boost::to_upper(value);
+      capitalize(value);
       kill_axial = (value == "YES") ? true : false;
     }
   }
@@ -208,7 +218,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   if (seed == 0) seed = (unsigned long) std::time(NULL);
 
   // Check if the database exists, if not the tables need to be created!
-  if (!boost::filesystem::exists(database)) create_database();
+  if (!file_exists(database)) create_database();
 
   sqlite3* dbase;
   sqlite3_open(database.c_str(),&dbase);

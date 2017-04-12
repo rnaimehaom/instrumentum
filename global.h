@@ -8,15 +8,10 @@
 #include <cassert>
 #include <vector>
 #include <string>
+#include <random>
 #include <algorithm>
+// To handle the database interactions
 #include <sqlite3.h>
-#include <boost/filesystem.hpp>
-#include <boost/timer/timer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/variate_generator.hpp>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -26,11 +21,15 @@
 #define __globalh
 const double epsilon = 0.001;
 
-void element(int,char*);
-unsigned int irandom(unsigned int);
-double rrandom();
+// Random number methods
+double drandom();
 void initialize_generator(unsigned long);
+unsigned int irandom(unsigned int);
+
+void element(int,char*);
 bool connected(const std::vector<int>&);
+bool file_exists(const std::string&);
+void capitalize(std::string&);
 int get_index(int,const std::vector<int>&);
 void shuffle(std::vector<int>&);
 bool parallel(const double*,const double*);

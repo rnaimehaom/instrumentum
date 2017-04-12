@@ -4,46 +4,13 @@
 
 <Title>Das Werkzeug</Title>
 
-<h1 ALIGN=center>
-Ein wissenschaftliche Werkzeug...
-</H1>
-<p>
-Zur Allt&auml;glichkeit des In-der-Welt-seins geh&ouml;ren Modi des Besorgens, die das 
-besorgte Seiende so begegnen lassen, da&szlig; dabei die Weltm&auml;&szlig;igkeit des Innerweltlichen
-zum Vorschein kommt. Das n&auml;chstzuhandene Seiende kann im Besorgen als unverwendbar, 
-als nicht zugerichtet f&uuml;r seine bestimmte Verwendung angetroffen werden. Werkzeug 
-stellt sich als besch&auml;digt heraus, das Material als ungeeignet. <i>Zeug</i> is hierbei 
-in jedem Falle zuhanden. Was aber die Unverwendbarkeit entdeckt, ist nicht das hinsehende 
-Feststellen von Eigenschaften, sondern die Umsicht des gebrauchenden Umgangs. In solchem
-Entdecken der Unverwendbarkeit f&auml;llt das Zeug auf. Das <i>Auffallen</i> gibt das 
-zuhandene Zeug in einer gewissen Unzuhandenheit. Darin liegt aber: das Unbrauchbare liegt 
-nur da -, es zeigt sich als Zeugding, das so und so aussieht und in seiner Zuhandenheit 
-als so aussehendes st&auml;ndig auch vorhanden war. Die pure Zuhandenheit meldet sich am 
-Zeug, um sich jedoch wieder in die Zuhandenheit des Besorgtem, d.h. des in der 
-Wiederinstandsetzung Befindlichen, zur&uuml;ckzuziehen. Diese Vorhandenheit des Unbrauchbaren 
-entbehrt noch nicht schlechthin jeder Zuhandenheit, das <i>so</i> vorhandene Zeug ist 
-noch nicht ein nur irgendwo vorkommendes Ding. Die Besch&auml;digung des Zeugs ist noch nicht 
-eine blo&szlig;e Dingver&auml;nderung, ein lediglich vorkommender Wechsel von Eigenschaften an 
-einem Vorhandenen. 
-</p>
-Martin Heidegger, <i>Sein und Zeit</i>, p. 74 
-
-<p>Wielding things in general, wielding things in competition, wielding things
-in an emergency, in conflict. Primordial stuff. But intricate and artificial as
-well. The skill and discipline required, all the more so under pressure, never
-more so than in combat. The most violent <i>ecstasis</i> given form by technique.
-Exquisite balance at the outer limit. Is the urge for that balance irrepressible
-in us?</p>
-<p>Skill with implements, hard or soft, is tantamount to fusion. <i>One literally 
-derives purpose from the tool</i>. And the purposes inherent in tools fuse with 
-those of other tools and, through them, with objectives - with the mission. [...]</p>
-<p>To attend an implement with skill in the service of a mission is to belong, to 
-be part of a greater whole, the aim of Romanticism fulfilled.
-<br>From <i>The Romance of Empire and the Politics of Self-Love</i>, by T. de Zengotita 
-(Harper's, July/2003) 
 <body>
-
-<hr>
+<script type="text/javascript">
+function showValue(newValue)
+{
+	document.getElementById("range").innerHTML=newValue;
+}
+</script>
 <table>
 <form method=POST action="instrumentum.cgi" name="masm_input" onsubmit="return validate()">
 <tr><td>
@@ -68,16 +35,16 @@ Number of Initial Deletion Attempts:</td><td> <input type="text" size="8" name="
 <td>Create Penta-Atomic Rings: </td><td> <input type="checkbox" checked 
 name="create_penta"></td></tr>
 <tr><td>
-Percentage to Delete in Initial Phase:</td><td> <input type="text" size="8" name="percent" value="50.0"></td>
+Percentage to Delete in Initial Phase:</td><td> <input type="range" name="percent" min="0" max="100" value="50.0"></td>
 <td>Create Amides, Sulfonamides and Esters: </td><td> <input type="checkbox" checked 
 name="create_exotic"></td></tr>
 <tr><td>
-Start Point for Path Selection is:</td><td> <input type="radio" name="path_hardening" checked value="0">Pharmacophore</td>
+Start Point for Path Selection is:</td><td> Pharmacophore<input type="radio" name="path_hardening" checked value="0"></td>
 <td>Substitute Oxygen Atoms: </td><td> <input type="checkbox" checked 
 name="subs_oxy"></td>
 </tr>
-<tr><td></td><td>
-<input type="radio" name="path_hardening" value="1">Random Interior</td>
+<tr><td></td><td>Random Interior
+<input type="radio" name="path_hardening" value="1"></td>
 <td>Substitute Sulfur Atoms: </td><td> <input type="checkbox" 
 name="subs_sul"></td>
 </tr>
@@ -97,7 +64,7 @@ Minimum Number of Four Ring Carbons to Halt Deletions:</td><td> <input type="tex
 Minimum Number of Rings to Halt Deletions:</td><td> <input type="text" size="8" name="nrings" value="4">
 </td></tr>
 <tr><td>
-Percentage of Methyls to Eliminate:</td><td> <input type="text" size="8" name="percent_methyl" value="30.0">
+Percentage of Methyls to Eliminate:</td><td> <input type="range" name="percent_methyl" min="0" max="100" value="30.0">
 </td></tr>
 <tr><td>
 Minimum Number of Rings to Desaturate:</td><td> <input type="text" size="8" name="min_rings" value="1"></td></tr>

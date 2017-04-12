@@ -2,7 +2,6 @@
 
 import Tkinter
 import FileDialog
-import random
 import os
 import sys
 
@@ -12,8 +11,8 @@ import sys
 class masm:
     def __init__(self,master=None):
         self.master = master
-        self.master.title('Molecular Assembler, version 4.0')
-        self.master.geometry('800x500')
+        self.master.title('Instrumentum')
+        self.master.geometry('800x600')
         self.master.resizable(0,0)
         if (os.name == 'nt'):
            self.hdir = "H:\\"

@@ -675,7 +675,7 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
     alpha2 = -rs2 + irandom(2*rs2);
     alpha3 = -rs3 + irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 1.0 + rrandom();
+    radius = 1.0 + drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
@@ -1006,7 +1006,7 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
     alpha2 = -rs2 + irandom(2*rs2);
     alpha3 = -rs3 + irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 2.0 + 2.5*rrandom();
+    radius = 2.0 + 2.5*drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
