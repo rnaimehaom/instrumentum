@@ -19,8 +19,11 @@ class masm:
         elif (os.name == 'posix'):
            self.hdir = "~/"
 
-        label1 = Tkinter.Label(text='Number of molecules to create:',wraplength=250,justify=Tkinter.LEFT)
-        label2 = Tkinter.Label(text='Filename in which to store molecules:',wraplength=250,justify=Tkinter.LEFT)
+        gparams = Tkinter.LabelFrame(self.master,text="Global",padx=5,pady=5)
+        #gparams.pack(padx=10,pady=10)
+
+        label1 = Tkinter.Label(gparams,text='Number of molecules to create:',wraplength=250,justify=Tkinter.LEFT)
+        label2 = Tkinter.Label(gparams,text='Database in which to store molecules:',wraplength=250,justify=Tkinter.LEFT)
         label5 = Tkinter.Label(text='Percentage of Initial Nodes to Delete:',wraplength=250,justify=Tkinter.LEFT)
         label6 = Tkinter.Label(text='Maximum Number of Initial Deletion Attempts:',wraplength=250,justify=Tkinter.LEFT)
         label7 = Tkinter.Label(text='Maximum Number of Secondary Deletion Attempts:',wraplength=250,justify=Tkinter.LEFT)
@@ -45,7 +48,8 @@ class masm:
         self.min_rings = Tkinter.IntVar()
         self.max_rings = Tkinter.IntVar()
         chem_entry1 = Tkinter.Entry(width=7,textvariable=self.percent_methyl)
-        chem_entry2 = Tkinter.Entry(width=7,textvariable=self.min_rings)
+        #chem_entry2 = Tkinter.Entry(width=7,textvariable=self.min_rings)
+        chem_entry2 = Tkinter.Spinbox(width=7,from_=0,to=10,textvariable=self.min_rings)
         chem_entry3 = Tkinter.Entry(width=7,textvariable=self.max_rings)
 
         self.percent_methyl.set(35.0)
@@ -60,12 +64,13 @@ class masm:
         chem_entry3.grid(row=15,column=1,sticky=Tkinter.W)
         
         self.nmol = Tkinter.IntVar()
-        self.ofilename = Tkinter.StringVar()
-        self.ofilename_display = Tkinter.StringVar() 
-        self.parameter_fname = Tkinter.StringVar()
-        self.parameter_fname_display = Tkinter.StringVar()
+        self.database = Tkinter.StringVar()
+        self.database_display = Tkinter.StringVar() 
+        self.parameter_filename = Tkinter.StringVar()
+        self.parameter_filename_display = Tkinter.StringVar()
 
         self.percent = Tkinter.DoubleVar()
+        self.rng_seed = Tkinter.IntVar()
         self.nattempts1 = Tkinter.IntVar()
         self.nattempts2 = Tkinter.IntVar()
         self.pharm_radius = Tkinter.DoubleVar()
@@ -92,6 +97,7 @@ class masm:
         self.strip_axial_methyls = Tkinter.IntVar()
         entry1 = Tkinter.Entry(width=7,textvariable=self.nmol)
         self.nmol.set(50000)
+        self.rng_seed.set(0)
         self.blength.set(1.52)
         self.pharm_radius.set(3.5)
         self.nattempts1.set(100)
@@ -131,7 +137,7 @@ class masm:
         entry23 = Tkinter.Entry(width=7,textvariable=self.iteration4)
         entry25 = Tkinter.Entry(width=7,textvariable=self.iteration5)
         entry24 = Tkinter.Entry(width=7,textvariable=self.blength)
-        entry45 = Tkinter.Entry(width=18,textvariable=self.parameter_fname)
+        entry45 = Tkinter.Entry(width=18,textvariable=self.parameter_filename)
 
         axial_methyl_check = Tkinter.Checkbutton(text='Strip axial methyls from rings?',variable=self.strip_axial_methyls)
         dbond_check = Tkinter.Checkbutton(text='Create double bonds?',variable=self.dbond)
@@ -149,10 +155,10 @@ class masm:
         rbutton6 = Tkinter.Radiobutton(text='Pharmacophoric Node',value=1,variable=self.hchoice)
         self.hchoice.set(1)
         
-        button1 = Tkinter.Button(text='Write Parameter File',command=self.startjob)
+        button1 = Tkinter.Button(text='Write Parameter File',command=self.write_parameters)
         button2 = Tkinter.Button(text='Exit',command=root.quit)
-        self.button3 = Tkinter.Button(textvariable=self.ofilename_display,width=16,command=self.get_sdfile1)
-        self.button0 = Tkinter.Button(textvariable=self.parameter_fname_display,width=16,command=self.get_sdfile0)
+        self.button3 = Tkinter.Button(textvariable=self.database_display,width=16,command=self.get_dbase_file)
+        self.button0 = Tkinter.Button(textvariable=self.parameter_filename_display,width=16,command=self.get_parameter_file)
 
         label1.grid(row=0,sticky=Tkinter.W)
         entry1.grid(row=0,column=1,sticky=Tkinter.W)
@@ -206,36 +212,37 @@ class masm:
         button1.grid(row=31,column=0)
         button2.grid(row=31,column=3)
 
-    def get_sdfile0(self):
+    def get_parameter_file(self):
         filename = FileDialog.LoadFileDialog(root).go(self.hdir,"*.txt")
         if not(filename is None):
            if (self.hdir == "H:\\"):
               temp = filename.split("\\")
               pure_name = temp[len(temp)-1].split(".")
-              self.parameter_fname_display.set(pure_name[0])
+              self.parameter_filename_display.set(pure_name[0])
            elif (self.hdir == "~/"):
               temp = filename.split("/")
               pure_name = temp[len(temp)-1].split(".")
-              self.parameter_fname_display.set(pure_name[0])
-        self.parameter_fname.set(filename)
+              self.parameter_filename_display.set(pure_name[0])
+        self.parameter_filename.set(filename)
 
-    def get_sdfile1(self):
-        filename = FileDialog.SaveFileDialog(root).go(self.hdir,"*.sdf")
+    def get_dbase_file(self):
+        filename = FileDialog.SaveFileDialog(root).go(self.hdir,"*.db")
         if not(filename is None):
            if (self.hdir == "H:\\"):
               temp = filename.split("\\")
               pure_name = temp[len(temp)-1].split(".")
-              self.ofilename_display.set(pure_name[0])
+              self.database_display.set(pure_name[0])
            elif (self.hdir == "~/"):
               temp = filename.split("/")
               pure_name = temp[len(temp)-1].split(".")
-              self.ofilename_display.set(pure_name[0])
-        self.ofilename.set(filename)
+              self.database_display.set(pure_name[0])
+        self.database.set(filename)
         
-    def startjob(self):
-        para_filename = self.parameter_fname.get()
-        pfile = open(para_filename,'w')
-        pfile.write('DatabaseFile = ' + ofilename.get() + '\n')
+    def write_parameters(self):
+        parameter_filename = self.parameter_filename.get()
+        pfile = open(parameter_filename,'w')
+        pfile.write('DatabaseFile = ' + self.database.get() + '\n')
+        pfile.write('RandomSeed = ' + str(self.rng_seed) + '\n')
         pfile.write('InitialPercentage = ' + str(self.percent.get()) + '\n')
         pfile.write('MaximumAttempts = ' + str(self.nattempts1.get()) + '\n')
         pfile.write('MaximumSecondary = ' + str(self.nattempts2.get()) + '\n')
