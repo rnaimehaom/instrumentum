@@ -29,12 +29,12 @@ the mission. [...]
 To attend an implement with skill in the service of a mission is to belong, to be part of a greater whole, the 
 aim of Romanticism fulfilled. 
 
-Global Parameters: internode distance (real > 0)
+Global Parameters: bond length (real > 0)
                    number of molecules to create (integer > 0)
-                   random number seed (integer > 0)
+                   random number seed (integer >= 0)
                    name of SQLite database file (string, file dialog for .sqlite3 file)
                    name of parameter file (string, file dialog for .txt file)
-Pharmacophore Parameters: steric radius (real > 0)
+Pharmacophore Parameters: pharmacophore radius (real > 0)
                           number of pharmacophore points (integer > 0)
 Carbon Skeleton Parameters: number of initial deletion attempts (integer > 0)
                             percentage deleted in initial phase (0 < real < 1)
