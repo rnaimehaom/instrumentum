@@ -1,4 +1,4 @@
-Ein wissenschaftliches Werkzeug
+The Instrumentum Project
 
 Martin Heidegger, "Sein und Zeit", p. 74:
 Zur Alltäglichkeit des In-der-Welt-seins gehören Modi des Besorgens, die das besorgte Seiende 
@@ -16,7 +16,7 @@ entbehrt noch nicht schlechthin jeder Zuhandenheit, das so vorhandene Zeug ist n
 irgendwo vorkommendes Ding. Die Beschädigung des Zeugs ist noch nicht eine bloße Dingveränderung, ein 
 lediglich vorkommender Wechsel von Eigenschaften an einem Vorhandenen. 
 
-From The Romance of Empire and the Politics of Self-Love, by T. de Zengotita (Harper's, July/2003):
+From "The Romance of Empire and the Politics of Self-Love", by T. de Zengotita (Harper's, July/2003):
 Wielding things in general, wielding things in competition, wielding things in an emergency, in conflict. 
 Primordial stuff. But intricate and artificial as well. The skill and discipline required, all the more 
 so under pressure, never more so than in combat. The most violent ecstasis given form by technique. Exquisite 
@@ -29,100 +29,40 @@ the mission. [...]
 To attend an implement with skill in the service of a mission is to belong, to be part of a greater whole, the 
 aim of Romanticism fulfilled. 
 
-The goal:
-1) a C++-based molecular assembler that has a nice, integrated, portable 
-graphical interface (probably using Qt) and writes its output to some SD 
-file for further study and manipulation. 
-2) for this graphical interface, the following controls will be needed:
-internode distance (double) slider
-number of molecules to create (integer) textbox (ensure > 0)
-steric radius (double) slider
-number of pharmacophoric points (integer) spinbox
-output filename (string) pushbutton
-number of initial deletion attempts (integer) spinbox
-percentage deleted in initial phase (double) slider
-use pharmacophoric point as start for path selection (integer) radiobutton
-number of secondary deletion attempts (integer) spinbox
-number of quaternary carbons (integer) spinbox
-number of four-ring carbons (integer) spinbox
-number of rings (integer) spinbox
-percentage of methyls to be eliminated (double) slider
-minimum number of rings (integer) spinbox
-maximum number of rings (integer) spinbox (ensure that max >= min)
-strip axial methyls (integer) checkbox
-create aromatic rings (integer) checkbox
-create double bonds (integer) checkbox
-create triple bonds (integer) checkbox (grayed out if dbonds not checked)
-create penta-atomic rings (integer) checkbox
-create amides, esters and sulfonamides (integer) checkbox (grayed out if dbonds not checked)
-substitute oxygen atoms (integer) checkbox
-substitute nitrogen atoms (integer) checkbox
-substitute sulfur atoms (integer) checkbox
-substitute functional groups (P, F, Cl) (integer) checkbox
-number of initial deletion iterations (integer) spinbox
-number of path selection iterations (integer) spinbox
-number of secondary deletion iterations (integer) spinbox
-number of demethylation/rationalization iterations (integer) spinbox
-number of desaturation/heteroatom substitution iterations (integer) spinbox
-create molecules pushbutton
-exit pushbutton
+Global Parameters: internode distance (real > 0)
+                   number of molecules to create (integer > 0)
+                   random number seed (integer > 0)
+                   name of SQLite database file (string, file dialog for .sqlite3 file)
+                   name of parameter file (string, file dialog for .txt file)
+Pharmacophore Parameters: steric radius (real > 0)
+                          number of pharmacophore points (integer > 0)
+Carbon Skeleton Parameters: number of initial deletion attempts (integer > 0)
+                            percentage deleted in initial phase (0 < real < 1)
+                            start point for paths is random or pharmacophore point (radio button)
+                            number of secondary deletion attempts (integer > 0)
+                            number of quaternary carbons (integer >= 0)
+                            number of four-ring carbons (integer >= 0)
+                            number of rings (integer >= 0)
+Rationalization Parameters: percentage of methyls to be eliminated (0 < real < 1)
+                            minimum number of rings (integer >= 0)
+                            maximum number of rings (integer >= min rings)  
+Desaturation & Heteroatom Parameters: strip axial methyls (boolean) checkbox
+                                      create aromatic rings (boolean) checkbox
+                                      create double bonds (boolean) checkbox
+                                      create triple bonds (boolean) checkbox (grayed out if double bonds not checked)
+                                      create penta-atomic rings (boolean) checkbox
+                                      create amides, esters and sulfonamides (boolean) checkbox (grayed out if double bonds not checked)
+                                      substitute oxygen atoms (boolean) checkbox
+                                      substitute nitrogen atoms (boolean) checkbox
+                                      substitute sulfur atoms (boolean) checkbox
+                                      substitute functional groups (phosphorus, fluorine, chlorine) (boolean) checkbox
+Molecular Assembly Parameters: number of initial deletion iterations (integer > 0)
+                               number of path selection iterations (integer > 0)
+                               number of secondary deletion iterations (integer > 0) 
+                               number of rationalization iterations (integer > 0)
+                               number of desaturation & heteroatom iterations (integer > 0)
 
-Once user hits "create molecules", the app throws up a dialog box containing a label saying 
-how many molecules have been created, a progress bar showing how close we are to the desired 
-number and a "cancel" pushbutton to exit the computation. 
+Three command buttons: Exit -> quit GUI
+                       Write -> write current GUI parameters to parameter file if defined
+                       Load -> if parameter file is defined and exists, load its values
 
-3) Problems:
-a) write Python script to read parameters from HTML form via CGI, and 
-   create new record in job table of Werkzeug database
-b) write Python script to check job table of Werkzeug database and 
-   if it finds a new job, start up a MASM process with job id
-c) Javascript code to check input values from HTML form
-d) Python script to accept job id from HTML form and snoop into the 
-   Werkzeug database to give info out as HTML document 
-
-4) Other ideas:
-a) add multithreading (pthreads or OpenMP) to Werkzeug code
-b) add parallel (via MPI-2) support to Werkzeug
-c) consider allowing ligand-based models for the pharmacophore
-
-
-Database Considerations:
-1) Postgresql database called "alchemy" with two tables, "parameters" and "compound", having 
-   structure
-   parameters -> pid (PRIMARY,serial)
-                 max_attempts (integer) 
-                 nrings (integer)
-                 nc4 (integer)
-                 nc4rings (integer)
-                 min_rings (integer)
-                 max_rings (integer)
-                 n_hardening (integer)
-                 n_initial (integer)
-                 n_secondary (integer)
-                 n_path (integer)
-                 max_secondary (integer)
-                 n_demethylate (integer)
-                 n_desaturate (integer)
-                 npharm (integer)
-                 path_hardening (boolean)
-                 subs_oxy (boolean)
-                 subs_sul (boolean)
-                 subs_nit (boolean)
-                 subs_fun (boolean)
-                 create_exotic (boolean)
-                 create_penta (boolean)
-                 create_double (boolean)
-                 create_triple (boolean)
-                 kill_axial (boolean)
-                 percent (double)
-                 percent_methyl (double)
-                 bond_length (double)
-                 pharm_radius (double)
-                 pharm_fname (string)
-
-   compound -> id (PRIMARY,serial)
-               pid (integer, refers to parameters table)
-               opstring (string)
-               rms (double)
-               raw_structure (string)
-               minimized_structure (string)

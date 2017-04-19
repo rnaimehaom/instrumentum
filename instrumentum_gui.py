@@ -22,8 +22,8 @@ class masm:
         gparams = Tkinter.LabelFrame(self.master,text="Global",padx=5,pady=5)
         #gparams.pack(padx=10,pady=10)
 
-        label1 = Tkinter.Label(gparams,text='Number of molecules to create:',wraplength=250,justify=Tkinter.LEFT)
-        label2 = Tkinter.Label(gparams,text='Database in which to store molecules:',wraplength=250,justify=Tkinter.LEFT)
+        label1 = Tkinter.Label(text='Number of molecules to create:',wraplength=250,justify=Tkinter.LEFT)
+        label2 = Tkinter.Label(text='Database in which to store molecules:',wraplength=250,justify=Tkinter.LEFT)
         label5 = Tkinter.Label(text='Percentage of Initial Nodes to Delete:',wraplength=250,justify=Tkinter.LEFT)
         label6 = Tkinter.Label(text='Maximum Number of Initial Deletion Attempts:',wraplength=250,justify=Tkinter.LEFT)
         label7 = Tkinter.Label(text='Maximum Number of Secondary Deletion Attempts:',wraplength=250,justify=Tkinter.LEFT)

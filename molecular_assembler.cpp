@@ -22,13 +22,12 @@ void Molecular_Assembler::set_default_values()
   max_rings = 6;
   n_initial = 3;
   n_secondary = 3;
-  n_hardening = 3;
   n_path = 3;
-  n_demethylate = 3;
+  n_rationalize = 3;
   n_desaturate = 1;
   n_mols = 50000;
 
-  path_hardening = true;
+  pharm_hardening = true;
   subs_oxygen = true;
   subs_nitrogen = true;
   subs_sulfur = false;
@@ -40,7 +39,6 @@ void Molecular_Assembler::set_default_values()
   kill_axial = true;
 
   database = "";
-  pharmacophore_filename = ""; 
   parameter_id = 0;
   seed = 0;
   nthread = 1;
@@ -105,9 +103,6 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     else if (name == "DatabaseFile") {
       database = value;
     }
-    else if (name == "PharmacophoreFilename") {
-      pharmacophore_filename = value;
-    }
     else if (name == "RandomSeed") {
       seed = stol(value);
     }
@@ -141,8 +136,8 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     else if (name == "MaximumSecondary") {
       max_secondary = stoi(value);
     }
-    else if (name == "NumberDemethylate") {
-      n_demethylate = stoi(value);
+    else if (name == "NumberRationalize") {
+      n_rationalize = stoi(value);
     }
     else if (name == "NumberDesaturate") {
       n_desaturate = stoi(value);
@@ -152,9 +147,6 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     }
     else if (name == "NumberPharmacophores") {
       npharmacophore = stoi(value);
-    }
-    else if (name == "NumberHardening") {
-      n_hardening = stoi(value);
     }
     else if (name == "CreateFiveMemberRings") {
       capitalize(value);
@@ -176,9 +168,9 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
       capitalize(value);
       create_exotic = (value == "YES") ? true : false;
     }
-    else if (name == "PathHardening") {
+    else if (name == "PharmacophoreHardening") {
       capitalize(value);
-      path_hardening = (value == "YES") ? true : false;
+      pharm_hardening = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteOxygen") {
       capitalize(value);
@@ -200,13 +192,11 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   s.close();
   // Sanity checks...
   assert(n_mols > 0);
-  assert(n_hardening >= 0);
-  assert(n_demethylate >= 0);
-  assert(n_desaturate >= 0);
+  assert(n_rationalize > 0);
+  assert(n_desaturate > 0);
   assert(n_path > 0);
   assert(n_secondary > 0);
   assert(n_initial > 0);
-  assert(max_rings > 0);
   assert(min_rings >= 0);
   assert(max_rings >= min_rings);
   assert(max_attempts > 0);
@@ -236,15 +226,14 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   query += "nc4rings,";
   query += "min_rings,";
   query += "max_rings,";
-  query += "n_hardening,";
   query += "n_initial,";
   query += "n_secondary,";
   query += "n_path,";
   query += "max_secondary,";
-  query += "n_demethylate,";
+  query += "n_rationalize,";
   query += "n_desaturate,";
   query += "npharmacophore,";
-  query += "path_hardening,";
+  query += "pharm_hardening,";
   query += "subs_oxygen,";
   query += "subs_sulfur,";
   query += "subs_nitrogen,";
@@ -258,7 +247,6 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   query += "percent_methyl,";
   query += "bond_length,";
   query += "pharmacophore_radius,";
-  query += "pharmacophore_filename,";
   query += "rng_seed,";
   query += "nthread,";
   query += "timestamp) ";
@@ -288,15 +276,14 @@ void Molecular_Assembler::create_database() const
   query += "nc4rings INTEGER,";
   query += "min_rings INTEGER,";
   query += "max_rings INTEGER,";
-  query += "n_hardening INTEGER,";
   query += "n_initial INTEGER,";
   query += "n_secondary INTEGER,";
   query += "n_path INTEGER,";
   query += "max_secondary INTEGER,";
-  query += "n_demethylate INTEGER,";
+  query += "n_rationalize INTEGER,";
   query += "n_desaturate INTEGER,";
   query += "npharmacophore INTEGER,";
-  query += "path_hardening BOOLEAN,";
+  query += "pharm_hardening BOOLEAN,";
   query += "subs_oxygen BOOLEAN,";
   query += "subs_sulfur BOOLEAN,";
   query += "subs_nitrogen BOOLEAN,";
@@ -310,7 +297,6 @@ void Molecular_Assembler::create_database() const
   query += "percent_methyl REAL,";
   query += "bond_length REAL,";
   query += "pharmacophore_radius REAL,";
-  query += "pharmacophore_filename CHAR(80),";
   query += "rng_seed INTEGER,";
   query += "nthread INTEGER,";
   query += "timestamp DATETIME,";
@@ -341,16 +327,15 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   s << nc4rings << ",";
   s << min_rings << ",";
   s << max_rings << ",";
-  s << n_hardening << ",";
   s << n_initial << ",";
   s << n_secondary << ",";
   s << n_path << ",";
   s << max_secondary << ",";
-  s << n_demethylate << ",";
+  s << n_rationalize << ",";
   s << n_desaturate << ",";
   s << npharmacophore << ",";
 
-  if (path_hardening) {
+  if (pharm_hardening) {
     s << "1,";
   }
   else {
@@ -414,12 +399,6 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   s << percent_methyl << ",";
   s << bond_length << ",";
   s << pharmacophore_radius << ",";
-  if (pharmacophore_filename == "") {
-    s << "NULL,";
-  }
-  else {
-    s << "\'" << pharmacophore_filename << "\',";
-  }
   s << seed << ",";
   s << nthread << ",";
   s << "\'DATETIME(\'NOW\')\')";
@@ -467,12 +446,12 @@ void Molecular_Assembler::run() const
         g->restore(0);
         continue;
       }
-      for(j=0; j<n_hardening; ++j) {
+      for(j=0; j<n_path; ++j) {
         g->save_state(1);
 #ifdef VERBOSE
         std::cout << "Path hardening..." << std::endl;
 #endif
-        test = g->path_selection(path_hardening);
+        test = g->path_selection(pharm_hardening);
         if (!test) {
           g->restore(1);
           continue;
@@ -487,7 +466,7 @@ void Molecular_Assembler::run() const
             g->restore(2);
             continue;
           }
-          for(l=0; l<n_demethylate; ++l) {
+          for(l=0; l<n_rationalize; ++l) {
             g->save_state(3);
 #ifdef VERBOSE
             std::cout << "Rationalizing..." << std::endl;

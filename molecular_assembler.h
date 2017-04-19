@@ -9,18 +9,17 @@ class Molecular_Assembler {
   unsigned int nc4rings;
   unsigned int min_rings;
   unsigned int max_rings;
-  unsigned int n_hardening;
   unsigned int n_initial;
   unsigned int n_secondary;
   unsigned int n_path;
   unsigned int max_secondary;
-  unsigned int n_demethylate;
+  unsigned int n_rationalize;
   unsigned int n_desaturate;
   unsigned int n_mols;
   unsigned int npharmacophore;
   unsigned int parameter_id;
     
-  bool path_hardening;
+  bool pharm_hardening;
   bool subs_oxygen;
   bool subs_nitrogen;
   bool subs_sulfur;
@@ -32,7 +31,6 @@ class Molecular_Assembler {
   bool kill_axial;
   
   std::string database;
-  std::string pharmacophore_filename;
   unsigned long seed;
   unsigned int nthread;
 
