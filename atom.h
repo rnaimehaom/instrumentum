@@ -1,5 +1,7 @@
-#ifndef __atomh
-#define __atomh
+#include "global.h"
+
+#ifndef _atomh
+#define _atomh
 
 class Atom {
  private:

@@ -1,7 +1,7 @@
 #include "global.h"
 
-#ifndef __node_h
-#define __node_h
+#ifndef _nodeh
+#define _nodeh
 
 class Node {
  public:

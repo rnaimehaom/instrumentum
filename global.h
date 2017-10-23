@@ -17,8 +17,8 @@
 #include <omp.h>
 #endif
 
-#ifndef __globalh
-#define __globalh
+#ifndef _globalh
+#define _globalh
 const double epsilon = 0.001;
 
 // Random number methods

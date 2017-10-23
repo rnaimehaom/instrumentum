@@ -1,5 +1,7 @@
-#include "molecule.h"
 #include "grid.h"
+
+#ifndef _masmh
+#define _masmh
 
 class Molecular_Assembler {
  private:
@@ -49,3 +51,4 @@ class Molecular_Assembler {
   ~Molecular_Assembler();
   void run() const;
 };
+#endif

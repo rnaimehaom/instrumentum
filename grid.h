@@ -1,9 +1,8 @@
-#include "global.h"
 #include "node.h"
 #include "molecule.h"
 
-#ifndef __gridh
-#define __gridh
+#ifndef _gridh
+#define _gridh
 
 class state {
  public:

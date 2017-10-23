@@ -1,7 +1,7 @@
 #include "global.h"
 
-#ifndef __moleculeh
-#define __moleculeh
+#ifndef _moleculeh
+#define _moleculeh
 
 class Molecule {
  private:
