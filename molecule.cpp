@@ -265,26 +265,27 @@ void Molecule::add_bond(int atom1,int atom2,int valence)
   }
 }
 
-void Molecule::write2screen() const
+std::ostream& operator <<(std::ostream& s,const Molecule& source)
 {
   int i,j;
-  for(i=0; i<natoms; ++i) {
-    std::cout << i << "  " << atom_type[i] << "  " << locale[i] << std::endl;
-    std::cout << "       " << coords[3*i] << "  " << coords[3*i+1] << "  " << coords[3*i+2] << std::endl;
+  for(i=0; i<source.natoms; ++i) {
+    s << i << "  " << source.atom_type[i] << "  " << source.locale[i] << std::endl;
+    s << "       " << source.coords[3*i] << "  " << source.coords[3*i+1] << "  " << source.coords[3*i+2] << std::endl;
   }
-  for(i=0; i<natoms; ++i) {
+  for(i=0; i<source.natoms; ++i) {
     for(j=0; j<4; ++j) {
-      if (bonds[4*i+j] != -1) {
-        std::cout << i << "  " << bonds[4*i+j] << "  " << btype[4*i+j] << std::endl;
+      if (source.bonds[4*i+j] != -1) {
+        s << i << "  " << source.bonds[4*i+j] << "  " << source.btype[4*i+j] << std::endl;
       }
     }
   }
-  for(i=0; i<nrings; ++i) {
+  for(i=0; i<source.nrings; ++i) {
     for(j=0; j<6; ++j) {
-      std::cout << rings[6*i+j] << "  ";
+      s << source.rings[6*i+j] << "  ";
     }
-    std::cout << std::endl;
+    s << std::endl;
   }
+  return s;
 }
 
 void Molecule::saturation_check() const
@@ -635,7 +636,7 @@ bool Molecule::add_nitrogen()
             bonds[4*candidate_rneighbours[alpha][1]+in2] = candidate_rneighbours[alpha][0];
             eliminate_atoms(to_die,2);
 #ifdef VERBOSE
-            write2screen();
+            std::cout << this << std::endl;
             for(l=0; l<nrings; ++l) {
               for(int m=0; m<6; ++m) {
                 std::cout << rings[6*l+m] << "  ";
@@ -1418,7 +1419,7 @@ bool Molecule::create_penta1()
 #ifdef VERBOSE
           std::cout << "For nitrogen " << the_nitro << " the bond count is " << bcount1 << std::endl;
 #endif
-          write2screen();
+          std::cout << this << std::endl;
           std::exit(1);
         }
         if (cand < 1) continue;
@@ -1455,7 +1456,7 @@ bool Molecule::create_penta1()
       }
       else {
         if (nitro > 2) {
-          write2screen();
+          std::cout << this << std::endl;
           std::exit(1);
         }
         // Delete a carbon and add a hydrogen to one of the nitrogens
@@ -2103,7 +2104,7 @@ void Molecule::normalize_free_ring(int the_aring)
 #ifdef VERBOSE
         std::cout << "Missing bonds for " << oxygen << std::endl;
 #endif
-        write2screen();
+        std::cout << this << std::endl;
         std::exit(1);
       }
       btype[4*oxygen+rneighbour[0]] = 1;
@@ -2114,7 +2115,7 @@ void Molecule::normalize_free_ring(int the_aring)
 #ifdef VERBOSE
         std::cout << "No oxy ring bond here at " << oxygen << std::endl;
 #endif
-        write2screen();
+        std::cout << this << std::endl;
         std::exit(1);
       }
       btype[4*v1+get_bindex(oxygen,v1)] = 1;
@@ -2211,7 +2212,7 @@ void Molecule::normalize_free_ring(int the_aring)
         }
       }
       if (nitrogen == -1) {
-        write2screen();
+        std::cout << this << std::endl;
         std::exit(1);
       }
       for(i=0; i<4; ++i) {
@@ -2817,7 +2818,7 @@ bool Molecule::normalize_aromatic_bonds()
         if (ring_cluster[nrings*i+j] == 1) the_ring = j;
       }
       if (the_ring == -1) {
-        write2screen();
+        std::cout << this << std::endl;
         std::exit(1);
       }
       if (is_aromatic(the_ring)) normalize_free_ring(the_ring);
@@ -2827,7 +2828,7 @@ bool Molecule::normalize_aromatic_bonds()
   return true;
 }
 
-std::string Molecule::write2string() const
+std::string Molecule::to_MDLMol() const
 {
   int i,j,bnumber = 0;
   char atom[3];

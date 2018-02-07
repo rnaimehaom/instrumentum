@@ -49,7 +49,6 @@ class Molecule {
   void add_atom(int,const double*,int);
   void add_bond(int,int,int);
   void drop_atom(int);
-  void write2screen() const;
  public:
   Molecule();
   Molecule(const Molecule&);
@@ -57,8 +56,9 @@ class Molecule {
   Molecule& operator =(const Molecule&);
   void clear();
   bool decorate(const bool*);
-  std::string write2string() const;
+  std::string to_MDLMol() const;
   inline std::string get_opstring() const {return opstring;}; 
+  friend std::ostream& operator <<(std::ostream&,const Molecule&);
   friend class Grid;
 };
 

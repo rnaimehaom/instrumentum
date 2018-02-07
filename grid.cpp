@@ -1283,7 +1283,7 @@ void Grid::restore(int q)
 {
   int i,j,k,in1;
   unsigned int l;
-  state s;
+  State s;
 
   // First, initialize the whole grid back to zero...
   for(i=-D1; i<=D1; ++i) {
@@ -1307,7 +1307,7 @@ void Grid::restore(int q)
 void Grid::save_state(int q)
 {
   int i,j,k,in1;
-  state s;
+  State s;
 
   backup[q].clear();
   for(i=-D1; i<=D1; ++i) {

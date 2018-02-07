@@ -4,12 +4,11 @@
 #ifndef _gridh
 #define _gridh
 
-class state {
- public:
+typedef struct {
   int atom;
   int node;
   int locale;
-};
+} State;
 
 class Grid {
  private:
@@ -18,7 +17,7 @@ class Grid {
   Node* nodes;
   std::vector<int> ring_info;
   unsigned int total;
-  std::vector<state> backup[4];
+  std::vector<State> backup[4];
   std::vector<int> pnodes;
   double bond_length;
 

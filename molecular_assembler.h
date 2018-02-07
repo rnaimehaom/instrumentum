@@ -42,7 +42,7 @@ class Molecular_Assembler {
   double pharmacophore_radius;
 
   void set_default_values();
-  void write2disk(const std::string&,const std::string&,sqlite3*) const;
+  void database_insertion(const std::string&,const std::string&,sqlite3*) const;
   void create_parameter_string(std::string&) const;
   void create_database() const;  
  public:

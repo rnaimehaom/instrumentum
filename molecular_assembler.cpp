@@ -489,13 +489,13 @@ void Molecular_Assembler::run() const
               test = m->decorate(ornaments);
               if (test) {
                 build++;
-                mstring = m->write2string();
+                mstring = m->to_MDLMol();
                 ops = m->get_opstring();
 #ifdef _OPENMP
 #pragma omp critical 
         {
 #endif
-                write2disk(ops,mstring,dbase);
+                database_insertion(ops,mstring,dbase);
 #ifdef _OPENMP
         }
 #endif
@@ -521,7 +521,7 @@ void Molecular_Assembler::run() const
   sqlite3_close(dbase);
 }
 
-void Molecular_Assembler::write2disk(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const
+void Molecular_Assembler::database_insertion(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const
 {
   std::string query = "INSERT INTO Compound (parameter_id,op_string,raw_structure) VALUES (";
   std::stringstream sstream;
