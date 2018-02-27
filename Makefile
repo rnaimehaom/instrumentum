@@ -1,4 +1,4 @@
-OBJECTS = main.o node.o grid.o molecule.o molecular_assembler.o global.o
+OBJECTS = main.o global.o random.o node.o grid.o molecule.o molecular_assembler.o
 
 #CXX_FLAGS += $(CXX_OPT) $(OPENMP) 
 CXX_FLAGS += $(DEBUG) $(OPENMP)
@@ -6,7 +6,7 @@ CXX_FLAGS += $(DEBUG) $(OPENMP)
 #LD_FLAGS += $(CXX_OPT) $(OPENMP)
 LD_FLAGS += $(DEBUG) $(OPENMP)
 
-LIBS = -lsqlite3 -lm
+LIBS = $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lsqlite3 -lm
 
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
@@ -22,6 +22,9 @@ node.o: node.cpp node.h global.h
 
 global.o: global.cpp global.h 
 	$(CXX) $(CXX_FLAGS) -c global.cpp 
+
+random.o: random.cpp random.h global.h
+	$(CXX) $(CXX_FLAGS) -c random.cpp
 
 molecule.o: molecule.cpp molecule.h node.h global.h 
 	$(CXX) $(CXX_FLAGS) -c molecule.cpp

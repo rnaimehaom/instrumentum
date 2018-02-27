@@ -1,5 +1,7 @@
 #include "grid.h"
 
+extern Random RND;
+
 void Grid::next_door(int m,int n,int k,int i,const double* deltas)
 {
   int in1,in2,x_new,y_new,z_new,n_state;
@@ -515,7 +517,7 @@ void Grid::blank_pharmacophore(double radius)
   // "must have" nodes, to aid in constructing connected
   // molecules
   while(kount < pnodes.size()) {
-    test = irandom(frontier_nodes.size());
+    test = RND.irandom(frontier_nodes.size());
     bad = false;
     for(m=0; m<kount; ++m) {
       for(l=0; l<nodes[pnodes[m]].neighbours.size(); ++l) {
@@ -671,11 +673,11 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
     return false;
   }
   do {
-    alpha1 = -rs1 + irandom(2*rs1);
-    alpha2 = -rs2 + irandom(2*rs2);
-    alpha3 = -rs3 + irandom(2*rs3);
+    alpha1 = -rs1 + RND.irandom(2*rs1);
+    alpha2 = -rs2 + RND.irandom(2*rs2);
+    alpha3 = -rs3 + RND.irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 1.0 + drandom();
+    radius = 1.0 + RND.drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
@@ -762,7 +764,7 @@ bool Grid::rationalize(double percent_methyl,unsigned int rings_min,unsigned int
 
   if (nkill > 0) {
     do {
-      alpha = irandom(methyl.size());
+      alpha = RND.irandom(methyl.size());
       in1 = methyl[alpha];
       if (nodes[in1].atomic_number > 0) {
         nodes[in1].atomic_number = 0;
@@ -1002,11 +1004,11 @@ bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned in
   double r2,radius,delta;
 
   do {
-    alpha1 = -rs1 + irandom(2*rs1);
-    alpha2 = -rs2 + irandom(2*rs2);
-    alpha3 = -rs3 + irandom(2*rs3);
+    alpha1 = -rs1 + RND.irandom(2*rs1);
+    alpha2 = -rs2 + RND.irandom(2*rs2);
+    alpha3 = -rs3 + RND.irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 2.0 + 2.5*drandom();
+    radius = 2.0 + 2.5*RND.drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
@@ -1118,7 +1120,7 @@ bool Grid::path_selection(bool random)
   }
 
   if (random) {
-    inode = pnodes[irandom(pnodes.size())];
+    inode = pnodes[RND.irandom(pnodes.size())];
   }
   else {
     for(i=-rs1; i<=rs1; ++i) {
@@ -1129,7 +1131,7 @@ bool Grid::path_selection(bool random)
         }
       }
     }
-    inode = candidate[irandom(candidate.size())];
+    inode = candidate[RND.irandom(candidate.size())];
   }
   nodes[inode].path_hop = 0;
 
@@ -1194,7 +1196,7 @@ bool Grid::path_selection(bool random)
 #ifdef DEBUG
       assert(!winner.empty());
 #endif
-      next_node = winner[irandom(winner.size())];
+      next_node = winner[RND.irandom(winner.size())];
       if (nodes[next_node].locale == 6) {
         for(l=0; l<pathback.size(); ++l) {
           if (nodes[pathback[l]].locale == 2) nodes[pathback[l]].locale = 6;

@@ -1,127 +1,5 @@
 #include "global.h"
 
-// Random number variables
-std::random_device rd;  
-std::mt19937 gen(rd());
-std::uniform_real_distribution<> VRG(0.0,1.0);
-
-void initialize_generator(unsigned long seed)
-{
-  gen.seed(seed);
-}
-
-unsigned int irandom(unsigned int nmax)
-{
-  unsigned int output = (unsigned) int(double(nmax)*drandom());
-  return output;
-}
-
-double drandom()
-{
-  double out = VRG(gen);
-  return out;
-}
-
-bool file_exists(const std::string& fname)
-{
-  std::ifstream infile(fname.c_str());
-  return infile.good();
-}
-
-void capitalize(std::string& s)
-{
-  //std::transform(s.begin(),s.end(),s.begin(),::to_upper);
-  // This algorithm assumes the incoming string is pure ASCII text!
-  unsigned int i;
-  for(i=0; i<s.size(); ++i) {
-    if (s[i] <= 122 && s[i] >= 97) s[i] -= 32;
-  }
-}
-
-bool parallel(const double* x,const double* y)
-{
-  // We take the cross product of these two 3-vectors and see if
-  // it's approximately zero
-  bool output = false;
-  double delta,out[3];
-  
-  out[0] = x[1]*y[2] - x[2]*y[1];
-  out[1] = x[2]*y[0] - x[0]*y[2];
-  out[2] = x[0]*y[1] - x[1]*y[0];
-  delta = out[0]*out[0] + out[1]*out[1] + out[2]*out[2];
-
-  if (delta < epsilon*epsilon) output = true;
-
-  return output;
-}
-
-void shuffle(std::vector<int>& v)
-{
-  // Fisher-Yates shuffle algorithm
-#ifdef DEBUG
-  assert(v.size() > 1);
-#endif
-  int i,j,q;
-  const int n = (signed) v.size();
-
-  for(i=0; i<n; ++i) {
-    v[i] = i;
-  }
-  for(i=n-1; i>0; --i) {
-    j = irandom(1+i);
-    q = v[j];
-    v[j] = v[i];
-    v[i] = q;
-  }
-}
-
-int get_index(int x,const std::vector<int>& v)
-{
-  std::vector<int>::const_iterator it = std::find(v.begin(),v.end(),x);
-  if (it == v.end()) return -1;
-  int output = std::distance(v.begin(),it);
-  return output;
-}
-
-bool connected(const std::vector<int>& bonds)
-{
-  int i,j;
-  std::set<int> current,next;
-  std::set<int>::const_iterator it;
-  const int n = bonds.size()/4;
-  bool visited[n];
-
-  for(i=0; i<n; ++i) {
-    visited[i] = false;
-  }
-  visited[0] = true;
-  current.insert(0);
-
-  do {
-    for(it=current.begin(); it!=current.end(); ++it) {
-      i = *it;
-      if (visited[i]) {
-        for(j=0; j<4; ++j) {
-          if (bonds[4*i+j] < 0) continue;
-          if (!visited[bonds[4*i+j]]) next.insert(bonds[4*i+j]);
-        }
-      }
-    }
-    if (next.empty()) break;
-    for(it=next.begin(); it!=next.end(); ++it) {
-      visited[*it] = true;
-    }
-    current = next;
-    next.clear();
-  } while(true);
-
-  for(i=0; i<n; ++i) {
-    if (!visited[i]) return false;
-  }
-
-  return true;
-}
-
 void element(int atomic_number,char* element)
 {
   switch(atomic_number) {
@@ -176,6 +54,45 @@ void element(int atomic_number,char* element)
     element[1] = '\0';
     return;
   }
+}
+
+bool connected(const std::vector<int>& bonds)
+{
+  int i,j;
+  std::set<int> current,next;
+  std::set<int>::const_iterator it;
+  const int n = bonds.size()/4;
+  bool visited[n];
+
+  for(i=0; i<n; ++i) {
+    visited[i] = false;
+  }
+  visited[0] = true;
+  current.insert(0);
+
+  do {
+    for(it=current.begin(); it!=current.end(); ++it) {
+      i = *it;
+      if (visited[i]) {
+        for(j=0; j<4; ++j) {
+          if (bonds[4*i+j] < 0) continue;
+          if (!visited[bonds[4*i+j]]) next.insert(bonds[4*i+j]);
+        }
+      }
+    }
+    if (next.empty()) break;
+    for(it=next.begin(); it!=next.end(); ++it) {
+      visited[*it] = true;
+    }
+    current = next;
+    next.clear();
+  } while(true);
+
+  for(i=0; i<n; ++i) {
+    if (!visited[i]) return false;
+  }
+
+  return true;
 }
 
 void ring_perception(const std::vector<int>& rbonds,std::vector<int>& rings)

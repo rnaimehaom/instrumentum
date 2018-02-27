@@ -1,5 +1,7 @@
 #include "molecular_assembler.h"
 
+Random RND;
+
 Molecular_Assembler::Molecular_Assembler()
 {
   set_default_values();
@@ -214,7 +216,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
 #endif
 
   // Check if the database exists, if not the tables need to be created!
-  if (!file_exists(database)) create_database();
+  if (!boost::filesystem::exists(database)) create_database();
 
   sqlite3* dbase;
   sqlite3_open(database.c_str(),&dbase);
@@ -428,7 +430,7 @@ void Molecular_Assembler::run() const
   s *= (1 + omp_get_thread_num());
 #endif
 
-  initialize_generator(s);
+  RND.initialize_generator(s);
 
   while(mol_created < n_mols) {
 #if VERBOSE

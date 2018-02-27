@@ -1,4 +1,5 @@
 #include "global.h"
+#include "random.h"
 
 #ifndef _moleculeh
 #define _moleculeh

@@ -1,5 +1,7 @@
 #include "molecule.h"
 
+extern Random RND;
+
 Molecule::Molecule()
 {
   nrings = 0;
@@ -503,7 +505,7 @@ bool Molecule::add_nitrogen()
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
-  shuffle(indices);
+  RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
@@ -622,7 +624,7 @@ bool Molecule::add_nitrogen()
               }
             }
             if (cand < 1) continue;
-            alpha = irandom(cand);
+            alpha = RND.irandom(cand);
             atom_type[temp1] = 7;
             to_die[0] = candidate[alpha];
             to_die[1] = candidate_hneighbours[alpha][0];
@@ -697,7 +699,7 @@ bool Molecule::add_sulfur()
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
-  shuffle(indices);
+  RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
@@ -766,7 +768,7 @@ bool Molecule::add_oxygen()
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
-  shuffle(indices);
+  RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 6) {
@@ -1076,7 +1078,7 @@ bool Molecule::fungrp()
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
-  shuffle(indices);
+  RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
     if (atom_type[temp1] == 1) {
@@ -1084,7 +1086,7 @@ bool Molecule::fungrp()
       temp2 = bonds[4*temp1];
       if (atom_type[temp2] == 6) {
         // Do the conversion...
-        alpha = irandom(3);
+        alpha = RND.irandom(3);
         if (alpha == 0) {
           atom_type[temp1] = 9;
         }
@@ -1134,7 +1136,7 @@ bool Molecule::create_dbond()
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
   }
-  shuffle(indices);
+  RND.shuffle(indices);
   // First we enumerate all of the carbon-carbon sp3 bonds
   // in the molecule
   for(i=0; i<natoms; ++i) {
@@ -1254,7 +1256,7 @@ bool Molecule::create_dbond()
           C = p[0][0]*(p[1][1]-p[2][1])-p[0][1]*(p[1][0]-p[2][0])+(p[1][0]*p[2][1]-p[2][0]*p[1][1]);
           D = -1.0*(p[0][0]*(p[1][1]*p[2][2]-p[2][1]*p[1][2])-p[0][1]*(p[1][0]*p[2][2]-p[2][0]*p[1][2])+p[0][2]*(p[1][0]*p[2][1]-p[2][0]*p[1][1]));
           delta = (A*p[3][0]+B*p[3][1]+C*p[3][2]+D)/std::sqrt(A*A+B*B+C*C);
-          if (std::abs(delta) < epsilon) {
+          if (std::abs(delta) < 0.001) {
             // We'll delete h1[j] and h2[k] to create the double bond
             for(l=0; l<4; ++l) {
               if (bonds[4*candidate[i+1]+l] == candidate[i]) in1 = l;
@@ -1354,15 +1356,15 @@ bool Molecule::create_penta1()
         }
         if (cand < 2) continue;
         // Choose two at random, and do the necessary changes
-        alpha1 = irandom(cand);
+        alpha1 = RND.irandom(cand);
         do {
-          alpha2 = irandom(cand);
+          alpha2 = RND.irandom(cand);
           if (alpha2 != alpha1) break;
         } while(true);
         to_die[0] = candidate_hneighbours[alpha1][0];
         to_die[1] = candidates[alpha2];
         to_die[2] = candidate_hneighbours[alpha2][0];
-        alpha = irandom(2);
+        alpha = RND.irandom(2);
         if (alpha == 0) {
           atom_type[candidates[alpha1]] = 8;
         }
@@ -1424,7 +1426,7 @@ bool Molecule::create_penta1()
         }
         if (cand < 1) continue;
         // Choose two at random, and do the necessary changes
-        alpha1 = irandom(cand);
+        alpha1 = RND.irandom(cand);
         to_die[0] = candidate_hneighbours[alpha1][0];
         to_die[1] = candidates[alpha1];
         // Let's compute the ring centre
@@ -1514,8 +1516,8 @@ bool Molecule::create_penta1()
 #endif
         if (cand < 1) continue;
         // Choose two at random, and do the necessary changes
-        alpha1 = irandom(cand);
-        alpha2 = irandom(2);
+        alpha1 = RND.irandom(cand);
+        alpha2 = RND.irandom(2);
         to_die[0] = candidate_hneighbours[alpha1][0];
         to_die[1] = candidates[alpha1];
 
@@ -1583,7 +1585,7 @@ bool Molecule::create_penta1()
       }
       if (cand < 1) continue;
       // Choose two at random, and do the necessary changes
-      alpha1 = irandom(cand);
+      alpha1 = RND.irandom(cand);
       to_die[0] = candidate_hneighbours[alpha1][0];
       to_die[1] = candidates[alpha1];
       to_die[2] = candidate_hneighbours[alpha1][1];
@@ -1662,7 +1664,7 @@ bool Molecule::create_amide()
         // and what was a carbon-carbon double bond becomes a nitrogen-carbon single bond.
         // So, first find out who has a hydrogen
         if ((h1 + h2) == 1) {
-          alpha = irandom(2);
+          alpha = RND.irandom(2);
           if (alpha == 0) {
             if (h1 > 0) {
               atom_type[a] = 7;
@@ -1716,7 +1718,7 @@ bool Molecule::create_amide()
           }
         }
         else if ((h1 + h2) == 2) {
-          alpha = irandom(3);
+          alpha = RND.irandom(3);
           if (alpha == 0) {
             atom_type[a] = 7;
             atom_type[hydro1[0]] = 16;
@@ -1995,7 +1997,7 @@ bool Molecule::decorate(const bool* ornaments)
   aromatize(axial);
   // Now, go create some double bonds...
   if (create_double) {
-    ndouble = irandom(4);
+    ndouble = RND.irandom(4);
     for(i=0; i<ndouble; ++i) {
       test = create_dbond();
 #ifdef VERBOSE
@@ -2006,10 +2008,10 @@ bool Molecule::decorate(const bool* ornaments)
  
   // Next step here involves creating an "op string" of a random sequence of the
   // following: T, O, S, N, P, F, A.
-  nops = 3 + irandom(6);
+  nops = 3 + RND.irandom(6);
   opstring.clear();
   do {
-    alpha = irandom(7);
+    alpha = RND.irandom(7);
     if (create_triple == false && alpha == 4) continue;
     if (create_exotic == false && alpha == 6) continue;
     if (subs_fun == false && alpha == 5) continue;
