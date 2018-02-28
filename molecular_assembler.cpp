@@ -52,8 +52,8 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   // of which is passed in as an argument to the method
   // The file format should be '#' for a comment, otherwise 
   // varname = value
-  unsigned int i,n,bpoint;
   std::string line,name,value,parameter_string;
+  std::vector<std::string> ppair;
 
   set_default_values();
 
@@ -61,7 +61,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   std::ifstream s(filename,std::ios_base::in);
   if (!s.is_open()) {
     // File doesn't exist, print an error message and die
-    std::cout << "The file " << filename << " cannot be found!" << std::endl;
+    std::cout << "The file " << filename << " cannot be opened!" << std::endl;
     std::exit(1);
   }
   // Loop through all lines in the parameter file
@@ -72,83 +72,73 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
     if (line[0] == '#') continue;
     // If there's no equals sign in this line, continue
     if (line.find('=') == std::string::npos) continue;
-    n = line.size();
-    name = "";
-    for(i=0; i<n; ++i) {
-      if (line[i] == ' ') continue;
-      if (line[i] == '=') {
-        bpoint = i;
-        break;
-      }
-      name += line[i];
-    }
-    value = "";
-    for(i=bpoint+1; i<n; ++i) {
-      if (line[i] == ' ') continue;
-      value += line[i];
-    }
+    boost::split(ppair,line,boost::is_any_of("="));
+    name = ppair[0];
+    value = ppair[1];
+    boost::algorithm::trim(name);
+    boost::algorithm::trim(value);
     // Now that we have the parameter name, see if it matches
     // any of the known parameters. If so, read in the value and
     // assign it
     if (name == "PharmacophoreRadius") {
-      pharmacophore_radius = stod(value);
+      pharmacophore_radius = boost::lexical_cast<double>(value);
     }
     else if (name == "InitialPercentage") {
-      percent = stod(value);
+      percent = boost::lexical_cast<double>(value);
     }
     else if (name == "PercentMethyl") {
-      percent_methyl = stod(value);
+      percent_methyl = boost::lexical_cast<double>(value);
     }
     else if (name == "BondLength") {
-      bond_length = stod(value);
+      bond_length = boost::lexical_cast<double>(value);
     }
     else if (name == "DatabaseFile") {
       database = value;
     }
     else if (name == "RandomSeed") {
-      seed = stol(value);
+      seed = boost::lexical_cast<long>(value);
     }
     else if (name == "MaximumAttempts") {
-      max_attempts = stoi(value);
+      max_attempts = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberRings") {
-      nrings = stoi(value);
+      nrings = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberC4Atoms") {
-      nc4 = stoi(value);
+      nc4 = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberC4Rings") {
-      nc4rings = stoi(value);
+      nc4rings = boost::lexical_cast<int>(value);
     }
     else if (name == "MinimumRings") { 
-      min_rings = stoi(value);
+      min_rings = boost::lexical_cast<int>(value);
     }
     else if (name == "MaximumRings") {
-      max_rings = stoi(value);
+      max_rings = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberInitial") { 
-      n_initial = stoi(value);
+      n_initial = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberSecondary") {
-      n_secondary = stoi(value);
+      n_secondary = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberPath") {
-      n_path = stoi(value);
+      n_path = boost::lexical_cast<int>(value);
     }
     else if (name == "MaximumSecondary") {
-      max_secondary = stoi(value);
+      max_secondary = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberRationalize") {
-      n_rationalize = stoi(value);
+      n_rationalize = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberDesaturate") {
-      n_desaturate = stoi(value);
+      n_desaturate = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberMolecules") {
-      n_mols = stoi(value);
+      n_mols = boost::lexical_cast<int>(value);
     }
     else if (name == "NumberPharmacophores") {
-      npharmacophore = stoi(value);
+      npharmacophore = boost::lexical_cast<int>(value);
     }
     else if (name == "CreateFiveMemberRings") {
       capitalize(value);

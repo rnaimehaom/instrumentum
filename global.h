@@ -13,6 +13,8 @@
 // To handle the database interactions
 #include <sqlite3.h>
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #ifdef _OPENMP
 #include <omp.h>
