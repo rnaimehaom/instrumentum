@@ -1,64 +1,8 @@
 #include "global.h"
 
-void element(int atomic_number,char* element)
-{
-  switch(atomic_number) {
-  case 0:
-    element[0] = '\0';
-    break;
-  case 1:
-    element[0] = 'H';
-    element[1] = '\0';
-    return;
-  case 6:
-    element[0] = 'C';
-    element[1] = '\0';
-    return;
-  case 7:
-    element[0] = 'N';
-    element[1] = '\0';
-    return;
-  case 8:
-    element[0] = 'O';
-    element[1] = '\0';
-    return;
-  case 9:
-    element[0] = 'F';
-    element[1] = '\0';
-    return;
-  case 15:
-    element[0] = 'P';
-    element[1] = '\0';
-    return;
-  case 16:
-    element[0] = 'S';
-    element[1] = '\0';
-    return;
-  case 17:
-    element[0] = 'C';
-    element[1] = 'l';
-    element[2] = '\0';
-    return;
-  case 35:
-    element[0] = 'B';
-    element[1] = 'r';
-    element[2] = '\0';
-    return;
-  case 47:
-    element[0] = 'A';
-    element[1] = 'r';
-    element[2] = '\0';
-    return;
-  case 53:
-    element[0] = 'I';
-    element[1] = '\0';
-    return;
-  }
-}
-
 bool connected(const std::vector<int>& bonds)
 {
-  int i,j;
+  int i,j,k,spoint = 0,mcount = -1;
   std::set<int> current,next;
   std::set<int>::const_iterator it;
   const int n = bonds.size()/4;
@@ -66,18 +10,22 @@ bool connected(const std::vector<int>& bonds)
 
   for(i=0; i<n; ++i) {
     visited[i] = false;
+    k = 0;
+    for(j=0; j<4; ++j) {
+      if (bonds[4*i+j] >= 0) k++;
+    }
+    if (k > mcount) spoint = i;
   }
-  visited[0] = true;
-  current.insert(0);
+  visited[spoint] = true;
+  current.insert(spoint);
 
   do {
     for(it=current.begin(); it!=current.end(); ++it) {
       i = *it;
-      if (visited[i]) {
-        for(j=0; j<4; ++j) {
-          if (bonds[4*i+j] < 0) continue;
-          if (!visited[bonds[4*i+j]]) next.insert(bonds[4*i+j]);
-        }
+      for(j=0; j<4; ++j) {
+        k = bonds[4*i+j];
+        if (k < 0) continue;
+        if (!visited[k]) next.insert(k);
       }
     }
     if (next.empty()) break;

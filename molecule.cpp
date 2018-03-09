@@ -14,6 +14,18 @@ Molecule::Molecule()
   ops[4] = 'T';
   ops[5] = 'F';
   ops[6] = 'A';
+  // Element names...
+  element_name[1] =   "H";
+  element_name[6] =   "C";
+  element_name[7] =   "N";
+  element_name[8] =   "O";
+  element_name[9] =   "F";
+  element_name[15] =  "P";
+  element_name[16] =  "S";
+  element_name[17] = "Cl";
+  element_name[35] = "Br";
+  element_name[47] = "Ag";
+  element_name[53] =  "I";
 }
 
 Molecule::Molecule(const Molecule& source)
@@ -26,12 +38,12 @@ Molecule::Molecule(const Molecule& source)
   rbonds = source.rbonds;
   rings = source.rings;
   coords = source.coords;
+  element_name = source.element_name;
   opstring = source.opstring;
   if (source.p_allocated > 0) {
-    int i;
     p_allocated = source.p_allocated;
     pieces = new std::vector<int>[p_allocated];
-    for(i=0; i<p_allocated; ++i) {
+    for(int i=0; i<p_allocated; ++i) {
       pieces[i] = source.pieces[i];
     }
   }
@@ -60,12 +72,12 @@ Molecule& Molecule::operator =(const Molecule& source)
   rbonds = source.rbonds;
   rings = source.rings;
   coords = source.coords;
+  element_name = source.element_name;
   opstring = source.opstring;
   if (source.p_allocated > 0) {
-    int i;
     p_allocated = source.p_allocated;
     pieces = new std::vector<int>[p_allocated];
-    for(i=0; i<p_allocated; ++i) {
+    for(int i=0; i<p_allocated; ++i) {
       pieces[i] = source.pieces[i];
     }
     ops[0] = 'P';
@@ -2833,9 +2845,10 @@ bool Molecule::normalize_aromatic_bonds()
 std::string Molecule::to_MDLMol() const
 {
   int i,j,bnumber = 0;
-  char atom[3];
+  unsigned long seconds = std::time(NULL);
+  std::string atom;
   std::ostringstream s;
-  time_t seconds = std::time(NULL);
+  std::map<int,std::string>::const_iterator it;
 
 #ifdef DEBUG
   assert(consistent());
@@ -2844,9 +2857,6 @@ std::string Molecule::to_MDLMol() const
   s << "mol_" << opstring << "_" << seconds << std::endl;
   s << "  MOE2000" << std::endl;
   s << std::endl;
-  atom[0] = '\0';
-  atom[1] = '\0';
-  atom[2] = '\0';
   for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
       if (bonds[4*i+j] > (signed) i) bnumber++;
@@ -2854,7 +2864,11 @@ std::string Molecule::to_MDLMol() const
   }
   s << std::setw(3) << natoms << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
   for(i=0; i<natoms; ++i) {
-    element(atom_type[i],atom);
+    it = element_name.find(atom_type[i]);
+#ifdef DEBUG
+    assert(it != element_name.end());
+#endif
+    atom = it->second; 
     s << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+1] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+2] << " " << std::setw(3) << std::setiosflags(std::ios::left) << atom << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;
   }
   for(i=0; i<natoms; ++i) {

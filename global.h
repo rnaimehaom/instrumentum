@@ -22,14 +22,8 @@
 
 #ifndef _globalh
 #define _globalh
-void element(int,char*);
 bool connected(const std::vector<int>&);
 void ring_perception(const std::vector<int>&,std::vector<int>&);
-
-inline void capitalize(std::string& s)
-{
-  std::transform(s.begin(),s.end(),s.begin(),::toupper);
-}
 
 inline int get_index(int x,const std::vector<int>& v)
 {

@@ -141,43 +141,43 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
       npharmacophore = boost::lexical_cast<int>(value);
     }
     else if (name == "CreateFiveMemberRings") {
-      capitalize(value);
+      boost::to_upper(value);
       create_penta = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteFunctionalGroups") {
-      capitalize(value);
+      boost::to_upper(value);
       subs_functional = (value == "YES") ? true : false;
     }
     else if (name == "CreateDoubleBonds") { 
-      capitalize(value);
+      boost::to_upper(value);
       create_double = (value == "YES") ? true : false;
     }
     else if (name == "CreateTripleBonds") {
-      capitalize(value);
+      boost::to_upper(value);
       create_triple = (value == "YES") ? true : false;
     }
     else if (name == "CreateExotic") {
-      capitalize(value);
+      boost::to_upper(value);
       create_exotic = (value == "YES") ? true : false;
     }
     else if (name == "PharmacophoreHardening") {
-      capitalize(value);
+      boost::to_upper(value);
       pharm_hardening = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteOxygen") {
-      capitalize(value);
+      boost::to_upper(value);
       subs_oxygen = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteNitrogen") {
-      capitalize(value);
+      boost::to_upper(value);
       subs_nitrogen = (value == "YES") ? true : false;
     }
     else if (name == "SubstituteSulfur") {
-      capitalize(value);
+      boost::to_upper(value);
       subs_sulfur = (value == "YES") ? true : false;
     }
     else if (name == "StripAxialMethyls") {
-      capitalize(value);
+      boost::to_upper(value);
       kill_axial = (value == "YES") ? true : false;
     }
   }

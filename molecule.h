@@ -19,6 +19,7 @@ class Molecule {
   std::vector<int>* pieces;
   std::vector<int> rings;
   std::vector<double> coords;
+  std::map<int,std::string> element_name;
 
   bool consistent() const;
   bool valence_check() const;
