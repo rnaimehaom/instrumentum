@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ctime>
 #include <set>
+#include <map>
 #include <cassert>
 #include <vector>
 #include <string>
