@@ -199,7 +199,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
 
-  if (seed == 0) seed = (unsigned long) std::time(NULL);
+  if (seed == 0) seed = (unsigned long) std::time(nullptr);
 
 #ifdef _OPENMP
   nthread = atoi(std::getenv("OMP_NUM_THREADS"));
@@ -243,7 +243,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   query += "nthread,";
   query += "timestamp) ";
   query +=  "VALUES " + parameter_string + ";";
-  sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL);
+  sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr);
   // We need to get the value of the parameter_id from this INSERT statement!
   parameter_id = int(sqlite3_last_insert_rowid(dbase));
   sqlite3_close(dbase);
@@ -293,7 +293,7 @@ void Molecular_Assembler::create_database() const
   query += "nthread INTEGER,";
   query += "timestamp DATETIME,";
   query += "parameter_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL);";
-  sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL);
+  sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr);
 
   query = "CREATE TABLE Compound(";
   query += "raw_structure TEXT,";
@@ -304,7 +304,7 @@ void Molecular_Assembler::create_database() const
   query += "parameter_id INTEGER,";
   query += "compound_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,";
   query += "FOREIGN KEY(parameter_id) REFERENCES Parameter_Set(parameter_id));";
-  sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL);
+  sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr);
 
   sqlite3_close(dbase);
 }
@@ -519,5 +519,5 @@ void Molecular_Assembler::database_insertion(const std::string& opstring,const s
   std::stringstream sstream;
   sstream << parameter_id;
   query += sstream.str() + ",\'" + opstring + "\',\'" + molecule + "\');";
-  sqlite3_exec(dbase,query.c_str(),NULL,NULL,NULL); 
+  sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr); 
 }
