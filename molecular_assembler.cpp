@@ -2,50 +2,6 @@
 
 Random RND;
 
-Molecular_Assembler::Molecular_Assembler()
-{
-  set_default_values();
-}
-
-void Molecular_Assembler::set_default_values()
-{
-  percent = 0.5;
-  percent_methyl = 0.4;
-  bond_length = 1.52;
-  pharmacophore_radius = 3.5;
-
-  max_attempts = 100;
-  max_secondary = 100;
-  npharmacophore = 3;
-  nc4 = 2;
-  nc4rings = 0;
-  nrings = 4;
-  min_rings = 1;
-  max_rings = 6;
-  n_initial = 3;
-  n_secondary = 3;
-  n_path = 3;
-  n_rationalize = 3;
-  n_desaturate = 1;
-  n_mols = 50000;
-
-  pharm_hardening = true;
-  subs_oxygen = true;
-  subs_nitrogen = true;
-  subs_sulfur = false;
-  subs_functional = false;
-  create_double = true;
-  create_triple = false;
-  create_penta = true;
-  create_exotic = false;
-  kill_axial = true;
-
-  database = "";
-  parameter_id = 0;
-  seed = 0;
-  nthread = 1;
-}
-
 Molecular_Assembler::Molecular_Assembler(const char* filename)
 {
   // This method reads in the parameters from a file, the name 
@@ -54,8 +10,6 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   // varname = value
   std::string line,name,value,parameter_string;
   std::vector<std::string> ppair;
-
-  set_default_values();
 
   // Open the file
   std::ifstream s(filename,std::ios_base::in);
@@ -247,11 +201,6 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   // We need to get the value of the parameter_id from this INSERT statement!
   parameter_id = int(sqlite3_last_insert_rowid(dbase));
   sqlite3_close(dbase);
-}
-
-Molecular_Assembler::~Molecular_Assembler()
-{
-
 }
 
 void Molecular_Assembler::create_database() const

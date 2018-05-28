@@ -12,21 +12,24 @@ typedef struct {
 
 class Grid {
  private:
-  int D1,D2,D3;
-  int rs1,rs2,rs3;
-  Node* nodes;
+  int D1 = 17;
+  int D2 = 17;
+  int D3 = 9;
+  unsigned int total = 23275;
+  int rs1 = 0;
+  int rs2 = 0;
+  int rs3 = 0;
+  double bond_length = 1.4;
   std::vector<int> ring_info;
-  unsigned int total;
-  std::vector<State> backup[4];
   std::vector<int> pnodes;
-  double bond_length;
+  std::vector<State> backup[4];
+  Node* nodes;
 
   inline int index1(int,int,int) const;
   inline double distance(int,int) const;
   void next_door(int,int,int,int,const double*);
   void initialize();
   void allocate(unsigned int);
-  void set_default_values();
   void clear();
   void add_hydrogens();
   bool initial_deletion(double,unsigned int);

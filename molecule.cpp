@@ -2,34 +2,19 @@
 
 extern Random RND;
 
+extern std::map<int,std::string> element_table;
+
 Molecule::Molecule()
 {
-  nrings = 0;
-  natoms = 0;
-  p_allocated = 0;
-  ops[0] = 'P';
-  ops[1] = 'N';
-  ops[2] = 'S';
-  ops[3] = 'O';
-  ops[4] = 'T';
-  ops[5] = 'F';
-  ops[6] = 'A';
-  // Element names...
-  element_name[1] =   "H";
-  element_name[6] =   "C";
-  element_name[7] =   "N";
-  element_name[8] =   "O";
-  element_name[9] =   "F";
-  element_name[15] =  "P";
-  element_name[16] =  "S";
-  element_name[17] = "Cl";
-  element_name[35] = "Br";
-  element_name[47] = "Ag";
-  element_name[53] =  "I";
+
 }
 
 Molecule::Molecule(const Molecule& source)
 {
+  if (p_allocated > 0) {
+    delete[] pieces;
+    p_allocated = 0;
+  }
   natoms = source.natoms;
   atom_type = source.atom_type;
   locale = source.locale;
@@ -38,7 +23,6 @@ Molecule::Molecule(const Molecule& source)
   rbonds = source.rbonds;
   rings = source.rings;
   coords = source.coords;
-  element_name = source.element_name;
   opstring = source.opstring;
   if (source.p_allocated > 0) {
     p_allocated = source.p_allocated;
@@ -47,13 +31,6 @@ Molecule::Molecule(const Molecule& source)
       pieces[i] = source.pieces[i];
     }
   }
-  ops[0] = 'P';
-  ops[1] = 'N';
-  ops[2] = 'S';
-  ops[3] = 'O';
-  ops[4] = 'T';
-  ops[5] = 'F';
-  ops[6] = 'A';
 }
 
 Molecule::~Molecule()
@@ -64,6 +41,11 @@ Molecule::~Molecule()
 Molecule& Molecule::operator =(const Molecule& source)
 {
   if (this == &source) return *this;
+
+  if (p_allocated > 0) {
+    delete[] pieces;
+    p_allocated = 0;
+  }
   natoms = source.natoms;
   atom_type = source.atom_type;
   locale = source.locale;
@@ -72,7 +54,6 @@ Molecule& Molecule::operator =(const Molecule& source)
   rbonds = source.rbonds;
   rings = source.rings;
   coords = source.coords;
-  element_name = source.element_name;
   opstring = source.opstring;
   if (source.p_allocated > 0) {
     p_allocated = source.p_allocated;
@@ -80,14 +61,8 @@ Molecule& Molecule::operator =(const Molecule& source)
     for(int i=0; i<p_allocated; ++i) {
       pieces[i] = source.pieces[i];
     }
-    ops[0] = 'P';
-    ops[1] = 'N';
-    ops[2] = 'S';
-    ops[3] = 'O';
-    ops[4] = 'T';
-    ops[5] = 'F';
-    ops[6] = 'A';
   }
+
   return *this;
 }
 
@@ -2567,16 +2542,16 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
 void Molecule::connected_components(int vertices)
 {
   std::vector<int> visited;
-  int i,j,nzero,kount = 1;
-  bool first = true;;
+  int i,j,nzero,nc = 1;
+  bool first = true;
 
   for(i=0; i<vertices; ++i) {
     visited.push_back(0);
   }
   nzero = 0;
   do {
-    visited[nzero] = kount;
-    propagate(visited,kount);
+    visited[nzero] = nc;
+    propagate(visited,nc);
     first = true;
     for(j=0; j<vertices; ++j) {
       if (visited[j] == 0 && first) {
@@ -2588,17 +2563,17 @@ void Molecule::connected_components(int vertices)
       break;
     }
     else {
-      kount++;
+      nc++;
     }
   } while(true);
-  pieces = new std::vector<int>[kount];
+  pieces = new std::vector<int>[nc];
   for(i=0; i<vertices; ++i) {
     pieces[visited[i]-1].push_back(i);
   }
-  p_allocated = kount;
+  p_allocated = nc;
 }
 
-void Molecule::propagate(std::vector<int>& visited,int kount) const
+void Molecule::propagate(std::vector<int>& visited,int nc) const
 {
   unsigned int i,j;
   std::vector<unsigned int> convert;
@@ -2609,7 +2584,7 @@ void Molecule::propagate(std::vector<int>& visited,int kount) const
       if (visited[i] == 0) {
         for(j=0; j<4; ++j) {
           if (rbonds[4*i+j] < 0) continue;
-          if (visited[rbonds[4*i+j]] == kount) {
+          if (visited[rbonds[4*i+j]] == nc) {
             convert.push_back(i);
             break;
           }
@@ -2617,7 +2592,7 @@ void Molecule::propagate(std::vector<int>& visited,int kount) const
       }
     }
     for(i=0; i<convert.size(); ++i) {
-      visited[convert[i]] = kount;
+      visited[convert[i]] = nc;
     }
     if (convert.empty()) break;
   } while(true);
@@ -2864,9 +2839,9 @@ std::string Molecule::to_MDLMol() const
   }
   s << std::setw(3) << natoms << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
   for(i=0; i<natoms; ++i) {
-    it = element_name.find(atom_type[i]);
+    it = element_table.find(atom_type[i]);
 #ifdef DEBUG
-    assert(it != element_name.end());
+    assert(it != element_table.end());
 #endif
     atom = it->second; 
     s << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+1] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+2] << " " << std::setw(3) << std::setiosflags(std::ios::left) << atom << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;

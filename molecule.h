@@ -6,20 +6,19 @@
 
 class Molecule {
  private:
-  int natoms;
-  int nrings;
-  int p_allocated;
-  char ops[7];
+  int natoms = 0;
+  int nrings = 0;
+  int p_allocated = 0;
+  char ops[7] = {'P','N','S','O','T','F','A'};
   std::string opstring;
   std::vector<int> atom_type;
   std::vector<int> locale;
   std::vector<int> bonds;
   std::vector<int> btype;
   std::vector<int> rbonds;
-  std::vector<int>* pieces;
   std::vector<int> rings;
   std::vector<double> coords;
-  std::map<int,std::string> element_name;
+  std::vector<int>* pieces;
 
   bool consistent() const;
   bool valence_check() const;

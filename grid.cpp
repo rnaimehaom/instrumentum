@@ -182,16 +182,12 @@ Grid::~Grid()
 
 Grid::Grid(unsigned int np)
 {
-  set_default_values();
-
   allocate(np);
   initialize();
 }
 
 Grid::Grid(double blength,unsigned int np)
 {
-  set_default_values();
-
   bond_length = blength;
 
   allocate(np);
@@ -200,8 +196,6 @@ Grid::Grid(double blength,unsigned int np)
 
 Grid::Grid(int i,int j,int k,unsigned int np)
 {
-  set_default_values();
-
   D1 = i;
   D2 = j;
   D3 = k;
@@ -212,8 +206,6 @@ Grid::Grid(int i,int j,int k,unsigned int np)
 
 Grid::Grid(int i,int j,int k,double blength,unsigned int np)
 {
-  set_default_values();
-
   D1 = i;
   D2 = j;
   D3 = k;
@@ -221,17 +213,6 @@ Grid::Grid(int i,int j,int k,double blength,unsigned int np)
 
   allocate(np);
   initialize();
-}
-
-void Grid::set_default_values()
-{
-  D1 = 17;
-  D2 = 17;
-  D3 = 9;
-  rs1 = 0;
-  rs2 = 0;
-  rs3 = 0;
-  bond_length = 1.4;
 }
 
 void Grid::allocate(unsigned int np)
