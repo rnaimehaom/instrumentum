@@ -11,7 +11,7 @@ LIBS = $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lsqlite3 -lm
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
 
-instrumentum.o: main.cpp instrumentum.h molecular_assembler.h
+instrumentum.o: instrumentum.cpp instrumentum.h molecular_assembler.h
 	$(CXX) $(CXX_FLAGS) -c instrumentum.cpp
 
 grid.o: grid.cpp grid.h node.h instrumentum.h
