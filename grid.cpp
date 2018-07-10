@@ -180,13 +180,13 @@ Grid::~Grid()
   delete[] nodes;
 }
 
-Grid::Grid(unsigned int np)
+Grid::Grid(int np)
 {
   allocate(np);
   initialize();
 }
 
-Grid::Grid(double blength,unsigned int np)
+Grid::Grid(double blength,int np)
 {
   bond_length = blength;
 
@@ -194,7 +194,7 @@ Grid::Grid(double blength,unsigned int np)
   initialize();
 }
 
-Grid::Grid(int i,int j,int k,unsigned int np)
+Grid::Grid(int i,int j,int k,int np)
 {
   D1 = i;
   D2 = j;
@@ -204,7 +204,7 @@ Grid::Grid(int i,int j,int k,unsigned int np)
   initialize();
 }
 
-Grid::Grid(int i,int j,int k,double blength,unsigned int np)
+Grid::Grid(int i,int j,int k,double blength,int np)
 {
   D1 = i;
   D2 = j;
@@ -215,13 +215,13 @@ Grid::Grid(int i,int j,int k,double blength,unsigned int np)
   initialize();
 }
 
-void Grid::allocate(unsigned int np)
+void Grid::allocate(int np)
 {
   unsigned int i;
   for(i=0; i<np; ++i) {
-    pnodes.push_back(-1);
+    pharma_nodes.push_back(-1);
   }
-  total = (unsigned) (2*D3+1)*(2*D2+1)*(2*D1+1);
+  total = (2*D3+1)*(2*D2+1)*(2*D1+1);
   nodes = new Node[total];
 }
 
@@ -497,12 +497,12 @@ void Grid::blank_pharmacophore(double radius)
   // Now choose two or three of these frontier nodes to be
   // "must have" nodes, to aid in constructing connected
   // molecules
-  while(kount < pnodes.size()) {
+  while(kount < pharma_nodes.size()) {
     test = RND.irandom(frontier_nodes.size());
     bad = false;
     for(m=0; m<kount; ++m) {
-      for(l=0; l<nodes[pnodes[m]].neighbours.size(); ++l) {
-        in2 = nodes[pnodes[m]].neighbours[l];
+      for(l=0; l<nodes[pharma_nodes[m]].neighbours.size(); ++l) {
+        in2 = nodes[pharma_nodes[m]].neighbours[l];
         if (in2 == frontier_nodes[test]) {
           bad = true;
           break;
@@ -511,7 +511,7 @@ void Grid::blank_pharmacophore(double radius)
       if (bad) break;
     }
     if (!bad) {
-      pnodes[kount] =  frontier_nodes[test];
+      pharma_nodes[kount] =  frontier_nodes[test];
       nodes[frontier_nodes[test]].locale = 5;
       kount++;
     }
@@ -580,7 +580,7 @@ bool Grid::connect_pharmacophores()
   }
 
   // Now choose one of the pharmacophoric nodes to begin the process...
-  nodes[pnodes[0]].visited = 1;
+  nodes[pharma_nodes[0]].visited = 1;
   do {
     convert.clear();
     for(i=-rs1; i<=rs1; ++i) {
@@ -605,10 +605,10 @@ bool Grid::connect_pharmacophores()
       nodes[convert[l]].visited = 1;
     }
   } while(true);
-  // Last step is to see if all of the pnodes have visited set equal to one,
+  // Last step is to see if all of the pharma_nodes have visited set equal to one,
   // and if so, to set any unvisited carbons to also be silver
-  for(l=0; l<pnodes.size(); ++l) {
-    if (nodes[pnodes[l]].visited != 1) return false;
+  for(l=0; l<pharma_nodes.size(); ++l) {
+    if (nodes[pharma_nodes[l]].visited != 1) return false;
   }
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -621,16 +621,17 @@ bool Grid::connect_pharmacophores()
   return true;
 }
 
-bool Grid::initial_deletion(double percent,unsigned int max_attempts)
+bool Grid::initial_deletion(double percent,int max_attempts)
 {
   // This function will make a series of random deletions in the
   // initial volume of carbon atoms, checking to preserve the
   // connectivity at each stage, until either "percent" percentage
   // of the original number of heavy atoms remain, or the number
   // "max_attempts" of deletions has been exhausted
-  int i,j,k,alpha1,alpha2,alpha3,target,in1;
-  unsigned int nheavy,kount,nkill,iterations = 0;
+  int i,j,k,alpha1,alpha2,alpha3,target,in1,nheavy,kount,nkill,iterations = 0;
   double r2,radius,delta,n_debut;
+
+  assert(max_attempts > 0);
 
   nheavy = 0;
   for(i=-rs1; i<=rs1; ++i) {
@@ -713,17 +714,20 @@ bool Grid::initial_deletion(double percent,unsigned int max_attempts)
     }
     iterations++;
   } while(iterations < max_attempts);
+
   return false;
 }
 
-bool Grid::rationalize(double percent_methyl,unsigned int rings_min,unsigned int rings_max)
+bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
 {
   // This function eliminates flagpole interactions among
   // hydrogen atoms by forcing any node which is a neighbour
   // of two or more carbon atoms to become carbon as well
-  int i,j,k,in1,in2;
-  unsigned int alpha,nrings,l,ncarbon,nkill,kount = 0;
+  int i,j,k,in1,in2,alpha,nrings,ncarbon,nkill,kount = 0;
+  unsigned int l;
   std::vector<int> methyl,convert;
+
+  assert(rings_min >= 0 && rings_max >= 0);
 
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -741,7 +745,7 @@ bool Grid::rationalize(double percent_methyl,unsigned int rings_min,unsigned int
       }
     }
   }
-  nkill = (unsigned) int(percent_methyl*double(methyl.size()));
+  nkill = int(percent_methyl*double(methyl.size()));
 
   if (nkill > 0) {
     do {
@@ -837,20 +841,19 @@ void Grid::add_hydrogens()
   }
 }
 
-unsigned int Grid::ring_count()
+int Grid::ring_count()
 {
-  unsigned int nring = ring_analysis();
-  return nring;
+  return ring_analysis();
 }
 
-unsigned int Grid::ring_analysis()
+int Grid::ring_analysis()
 {
   // The first item of business in this routine is to find all
   // of the edges (and so vertices) that are involved in rings.
   // We will do this by removing a bond from the molecule, and
   // seeing if it remains connected.
-  int i,j,k,in1,in2;
-  unsigned int l,nbonds;
+  int i,j,k,in1,in2,nbonds;
+  unsigned int l;
   bool found;
   std::vector<int> vertices,ring_vertices,ring_edges,rings,redges,bonds,wcopy;
 
@@ -974,15 +977,22 @@ unsigned int Grid::ring_analysis()
   for(l=0; l<rings.size(); ++l) {
     ring_info.push_back(vertices[ring_vertices[rings[l]]]);
   }
-  return ring_info.size()/6;
+  int output = (signed) ring_info.size()/6;
+  return output;
 }
 
-bool Grid::secondary_deletion(unsigned int nc4,unsigned int nc4rings,unsigned int nrings,unsigned int attempts)
+bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
 {
-  int i,j,k,alpha1,alpha2,alpha3,target,in1,in2,temp;
-  unsigned int m,l,q,nkill,cring,ring_count,ring_member,ncarbon,silver,nbonds,iterations = 0;
+  int i,j,k,m,q,alpha1,alpha2,alpha3,target,in1,in2,temp,cring,ring_count,ring_member;
+  int nkill,,ncarbon,silver,nbonds,iterations = 0;
+  unsigned int l;
   std::vector<int> vertices,c4;
   double r2,radius,delta;
+
+  assert(nc4 >= 0);
+  assert(nrings >= 0);
+  assert(nc4rings >= 0);
+  assert(attempts > 0);
 
   do {
     alpha1 = -rs1 + RND.irandom(2*rs1);
@@ -1101,7 +1111,7 @@ bool Grid::path_selection(bool random)
   }
 
   if (random) {
-    inode = pnodes[RND.irandom(pnodes.size())];
+    inode = pharma_nodes[RND.irandom(pharma_nodes.size())];
   }
   else {
     for(i=-rs1; i<=rs1; ++i) {
@@ -1154,9 +1164,9 @@ bool Grid::path_selection(bool random)
   } while(true);
 
   winner.reserve(4);
-  for(m=0; m<pnodes.size(); ++m) {
-    if (pnodes[m] == inode) continue;
-    current_pt = pnodes[m];
+  for(m=0; m<pharma_nodes.size(); ++m) {
+    if (pharma_nodes[m] == inode) continue;
+    current_pt = pharma_nodes[m];
     done = false;
     do {
       pcount = nodes[current_pt].path_hop;

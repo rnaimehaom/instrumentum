@@ -2820,7 +2820,7 @@ bool Molecule::normalize_aromatic_bonds()
 std::string Molecule::to_MDLMol() const
 {
   int i,j,bnumber = 0;
-  unsigned long seconds = (unsigned) std::time(nullptr);
+  long seconds = long(std::time(nullptr));
   std::string atom;
   std::ostringstream s;
   std::map<int,std::string>::const_iterator it;

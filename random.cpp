@@ -12,14 +12,16 @@ Random::~Random()
   delete VRG;
 }
 
-void Random::initialize_generator(unsigned long seed)
+void Random::initialize_generator(long seed)
 {
+  assert(seed > 0);
   gen->seed(seed);
 }
 
-unsigned int Random::irandom(unsigned int nmax)
+int Random::irandom(int nmax)
 {
-  unsigned int output = (unsigned) int(double(nmax)*drandom());
+  assert(nmax > 0);
+  int output = int(double(nmax)*drandom());
   return output;
 }
 

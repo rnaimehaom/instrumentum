@@ -13,9 +13,9 @@ class Random {
  public:
   Random();
   ~Random();
-  void initialize_generator(unsigned long);
+  void initialize_generator(long);
   double drandom();
-  unsigned int irandom(unsigned int);
+  int irandom(int);
   void shuffle(std::vector<int>&);
 };
 #endif

@@ -15,13 +15,13 @@ class Grid {
   int D1 = 17;
   int D2 = 17;
   int D3 = 9;
-  unsigned int total = 23275;
+  int total = 23275;
   int rs1 = 0;
   int rs2 = 0;
   int rs3 = 0;
   double bond_length = 1.4;
   std::vector<int> ring_info;
-  std::vector<int> pnodes;
+  std::vector<int> pharma_nodes;
   std::vector<State> backup[4];
   Node* nodes;
 
@@ -29,15 +29,15 @@ class Grid {
   inline double distance(int,int) const;
   void next_door(int,int,int,int,const double*);
   void initialize();
-  void allocate(unsigned int);
+  void allocate(int);
   void clear();
   void add_hydrogens();
-  bool initial_deletion(double,unsigned int);
+  bool initial_deletion(double,int);
   bool path_selection(bool);
-  bool secondary_deletion(unsigned int,unsigned int,unsigned int,unsigned int);
-  bool rationalize(double,unsigned int,unsigned int);
-  unsigned int ring_count();
-  unsigned int ring_analysis();
+  bool secondary_deletion(int,int,int,int);
+  bool rationalize(double,int,int);
+  int ring_count();
+  int ring_analysis();
   void fill_interior();
   void restore(int);
   void save_state(int);
@@ -46,10 +46,10 @@ class Grid {
   bool create_scaffold();
   void write_scaffold(Molecule*) const;
  public:
-  Grid(unsigned int);
-  Grid(double,unsigned int);
-  Grid(int,int,int,unsigned int);
-  Grid(int,int,int,double,unsigned int);
+  Grid(int);
+  Grid(double,int);
+  Grid(int,int,int,int);
+  Grid(int,int,int,double,int);
   ~Grid();
   friend class Molecular_Assembler;
 };

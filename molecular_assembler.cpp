@@ -153,7 +153,7 @@ Molecular_Assembler::Molecular_Assembler(const char* filename)
   assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
 
-  if (seed == 0) seed = (unsigned long) std::time(nullptr);
+  if (seed == 0) seed = long(std::time(nullptr));
 
 #ifdef _OPENMP
   nthread = atoi(std::getenv("OMP_NUM_THREADS"));
@@ -349,7 +349,7 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
 void Molecular_Assembler::run() const
 {
   sqlite3* dbase;
-  unsigned int mol_created = 0;
+  long mol_created = 0;
   bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
 
   sqlite3_open(database.c_str(),&dbase);
@@ -358,8 +358,8 @@ void Molecular_Assembler::run() const
 #pragma omp parallel default(shared) reduction(+:mol_created)
   {
 #endif
-  unsigned int build,i,j,k,l,q;
-  unsigned long s = seed;
+  int build,i,j,k,l,q;
+  long s = seed;
   bool test;
   std::string mstring,ops;
   Grid* g = new Grid(bond_length,npharmacophore);
