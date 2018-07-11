@@ -217,8 +217,7 @@ Grid::Grid(int i,int j,int k,double blength,int np)
 
 void Grid::allocate(int np)
 {
-  unsigned int i;
-  for(i=0; i<np; ++i) {
+  for(int i=0; i<np; ++i) {
     pharma_nodes.push_back(-1);
   }
   total = (2*D3+1)*(2*D2+1)*(2*D1+1);
@@ -983,9 +982,9 @@ int Grid::ring_analysis()
 
 bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
 {
-  int i,j,k,m,q,alpha1,alpha2,alpha3,target,in1,in2,temp,cring,ring_count,ring_member;
-  int nkill,,ncarbon,silver,nbonds,iterations = 0;
-  unsigned int l;
+  int i,j,k,q,alpha1,alpha2,alpha3,target,in1,in2,temp,cring,ring_count,ring_member;
+  int nkill,ncarbon,silver,nbonds,iterations = 0;
+  unsigned int l,m;
   std::vector<int> vertices,c4;
   double r2,radius,delta;
 
@@ -1076,9 +1075,9 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
       for(l=0; l<c4.size(); ++l) {
         temp = c4[l];
         ring_member = 0;
-        for(m=0; m<ring_count; ++m) {
+        for(i=0; i<ring_count; ++i) {
           for(q=0; q<6; ++q) {
-            if (ring_info[6*m+q] == temp) {
+            if (ring_info[6*i+q] == temp) {
               ring_member++;
               break;
             }
@@ -1086,7 +1085,7 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
         }
         if (ring_member == 4) cring++;
       }
-      if (c4.size() <= nc4 && cring <= nc4rings && ring_count <= nrings) return true;
+      if ((signed) c4.size() <= nc4 && cring <= nc4rings && ring_count <= nrings) return true;
     }
     iterations++;
   } while(iterations < attempts);
