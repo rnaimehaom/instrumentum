@@ -46,7 +46,7 @@ class Molecular_Assembler {
   void create_parameter_string(std::string&) const;
   void create_database() const;  
  public:
-  Molecular_Assembler(const char*);
+  Molecular_Assembler(const std::string&);
   void run() const;
 };
 #endif

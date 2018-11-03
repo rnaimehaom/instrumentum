@@ -197,7 +197,8 @@ int main(int argc,char** argv)
   element_table[47] = "Ag";
   element_table[53] =  "I";
 
-  Molecular_Assembler masm(argv[1]);
+  std::string filename(argv[1]);
+  Molecular_Assembler masm(filename);
   masm.run();
 
   return 0;

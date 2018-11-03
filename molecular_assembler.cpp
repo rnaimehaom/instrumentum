@@ -2,7 +2,7 @@
 
 Random RND;
 
-Molecular_Assembler::Molecular_Assembler(const char* filename)
+Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 {
   // This method reads in the parameters from a file, the name 
   // of which is passed in as an argument to the method
