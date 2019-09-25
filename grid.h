@@ -10,16 +10,17 @@ typedef struct {
   int locale;
 } State;
 
+/// A class representing the entire grid of nodes on which molecules will be built. 
 class Grid {
  private:
-  int D1 = 17;
-  int D2 = 17;
-  int D3 = 9;
-  int total = 23275;
+  int D1 = 0;
+  int D2 = 0;
+  int D3 = 0;
+  int total = 0;
   int rs1 = 0;
   int rs2 = 0;
   int rs3 = 0;
-  double bond_length = 1.4;
+  double bond_length = 0.0;
   std::vector<int> ring_info;
   std::vector<int> pharma_nodes;
   std::vector<State> backup[4];
@@ -46,10 +47,7 @@ class Grid {
   bool create_scaffold();
   void write_scaffold(Molecule*) const;
  public:
-  Grid(int);
-  Grid(double,int);
-  Grid(int,int,int,int);
-  Grid(int,int,int,double,int);
+  Grid(int,int,int,double = 1.4,int);
   ~Grid();
   friend class Molecular_Assembler;
 };

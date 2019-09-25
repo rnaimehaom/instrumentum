@@ -177,39 +177,17 @@ void Grid::next_door(int m,int n,int k,int i,const double* deltas)
 
 Grid::~Grid()
 {
-  delete[] nodes;
+  if (total > 0) delete[] nodes;
 }
 
-Grid::Grid(int np)
+Grid::Grid(int i,int j,int k,double lambda,int np)
 {
-  allocate(np);
-  initialize();
-}
-
-Grid::Grid(double blength,int np)
-{
-  bond_length = blength;
-
-  allocate(np);
-  initialize();
-}
-
-Grid::Grid(int i,int j,int k,int np)
-{
+  if (i < 1 || j < 1 || k < 1) throw std::invalid_argument("The grid dimensions must be greater than zero!");
+  if (lambda < std::numeric_limits<double>::epsilon) throw std::invalid_argument("The bond length must be positive!");
   D1 = i;
   D2 = j;
   D3 = k;
-
-  allocate(np);
-  initialize();
-}
-
-Grid::Grid(int i,int j,int k,double blength,int np)
-{
-  D1 = i;
-  D2 = j;
-  D3 = k;
-  bond_length = blength;
+  bond_length = lambda;
 
   allocate(np);
   initialize();
@@ -220,7 +198,7 @@ void Grid::allocate(int np)
   for(int i=0; i<np; ++i) {
     pharma_nodes.push_back(-1);
   }
-  total = (2*D3+1)*(2*D2+1)*(2*D1+1);
+  total = (2*D3 + 1)*(2*D2 + 1)*(2*D1 + 1);
   nodes = new Node[total];
 }
 
@@ -562,52 +540,48 @@ bool Grid::connect_pharmacophores()
   // unvisited carbon nodes as silver and return 1.
   int i,j,k,in1,in2;
   unsigned int l;
-  std::vector<int> convert;
+  std::vector<int> visited;
+  std::set<int> convert,current;
+  std::set<int>::const_iterator it;
+
+  for(i=0; i<total; ++i) {
+    visited.push_back(-1);
+  }
 
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 6 || nodes[in1].locale == 5) {
-          nodes[in1].visited = 0;
-        }
-        else {
-          nodes[in1].visited = -1;
-        }
+        if (nodes[in1].atomic_number == 6 || nodes[in1].locale == 5) visited[in1] = 0;
       }
     }
   }
 
   // Now choose one of the pharmacophoric nodes to begin the process...
-  nodes[pharma_nodes[0]].visited = 1;
+  visited[pharma_nodes[0]] = 1;
+  current.insert(pharma_nodes[0]);
   do {
-    convert.clear();
-    for(i=-rs1; i<=rs1; ++i) {
-      for(j=-rs2; j<=rs2; ++j) {
-        for(k=-rs3; k<=rs3; ++k) {
-          in1 = index1(i,j,k);
-          if (nodes[in1].visited == 0) {
-            // See if any of my neighbours have been visited
-            for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-              in2 = nodes[in1].neighbours[l];
-              if (nodes[in2].visited == 1) {
-                convert.push_back(in1);
-                break;
-              }
-            }
-          }
+    for(it=current.begin(); it!=current.end(); ++it) {
+      in1 = *it;
+      for(l=0; l<nodes[in1].neighbours.size(); ++l) {
+        in2 = nodes[in1].neighbours[l];
+        if (visited[in2] == 0) {
+          convert.insert(in2);
+          break;
         }
       }
     }
     if (convert.empty()) break;
-    for(l=0; l<convert.size(); ++l) {
-      nodes[convert[l]].visited = 1;
+    for(it=convert.begin(); it!=convert.end(); ++it) {
+      visited[*it] = 1;
     }
+    current = convert;
+    convert.clear();
   } while(true);
   // Last step is to see if all of the pharma_nodes have visited set equal to one,
   // and if so, to set any unvisited carbons to also be silver
   for(l=0; l<pharma_nodes.size(); ++l) {
-    if (nodes[pharma_nodes[l]].visited != 1) return false;
+    if (visited[pharma_nodes[l]] != 1) return false;
   }
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -881,21 +855,14 @@ int Grid::ring_analysis()
         nbonds++;
       }
     }
-    if (nbonds == 0) {
 #ifdef VERBOSE
-      std::cout << "Problem: isolated atom at " << vertices[i] << " with locale " << nodes[vertices[i]].locale << '\n';
+    if (nbonds == 0) std::cout << "Problem: isolated atom at " << vertices[i] << " with locale " << nodes[vertices[i]].locale << '\n';
 #endif
-    }
   }
   wcopy = bonds;
 
   // A sanity check...
-  if (!connected(bonds)) {
-#ifdef VERBOSE
-    std::cout << "Error raised..." << std::endl;
-#endif
-    std::exit(1);
-  }
+  if (!connected(bonds)) throw std::runtime_error("Error in Grid::ring_analysis method!");
 
   // We will methodically go through this bond table, and eliminate
   // a bond at each occasion, checking to see if the resulting molecule
@@ -1095,18 +1062,15 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
 
 bool Grid::path_selection(bool random)
 {
-  int i,j,k,inode,temp,pcount,in1,in2,kount,current_pt,next_node;
+  int i,j,k,inode,temp,pcount,in1,in2,current_pt,next_node,its = 0;
   unsigned int l,m,nbonds;
-  bool found,done;
-  std::vector<int> candidate,pathback,convert,winner,vertices,bonds;
+  bool done;
+  std::vector<int> candidate,pathback,winner,vertices,bonds,path_hop;
+  std::set<int> convert;
+  std::set<int>::const_iterator it;
 
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        nodes[in1].path_hop = -1;
-      }
-    }
+  for(i=0; i<total; ++i) {
+    path_hop.push_back(-1);
   }
 
   if (random) {
@@ -1123,42 +1087,29 @@ bool Grid::path_selection(bool random)
     }
     inode = candidate[RND.irandom(candidate.size())];
   }
-  nodes[inode].path_hop = 0;
+  path_hop[inode] = 0;
 
-  kount = 0;
   do {
-    kount++;
+    its++;
     convert.clear();
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].path_hop < 0) {
+          if (path_hop[in1] < 0) {
             if (nodes[in1].atomic_number > 0 || nodes[in1].locale == 5) {
               for(l=0; l<nodes[in1].neighbours.size(); ++l) {
                 in2 = nodes[in1].neighbours[l];
-                if (nodes[in2].path_hop >= 0) {
-                  found = false;
-                  for(m=0; m<convert.size(); ++m) {
-                    if (convert[m] == in1) {
-                      found = true;
-                      break;
-                    }
-                  }
-                  if (!found) {
-                    convert.push_back(in1);
-                    break;
-                  }
-                }
+                if (path_hop[in2] >= 0) convert.insert(in1);
               }
             }
           }
         }
       }
     }
-    if (convert.size() == 0) break;
-    for(i=0; i<(signed) convert.size(); ++i) {
-      nodes[convert[i]].path_hop = kount;
+    if (convert.empty()) break;
+    for(it=convert.begin(); it!=convert.end(); ++it) {
+      path_hop[*it] = its;
     }
   } while(true);
 
@@ -1168,11 +1119,11 @@ bool Grid::path_selection(bool random)
     current_pt = pharma_nodes[m];
     done = false;
     do {
-      pcount = nodes[current_pt].path_hop;
+      pcount = path_hop[current_pt];
       winner.clear();
       for(l=0; l<nodes[current_pt].neighbours.size(); ++l) {
         in1 = nodes[current_pt].neighbours[l];
-        temp = nodes[in1].path_hop;
+        temp = path_hop[in1];
         if (temp >= 0) {
           if (temp < pcount) {
             winner.clear();
@@ -1240,20 +1191,11 @@ bool Grid::path_selection(bool random)
         nbonds++;
       }
     }
-    if (nbonds == 0) {
-#ifdef VERBOSE
-      std::cout << "Problem: isolated atom at " << vertices[i] << " with locale " << nodes[vertices[i]].locale << std::endl;
-#endif
-      std::exit(1);
-    }
+    if (nbonds == 0) throw std::runtime_error("Error: Isolated atom in Grid::path_selection method!");
   }
   // A sanity check...
-  if (!connected(bonds)) {
-#ifdef VERBOSE
-    std::cout << "Error raised in path routine..." << std::endl;
-#endif
-    std::exit(1);
-  }
+  if (!connected(bonds)) throw std::runtime_error("Error: Disconnected bond table in Grid::path_selection method!");
+
   return true;
 }
 
@@ -1346,7 +1288,11 @@ void Grid::write_scaffold(Molecule* output) const
   int i,j,k,cc,in1,in2,na = 0;
   unsigned int l;
   double x[3];
-  std::vector<int> carbon;
+  std::vector<int> carbon,atom_index;
+
+  for(i=0; i<total; ++i) {
+    atom_index.push_back(-1);
+  }
 
   // First add the atoms...
   for(i=-D1; i<=D1; ++i) {
@@ -1358,7 +1304,7 @@ void Grid::write_scaffold(Molecule* output) const
           x[1] = nodes[in1].y;
           x[2] = nodes[in1].z;
           output->add_atom(nodes[in1].atomic_number,x,nodes[in1].locale);
-          nodes[in1].atom_index = na; na++;
+          atom_index[in1] = na; na++;
         }
       }
     }
@@ -1380,7 +1326,7 @@ void Grid::write_scaffold(Molecule* output) const
               break;
             }
           }
-          output->add_bond(nodes[in1].atom_index,nodes[cc].atom_index,1);
+          output->add_bond(atom_index[in1],atom_index[cc],1);
         }
         else {
           // Heavy atom, probably carbon, should be bonded to all
@@ -1391,7 +1337,7 @@ void Grid::write_scaffold(Molecule* output) const
             if (nodes[in2].atomic_number > 0) carbon.push_back(in2);
           }
           for(l=0; l<carbon.size(); ++l) {
-            output->add_bond(nodes[in1].atom_index,nodes[carbon[l]].atom_index,1);
+            output->add_bond(atom_index[in1],atom_index[carbon[l]],1);
           }
         }
       }

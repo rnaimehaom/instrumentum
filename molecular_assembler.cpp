@@ -362,7 +362,7 @@ void Molecular_Assembler::run() const
   long s = seed;
   bool test;
   std::string mstring,ops;
-  Grid* g = new Grid(bond_length,npharmacophore);
+  Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
   Molecule* m = new Molecule;
 
 #ifdef _OPENMP
