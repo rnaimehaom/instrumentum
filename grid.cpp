@@ -183,7 +183,7 @@ Grid::~Grid()
 Grid::Grid(int i,int j,int k,double lambda,int np)
 {
   if (i < 1 || j < 1 || k < 1) throw std::invalid_argument("The grid dimensions must be greater than zero!");
-  if (lambda < std::numeric_limits<double>::epsilon) throw std::invalid_argument("The bond length must be positive!");
+  if (lambda < std::numeric_limits<double>::epsilon()) throw std::invalid_argument("The bond length must be positive!");
   D1 = i;
   D2 = j;
   D3 = k;
@@ -565,10 +565,7 @@ bool Grid::connect_pharmacophores()
       in1 = *it;
       for(l=0; l<nodes[in1].neighbours.size(); ++l) {
         in2 = nodes[in1].neighbours[l];
-        if (visited[in2] == 0) {
-          convert.insert(in2);
-          break;
-        }
+        if (visited[in2] == 0) convert.insert(in2);
       }
     }
     if (convert.empty()) break;
@@ -587,7 +584,7 @@ bool Grid::connect_pharmacophores()
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 6 && nodes[in1].visited == 0) nodes[in1].atomic_number = 47;
+        if (nodes[in1].atomic_number == 6 && visited[in1] == 0) nodes[in1].atomic_number = 47;
       }
     }
   }
@@ -862,7 +859,7 @@ int Grid::ring_analysis()
   wcopy = bonds;
 
   // A sanity check...
-  if (!connected(bonds)) throw std::runtime_error("Error in Grid::ring_analysis method!");
+  if (!connected(bonds)) throw std::runtime_error("Error: Disconnected bond table in Grid::ring_analysis method!");
 
   // We will methodically go through this bond table, and eliminate
   // a bond at each occasion, checking to see if the resulting molecule
@@ -1138,29 +1135,14 @@ bool Grid::path_selection(bool random)
       assert(!winner.empty());
 #endif
       next_node = winner[RND.irandom(winner.size())];
-      if (nodes[next_node].locale == 6) {
-        for(l=0; l<pathback.size(); ++l) {
-          if (nodes[pathback[l]].locale == 2) nodes[pathback[l]].locale = 6;
-        }
-        done = true;
-      }
-      else if (next_node == inode) {
+      if (nodes[next_node].locale == 6 || next_node == inode) {
         for(l=0; l<pathback.size(); ++l) {
           if (nodes[pathback[l]].locale == 2) nodes[pathback[l]].locale = 6;
         }
         done = true;
       }
       else {
-        found = false;
-        for(l=0; l<pathback.size(); ++l) {
-          if (pathback[l] == next_node) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          pathback.push_back(next_node);
-        }
+        if (std::count(pathback.begin(),pathback.end(),next_node) == 0) pathback.push_back(next_node);
         current_pt = next_node;
       }
     } while(!done);

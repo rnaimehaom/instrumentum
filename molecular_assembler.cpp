@@ -12,128 +12,131 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   std::vector<std::string> ppair;
 
   // Open the file
-  std::ifstream s(filename,std::ios_base::in);
-  if (!s.is_open()) {
+  std::ifstream s; 
+  s.exceptions(std::ifstream::badbit);
+  try {
+    s.open(filename,std::ios_base::in);
+    // Loop through all lines in the parameter file
+    while(std::getline(s,line)) {
+      // If it's an empty line, continue
+      if (line.empty()) continue;
+      // If the line begins with a #, ignore it
+      if (line[0] == '#') continue;
+      // If there's no equals sign in this line, continue
+      if (line.find('=') == std::string::npos) continue;
+      boost::split(ppair,line,boost::is_any_of("="));
+      name = ppair[0];
+      value = ppair[1];
+      boost::algorithm::trim(name);
+      boost::algorithm::trim(value);
+      // Now that we have the parameter name, see if it matches
+      // any of the known parameters. If so, read in the value and
+      // assign it
+      if (name == "PharmacophoreRadius") {
+        pharmacophore_radius = boost::lexical_cast<double>(value);
+      }
+      else if (name == "InitialPercentage") {
+        percent = boost::lexical_cast<double>(value);
+      }
+      else if (name == "PercentMethyl") {
+        percent_methyl = boost::lexical_cast<double>(value);
+      }
+      else if (name == "BondLength") {
+        bond_length = boost::lexical_cast<double>(value);
+      }
+      else if (name == "DatabaseFile") {
+        database = value;
+      }
+      else if (name == "RandomSeed") {
+        seed = boost::lexical_cast<long>(value);
+      }
+      else if (name == "MaximumAttempts") {
+        max_attempts = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberRings") {
+        nrings = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberC4Atoms") {
+        nc4 = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberC4Rings") {
+        nc4rings = boost::lexical_cast<int>(value);
+      }
+      else if (name == "MinimumRings") { 
+        min_rings = boost::lexical_cast<int>(value);
+      }
+      else if (name == "MaximumRings") {
+        max_rings = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberInitial") { 
+        n_initial = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberSecondary") {
+        n_secondary = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberPath") {
+        n_path = boost::lexical_cast<int>(value);
+      }
+      else if (name == "MaximumSecondary") {
+        max_secondary = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberRationalize") {
+        n_rationalize = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberDesaturate") {
+        n_desaturate = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberMolecules") {
+        n_mols = boost::lexical_cast<int>(value);
+      }
+      else if (name == "NumberPharmacophores") {
+        npharmacophore = boost::lexical_cast<int>(value);
+      }
+      else if (name == "CreateFiveMemberRings") {
+        boost::to_upper(value);
+        create_penta = (value == "YES") ? true : false;
+      }
+      else if (name == "SubstituteFunctionalGroups") {
+        boost::to_upper(value);
+        subs_functional = (value == "YES") ? true : false;
+      }
+      else if (name == "CreateDoubleBonds") { 
+        boost::to_upper(value);
+        create_double = (value == "YES") ? true : false;
+      }
+      else if (name == "CreateTripleBonds") {
+        boost::to_upper(value);
+        create_triple = (value == "YES") ? true : false;
+      }
+      else if (name == "CreateExotic") {
+        boost::to_upper(value);
+        create_exotic = (value == "YES") ? true : false;
+      }
+      else if (name == "PharmacophoreHardening") {
+        boost::to_upper(value);
+        pharm_hardening = (value == "YES") ? true : false;
+      }
+      else if (name == "SubstituteOxygen") {
+        boost::to_upper(value);
+        subs_oxygen = (value == "YES") ? true : false;
+      }
+      else if (name == "SubstituteNitrogen") {
+        boost::to_upper(value);
+        subs_nitrogen = (value == "YES") ? true : false;
+      }
+      else if (name == "SubstituteSulfur") {
+        boost::to_upper(value);
+        subs_sulfur = (value == "YES") ? true : false;
+      }
+      else if (name == "StripAxialMethyls") {
+        boost::to_upper(value);
+        kill_axial = (value == "YES") ? true : false;
+      }
+    }
+  }
+  catch (const std::ifstream::failure& e) {
     // File doesn't exist, print an error message and die
     std::cout << "The file " << filename << " cannot be opened!" << std::endl;
-    std::exit(1);
-  }
-  // Loop through all lines in the parameter file
-  while(std::getline(s,line)) {
-    // If it's an empty line, continue
-    if (line.empty()) continue;
-    // If the line begins with a #, ignore it
-    if (line[0] == '#') continue;
-    // If there's no equals sign in this line, continue
-    if (line.find('=') == std::string::npos) continue;
-    boost::split(ppair,line,boost::is_any_of("="));
-    name = ppair[0];
-    value = ppair[1];
-    boost::algorithm::trim(name);
-    boost::algorithm::trim(value);
-    // Now that we have the parameter name, see if it matches
-    // any of the known parameters. If so, read in the value and
-    // assign it
-    if (name == "PharmacophoreRadius") {
-      pharmacophore_radius = boost::lexical_cast<double>(value);
-    }
-    else if (name == "InitialPercentage") {
-      percent = boost::lexical_cast<double>(value);
-    }
-    else if (name == "PercentMethyl") {
-      percent_methyl = boost::lexical_cast<double>(value);
-    }
-    else if (name == "BondLength") {
-      bond_length = boost::lexical_cast<double>(value);
-    }
-    else if (name == "DatabaseFile") {
-      database = value;
-    }
-    else if (name == "RandomSeed") {
-      seed = boost::lexical_cast<long>(value);
-    }
-    else if (name == "MaximumAttempts") {
-      max_attempts = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberRings") {
-      nrings = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberC4Atoms") {
-      nc4 = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberC4Rings") {
-      nc4rings = boost::lexical_cast<int>(value);
-    }
-    else if (name == "MinimumRings") { 
-      min_rings = boost::lexical_cast<int>(value);
-    }
-    else if (name == "MaximumRings") {
-      max_rings = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberInitial") { 
-      n_initial = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberSecondary") {
-      n_secondary = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberPath") {
-      n_path = boost::lexical_cast<int>(value);
-    }
-    else if (name == "MaximumSecondary") {
-      max_secondary = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberRationalize") {
-      n_rationalize = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberDesaturate") {
-      n_desaturate = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberMolecules") {
-      n_mols = boost::lexical_cast<int>(value);
-    }
-    else if (name == "NumberPharmacophores") {
-      npharmacophore = boost::lexical_cast<int>(value);
-    }
-    else if (name == "CreateFiveMemberRings") {
-      boost::to_upper(value);
-      create_penta = (value == "YES") ? true : false;
-    }
-    else if (name == "SubstituteFunctionalGroups") {
-      boost::to_upper(value);
-      subs_functional = (value == "YES") ? true : false;
-    }
-    else if (name == "CreateDoubleBonds") { 
-      boost::to_upper(value);
-      create_double = (value == "YES") ? true : false;
-    }
-    else if (name == "CreateTripleBonds") {
-      boost::to_upper(value);
-      create_triple = (value == "YES") ? true : false;
-    }
-    else if (name == "CreateExotic") {
-      boost::to_upper(value);
-      create_exotic = (value == "YES") ? true : false;
-    }
-    else if (name == "PharmacophoreHardening") {
-      boost::to_upper(value);
-      pharm_hardening = (value == "YES") ? true : false;
-    }
-    else if (name == "SubstituteOxygen") {
-      boost::to_upper(value);
-      subs_oxygen = (value == "YES") ? true : false;
-    }
-    else if (name == "SubstituteNitrogen") {
-      boost::to_upper(value);
-      subs_nitrogen = (value == "YES") ? true : false;
-    }
-    else if (name == "SubstituteSulfur") {
-      boost::to_upper(value);
-      subs_sulfur = (value == "YES") ? true : false;
-    }
-    else if (name == "StripAxialMethyls") {
-      boost::to_upper(value);
-      kill_axial = (value == "YES") ? true : false;
-    }
   }
   s.close();
   // Sanity checks...

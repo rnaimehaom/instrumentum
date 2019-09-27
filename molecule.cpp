@@ -1404,13 +1404,7 @@ bool Molecule::create_penta1()
             bcount1++;
           }
         }
-        if (bcount1 != 2) {
-#ifdef VERBOSE
-          std::cout << "For nitrogen " << the_nitro << " the bond count is " << bcount1 << std::endl;
-#endif
-          std::cout << this << std::endl;
-          std::exit(1);
-        }
+        if (bcount1 != 2) throw std::runtime_error("Error: Bad nitrogen bond count in Molecule::create_penta1 method!");
         if (cand < 1) continue;
         // Choose two at random, and do the necessary changes
         alpha1 = RND.irandom(cand);
@@ -1444,10 +1438,7 @@ bool Molecule::create_penta1()
         return true;
       }
       else {
-        if (nitro > 2) {
-          std::cout << this << std::endl;
-          std::exit(1);
-        }
+        if (nitro > 2) throw std::runtime_error("Error: Too many nitrogen atoms in Molecule::create_penta1 method!");
         // Delete a carbon and add a hydrogen to one of the nitrogens
         cand = 0;
         n = 0;
@@ -2089,24 +2080,11 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
-      if (rn != 2) {
-#ifdef VERBOSE
-        std::cout << "Missing bonds for " << oxygen << std::endl;
-#endif
-        std::cout << this << std::endl;
-        std::exit(1);
-      }
+      if (rn != 2) throw std::runtime_error("Error: Bad oxygen bond count in Molecule::normalize_free_ring method!");
       btype[4*oxygen+rneighbour[0]] = 1;
       btype[4*oxygen+rneighbour[1]] = 1;
       v1 = bonds[4*oxygen+rneighbour[0]];
-      temp = get_bindex(oxygen,v1);
-      if (temp == -1) {
-#ifdef VERBOSE
-        std::cout << "No oxy ring bond here at " << oxygen << std::endl;
-#endif
-        std::cout << this << std::endl;
-        std::exit(1);
-      }
+      if (get_bindex(oxygen,v1) == -1) throw std::runtime_error("Error: No oxygen ring bond in Molecule::normalize_free_ring method!");
       btype[4*v1+get_bindex(oxygen,v1)] = 1;
       v2 = bonds[4*oxygen+rneighbour[1]];
       btype[4*v2+get_bindex(oxygen,v2)] = 1;
@@ -2200,10 +2178,7 @@ void Molecule::normalize_free_ring(int the_aring)
 #endif
         }
       }
-      if (nitrogen == -1) {
-        std::cout << this << std::endl;
-        std::exit(1);
-      }
+      if (nitrogen == -1) throw std::runtime_error("Error: Missing trivalent nitrogen atom in Molecule::normalize_free_ring method!");
       for(i=0; i<4; ++i) {
         temp = bonds[4*nitrogen+i];
         if (temp < 0) continue;
@@ -2806,10 +2781,7 @@ bool Molecule::normalize_aromatic_bonds()
       for(j=0; j<nrings; ++j) {
         if (ring_cluster[nrings*i+j] == 1) the_ring = j;
       }
-      if (the_ring == -1) {
-        std::cout << this << std::endl;
-        std::exit(1);
-      }
+      if (the_ring == -1) throw std::runtime_error("Error: No candidate ring in Molecule::normalize_aromatic_bonds method!");
       if (is_aromatic(the_ring)) normalize_free_ring(the_ring);
     }
   }
