@@ -50,6 +50,8 @@ class Grid {
   /// The geometric distance separating the atoms in the 
   /// tetrahedral mesh, measured in Angstroms.  
   double bond_length = 0.0;
+  /// This vector contains a list of the atoms that are members of rings and 
+  /// is calculated by the Grid::ring_analysis method.
   std::vector<int> ring_info;
   /// This vector stores which nodes are pharmacophoric, i.e. they must be 
   /// included in any molecular skeleton built by this software.
@@ -59,18 +61,27 @@ class Grid {
   /// stores the ensemble of nodes associated with the tetrahedral mesh. 
   Node* nodes;
 
+  /// This method accepts the three mesh coordinates of a node and returns the index to this node in the array Grid::nodes. 
   inline int index1(int,int,int) const;
+  /// This method accepts as its arguments the indices of two nodes and calculates the square of the geometric distance separating them. 
   inline double distance(int,int) const;
+  /// This method sets the Node::locale and Node::atomic_number properties to zero for each node in the grid. 
+  inline void clear();
+  /// This method calls the Grid::ring_analysis method and returns its output value.
+  inline int ring_count() {return ring_analysis();};
+  /// This method accepts as its first three arguments the dimensional indices of a node in the mesh, while the final integer argument represents the state which lies between 1 and 4. The final argument contains the coordinates of this node in the grid. 
   void next_door(int,int,int,int,const double*);
+  /// This method is called by the constructor and builds the tetrahedral mesh with the node coordinates and the neighbour relations using the Grid::next_door method. 
   void initialize();
+  /// This method is called by the constructor and takes as its unique argument the number of pharmacophoric nodes and then allocates the memory for the Grid::pharma_nodes and the Grid::nodes properties.
   void allocate(int);
-  void clear();
+  /// This method converts any neighbouring nodes of carbon atoms which are empty to be hydrogen atoms. 
   void add_hydrogens();
   bool initial_deletion(double,int);
   bool path_selection(bool);
   bool secondary_deletion(int,int,int,int);
   bool rationalize(double,int,int);
-  int ring_count();
+  /// This method computes the number of rings in the current molecular scaffold and returns this value, as well as writing all of the nodes which are ring members to the Grid::ring_info vector. 
   int ring_analysis();
   void fill_interior();
   void restore(int);
@@ -78,6 +89,7 @@ class Grid {
   bool connect_pharmacophores();
   void blank_pharmacophore(double);
   bool create_scaffold();
+  /// This method writes the hydrocarbon scaffold in the current grid to an instance of the Molecule class.
   void write_scaffold(Molecule*) const;
  public:
   /// The standard constructor for this class - the first three arguments are the grid dimensions D1, D2 and D3, while the remaining two are the bond_length and number of pharmacophore nodes.
@@ -93,6 +105,14 @@ int Grid::index1(int i,int j,int k) const
   return output;
 }
 
+void Grid::clear()
+{
+  for(int i=0; i<total; ++i) {
+    nodes[i].locale = 0;
+    nodes[i].atomic_number = 0;
+  }
+}
+
 double Grid::distance(int in1,int in2) const
 {
   double x[3],y[3],output;
@@ -102,7 +122,7 @@ double Grid::distance(int in1,int in2) const
   y[0] = nodes[in2].x;
   y[1] = nodes[in2].y;
   y[2] = nodes[in2].z;
-  output = (x[0]-y[0])*(x[0]-y[0]) + (x[1]-y[1])*(x[1]-y[1]) + (x[2]-y[2])*(x[2]-y[2]);
+  output = (x[0] - y[0])*(x[0] - y[0]) + (x[1] - y[1])*(x[1] - y[1]) + (x[2] - y[2])*(x[2] - y[2]);
   return output;
 }
 #endif

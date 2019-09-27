@@ -811,11 +811,6 @@ void Grid::add_hydrogens()
   }
 }
 
-int Grid::ring_count()
-{
-  return ring_analysis();
-}
-
 int Grid::ring_analysis()
 {
   // The first item of business in this routine is to find all
@@ -1181,20 +1176,6 @@ bool Grid::path_selection(bool random)
   return true;
 }
 
-void Grid::clear()
-{
-  int i,j,k,in1;
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        nodes[in1].locale = 0;
-        nodes[in1].atomic_number = 0;
-      }
-    }
-  }
-}
-
 void Grid::restore(int q)
 {
   int i,j,k,in1;
@@ -1202,15 +1183,8 @@ void Grid::restore(int q)
   State s;
 
   // First, initialize the whole grid back to zero...
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        nodes[in1].locale = 0;
-        nodes[in1].atomic_number = 0;
-      }
-    }
-  }
+  clear();
+
   // Now refill it from the vector created by save_state:
   for(l=0; l<backup[q].size(); ++l) {
     s = backup[q][l];
