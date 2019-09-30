@@ -62,18 +62,39 @@ class Molecular_Assembler {
   /// generator, which is set using Random::initialize_generator. 
   long seed = 0;    
 
-  /// This Boolean method controls whether or not random paths are used 
+  /// This Boolean property controls whether or not random paths are used 
   /// to keep pharmacophoric nodes connected in the candidate molecule; it 
   /// is the unique argument to the Grid::path_selection method. 
   bool pharm_hardening = true;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to subsitute oxygen atoms in the molecule. 
   bool subs_oxygen = true;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to subsitute nitrogen atoms in the molecule. 
   bool subs_nitrogen = true;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to subsitute sulfur atoms in the molecule. 
   bool subs_sulfur = false;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to subsitute halogens for terminal hydrogen atoms
+  /// in the molecule. 
   bool subs_functional = false;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to create amide groups in the molecule. 
   bool create_exotic = false;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to convert hexa-atomic rings to penta-atomic rings 
+  /// in the molecule. 
   bool create_penta = true;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to convert C-C bonds to C=C bonds in the molecule. 
   bool create_double = true;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to convert C-C bonds to C≡C bonds in the molecule.   
   bool create_triple = false;
+  /// This Boolean property controls whether or not the Molecule::decorate 
+  /// method will attempt to eliminate all of the axial neighbours of ring 
+  /// atoms in the molecule, which promotes the creation of aromatic rings.
   bool kill_axial = true;
   
   /// This string property is the name of the SQLite database 

@@ -2274,8 +2274,9 @@ void Molecule::clear()
   atom_type.clear();
   locale.clear();
   rings.clear();
+  rbonds.clear();
   coords.clear();
-  opstring.clear();
+  opstring = "";
   if (p_allocated > 0) delete[] pieces;
   p_allocated = 0;
 }
@@ -2513,12 +2514,8 @@ void Molecule::connected_components(int vertices)
         nzero = j;
       }
     }
-    if (first) {
-      break;
-    }
-    else {
-      nc++;
-    }
+    if (first) break;
+    nc++;
   } while(true);
   pieces = new std::vector<int>[nc];
   for(i=0; i<vertices; ++i) {
