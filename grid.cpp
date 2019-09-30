@@ -428,69 +428,54 @@ void Grid::initialize()
 
 void Grid::blank_pharmacophore(double radius)
 {
-  double delta,x[3];
-  int i,j,k,in1,in2,temp;
-  unsigned int test,m,l,kount = 0;
-  bool bad,done;
+  int i,j,k,in1,candidate;
+  unsigned int l,kt = 0;
+  bool found,done;
+  double delta;
+  std::vector<int> vx,frontier_nodes;
   const double r2 = radius*radius;
 
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        x[0] = nodes[in1].x;
-        x[1] = nodes[in1].y;
-        x[2] = nodes[in1].z;
-        delta = x[0]*x[0] + x[1]*x[1] + x[2]*x[2];
-        if (delta < r2) nodes[in1].locale = 2;
-      }
-    }
+  for(i=0; i<total; ++i) {
+    delta = nodes[i].x*nodes[i].x + nodes[i].y*nodes[i].y + nodes[i].z*nodes[i].z;
+    if (delta < r2) nodes[i].locale = 2;
   }
+
   // Now that the interior nodes have been marked, we can
   // mark frontier nodes, namely locale=0 nodes that are
   // neighbours of a locale=2 node.
-  std::vector<int> frontier_nodes;
-  frontier_nodes.reserve(100);
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].locale == 0) {
-          done = false;
-          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-            in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].locale == 2) {
-              nodes[in1].locale = 1;
-              frontier_nodes.push_back(in1);
-              done = true;
-              break;
-            }
-            if (done) break;
-          }
-        }
+  for(i=0; i<total; ++i) {
+    if (nodes[i].locale != 0) continue;
+    done = false;
+    for(l=0; l<nodes[i].neighbours.size(); ++l) {
+      in1 = nodes[i].neighbours[l];
+      if (nodes[in1].locale == 2) {
+        nodes[i].locale = 1;
+        frontier_nodes.push_back(i);
+        done = true;
+        break;
       }
-    }
+      if (done) break;
+    }    
   }
+
   // Now choose two or three of these frontier nodes to be
   // "must have" nodes, to aid in constructing connected
   // molecules
-  while(kount < pharma_nodes.size()) {
-    test = RND.irandom(frontier_nodes.size());
-    bad = false;
-    for(m=0; m<kount; ++m) {
-      for(l=0; l<nodes[pharma_nodes[m]].neighbours.size(); ++l) {
-        in2 = nodes[pharma_nodes[m]].neighbours[l];
-        if (in2 == frontier_nodes[test]) {
-          bad = true;
-          break;
-        }
+  while(kt < pharma_nodes.size()) {
+    in1 = RND.irandom(frontier_nodes.size());
+    candidate = frontier_nodes[in1];
+    found = false;
+    for(l=0; l<kt; ++l) {
+      vx = nodes[pharma_nodes[l]].neighbours;
+      if (std::count(vx.begin(),vx.end(),candidate) > 0) {
+        found = true;
+        break;
       }
-      if (bad) break;
     }
-    if (!bad) {
-      pharma_nodes[kount] =  frontier_nodes[test];
-      nodes[frontier_nodes[test]].locale = 5;
-      kount++;
+    if (!found) {
+      pharma_nodes[kt] = candidate;
+      nodes[candidate].locale = 5;
+      kt++;
     }
   }
   // Lastly, set the values for rs1, rs2 and rs3
@@ -498,8 +483,7 @@ void Grid::blank_pharmacophore(double radius)
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        temp = nodes[in1].locale;
-        if (temp == 1 || temp == 2) {
+        if (nodes[in1].locale == 1 || nodes[in1].locale == 2) {
           if (std::abs(i) > rs1) rs1 = std::abs(i);
           if (std::abs(j) > rs2) rs2 = std::abs(j);
           if (std::abs(k) > rs3) rs3 = std::abs(k);
@@ -538,7 +522,7 @@ bool Grid::connect_pharmacophores()
   // as much as possible, we check to see if any of the pharmacophore
   // nodes are unvisited. If yes, return 0, otherwise, mark up all of
   // unvisited carbon nodes as silver and return 1.
-  int i,j,k,in1,in2;
+  int i,in1,in2;
   unsigned int l;
   std::vector<int> visited;
   std::set<int> convert,current;
@@ -548,13 +532,8 @@ bool Grid::connect_pharmacophores()
     visited.push_back(-1);
   }
 
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 6 || nodes[in1].locale == 5) visited[in1] = 0;
-      }
-    }
+  for(i=0; i<total; ++i) {
+    if (nodes[i].atomic_number == 6 || nodes[i].locale == 5) visited[i] = 0;
   }
 
   // Now choose one of the pharmacophoric nodes to begin the process...
@@ -580,14 +559,10 @@ bool Grid::connect_pharmacophores()
   for(l=0; l<pharma_nodes.size(); ++l) {
     if (visited[pharma_nodes[l]] != 1) return false;
   }
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 6 && visited[in1] == 0) nodes[in1].atomic_number = 47;
-      }
-    }
+  for(i=0; i<total; ++i) {
+    if (nodes[i].atomic_number == 6 && visited[i] == 0) nodes[i].atomic_number = 47;
   }
+
   return true;
 }
 
@@ -598,12 +573,10 @@ bool Grid::initial_deletion(double percent,int max_attempts)
   // connectivity at each stage, until either "percent" percentage
   // of the original number of heavy atoms remain, or the number
   // "max_attempts" of deletions has been exhausted
-  int i,j,k,alpha1,alpha2,alpha3,target,in1,nheavy,kount,nkill,iterations = 0;
+  if (max_attempts <= 0) throw std::invalid_argument("Error: Illegal argument value in Grid::initial_deletion method!");
+  int i,j,k,alpha1,alpha2,alpha3,target,in1,kount,nkill,nheavy = 0,iterations = 0;
   double r2,radius,delta,n_debut;
 
-  assert(max_attempts > 0);
-
-  nheavy = 0;
   for(i=-rs1; i<=rs1; ++i) {
     for(j=-rs2; j<=rs2; ++j) {
       for(k=-rs3; k<=rs3; ++k) {
@@ -693,11 +666,10 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
   // This function eliminates flagpole interactions among
   // hydrogen atoms by forcing any node which is a neighbour
   // of two or more carbon atoms to become carbon as well
+  if (rings_min < 0 || rings_max < 0) throw std::invalid_argument("Error: Illegal value for ring number argument in Grid::rationalize method!");
   int i,j,k,in1,in2,alpha,nrings,ncarbon,nkill,kount = 0;
   unsigned int l;
   std::vector<int> methyl,convert;
-
-  assert(rings_min >= 0 && rings_max >= 0);
 
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -847,9 +819,6 @@ int Grid::ring_analysis()
         nbonds++;
       }
     }
-#ifdef VERBOSE
-    if (nbonds == 0) std::cout << "Problem: isolated atom at " << vertices[i] << " with locale " << nodes[vertices[i]].locale << '\n';
-#endif
   }
   wcopy = bonds;
 
@@ -941,16 +910,12 @@ int Grid::ring_analysis()
 
 bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
 {
-  int i,j,k,q,alpha1,alpha2,alpha3,target,in1,in2,temp,cring,ring_count,ring_member;
-  int nkill,ncarbon,silver,nbonds,iterations = 0;
+  if (nc4 < 0 || nrings < 0 || nc4rings < 0 || attempts <= 0) throw std::invalid_argument("Error: Illegal argument value in the Grid::secondary_deletion method!");
+  int i,j,k,q,alpha1,alpha2,alpha3,target,in1,in2,cring,ring_count,ring_member;
+  int nkill,ncarbon,nbonds,iterations = 0;
   unsigned int l,m;
   std::vector<int> vertices,c4;
   double r2,radius,delta;
-
-  assert(nc4 >= 0);
-  assert(nrings >= 0);
-  assert(nc4rings >= 0);
-  assert(attempts > 0);
 
   do {
     alpha1 = -rs1 + RND.irandom(2*rs1);
@@ -973,79 +938,65 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
         }
       }
     }
-    if (nkill > 0) {
-      // Let's make sure it worked smoothly...
-      silver = 0;
-      vertices.clear();
-      for(i=-D1; i<=D1; ++i) {
-        for(j=-D2; j<=D2; ++j) {
-          for(k=-D3; k<=D3; ++k) {
-            in1 = index1(i,j,k);
-            if (nodes[in1].atomic_number > 0 || nodes[in1].locale == 5) vertices.push_back(in1);
-          }
-        }
-      }
-      for(m=0; m<vertices.size(); ++m) {
-        nbonds = 0;
-        for(l=0; l<nodes[vertices[m]].neighbours.size(); ++l) {
-          in2 = nodes[vertices[m]].neighbours[l];
-          if (nodes[in2].atomic_number > 0 || nodes[in2].locale == 5) nbonds++;
-        }
-        if (nbonds == 0) {
-          silver++;
-          nodes[vertices[m]].atomic_number = 0;
-        }
-      }
-      assert(connect_pharmacophores());
-      silver = 0;
-      for(i=-rs1; i<=rs1; ++i) {
-        for(j=-rs2; j<=rs2; ++j) {
-          for(k=-rs3; k<=rs3; ++k) {
-            in1 = index1(i,j,k);
-            if (nodes[in1].atomic_number == 47) {
-              nodes[in1].atomic_number = 0;
-              silver++;
-            }
-          }
-        }
-      }
-      // First, see how many carbons with four carbon neighbours we have
-      c4.clear();
-      for(i=-rs1; i<=rs1; ++i) {
-        for(j=-rs2; j<=rs2; ++j) {
-          for(k=-rs3; k<=rs3; ++k) {
-            in1 = index1(i,j,k);
-            if (nodes[in1].atomic_number > 0) {
-              // See if more than neighbour is carbon
-              ncarbon = 0;
-              for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-                in2 = nodes[in1].neighbours[l];
-                if (nodes[in2].atomic_number == 6) ncarbon++;
-              }
-              if (ncarbon == 4) c4.push_back(in1);
-            }
-          }
-        }
-      }
-      // Next, see how many of these four carbon neighbours are in four separate
-      // rings
-      cring = 0;
-      ring_count = ring_analysis();
-      for(l=0; l<c4.size(); ++l) {
-        temp = c4[l];
-        ring_member = 0;
-        for(i=0; i<ring_count; ++i) {
-          for(q=0; q<6; ++q) {
-            if (ring_info[6*i+q] == temp) {
-              ring_member++;
-              break;
-            }
-          }
-        }
-        if (ring_member == 4) cring++;
-      }
-      if ((signed) c4.size() <= nc4 && cring <= nc4rings && ring_count <= nrings) return true;
+    if (nkill == 0) continue;
+    // Let's make sure it worked smoothly...
+    vertices.clear();
+    for(i=0; i<total; ++i) {
+      if (nodes[i].atomic_number > 0 || nodes[i].locale == 5) vertices.push_back(i);
     }
+    for(m=0; m<vertices.size(); ++m) {
+      nbonds = 0;
+      for(l=0; l<nodes[vertices[m]].neighbours.size(); ++l) {
+        in2 = nodes[vertices[m]].neighbours[l];
+        if (nodes[in2].atomic_number > 0 || nodes[in2].locale == 5) nbonds++;
+      }
+      if (nbonds == 0) nodes[vertices[m]].atomic_number = 0;
+    }
+    assert(connect_pharmacophores());
+    for(i=-rs1; i<=rs1; ++i) {
+      for(j=-rs2; j<=rs2; ++j) {
+        for(k=-rs3; k<=rs3; ++k) {
+          in1 = index1(i,j,k);
+          if (nodes[in1].atomic_number == 47) nodes[in1].atomic_number = 0;
+        }
+      }
+    }
+    // First, see how many carbons with four carbon neighbours we have
+    c4.clear();
+    for(i=-rs1; i<=rs1; ++i) {
+      for(j=-rs2; j<=rs2; ++j) {
+        for(k=-rs3; k<=rs3; ++k) {
+          in1 = index1(i,j,k);
+          if (nodes[in1].atomic_number <= 0) continue;
+          // See if more than neighbour is carbon
+          ncarbon = 0;
+          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
+            in2 = nodes[in1].neighbours[l];
+            if (nodes[in2].atomic_number == 6) ncarbon++;
+          }
+          if (ncarbon == 4) c4.push_back(in1);
+        }
+      }
+    }
+    if ((signed) c4.size() > nc4) continue;
+    // Next, see how many of these four carbon neighbours are in four separate
+    // rings
+    ring_count = ring_analysis();
+    if (ring_count > nrings) continue;
+    cring = 0;
+    for(l=0; l<c4.size(); ++l) {
+      ring_member = 0;
+      for(i=0; i<ring_count; ++i) {
+        for(q=0; q<6; ++q) {
+          if (ring_info[6*i+q] == c4[l]) {
+            ring_member++;
+            break;
+          }
+        }
+      }
+      if (ring_member == 4) cring++;
+    }
+    if (cring <= nc4rings) return true;
     iterations++;
   } while(iterations < attempts);
 
@@ -1176,74 +1127,11 @@ bool Grid::path_selection(bool random)
   return true;
 }
 
-void Grid::restore(int q)
-{
-  int i,j,k,in1;
-  unsigned int l;
-  State s;
-
-  // First, initialize the whole grid back to zero...
-  clear();
-
-  // Now refill it from the vector created by save_state:
-  for(l=0; l<backup[q].size(); ++l) {
-    s = backup[q][l];
-    in1 = s.node;
-    nodes[in1].locale = s.locale;
-    nodes[in1].atomic_number = s.atom;
-  }
-}
-
-void Grid::save_state(int q)
-{
-  int i,j,k,in1;
-  State s;
-
-  backup[q].clear();
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].locale > 0) {
-          // Save this node's info
-          s.node = in1;
-          s.locale = nodes[in1].locale;
-          s.atom = nodes[in1].atomic_number;
-          backup[q].push_back(s);
-        }
-      }
-    }
-  }
-}
-
-bool Grid::create_scaffold()
-{
-  bool test;
-
-  fill_interior();
-
-  test = initial_deletion(0.5,100);
-  if (!test) return false;
-
-  test = path_selection(1);
-  if (!test) return false;
-
-  test = secondary_deletion(2,0,4,100);
-  if (!test) return false;
-
-  test = rationalize(0.4,1,6);
-  if (!test) return false;
-
-  add_hydrogens();
-
-  return true;
-}
-
 void Grid::write_scaffold(Molecule* output) const
 {
-  int i,j,k,cc,in1,in2,na = 0;
+  int i,cc,in1,na = 0;
   unsigned int l;
-  double x[3];
+  double xc[3];
   std::vector<int> carbon,atom_index;
 
   for(i=0; i<total; ++i) {
@@ -1251,51 +1139,40 @@ void Grid::write_scaffold(Molecule* output) const
   }
 
   // First add the atoms...
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number > 0) {
-          x[0] = nodes[in1].x;
-          x[1] = nodes[in1].y;
-          x[2] = nodes[in1].z;
-          output->add_atom(nodes[in1].atomic_number,x,nodes[in1].locale);
-          atom_index[in1] = na; na++;
-        }
-      }
-    }
+  for(i=0; i<total; ++i) {
+    if (nodes[i].atomic_number <= 0) continue;
+    xc[0] = nodes[i].x;
+    xc[1] = nodes[i].y;
+    xc[2] = nodes[i].z;
+    output->add_atom(nodes[i].atomic_number,xc,nodes[i].locale);
+    atom_index[i] = na; na++;
   }
   // Now do the bonds...
-  for(i=-D1; i<=D1; ++i) {
-    for(j=-D2; j<=D2; ++j) {
-      for(k=-D3; k<=D3; ++k) {
-        in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number <= 0) continue;
-        if (nodes[in1].atomic_number == 1) {
-          // Hydrogen - among your four neighbours, which contains
-          // a heavy atom?
-          cc = 0;
-          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-            in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].atomic_number == 6) {
-              cc = in2;
-              break;
-            }
-          }
-          output->add_bond(atom_index[in1],atom_index[cc],1);
+  for(i=0; i<total; ++i) {
+    if (nodes[i].atomic_number <= 0) continue;
+    if (nodes[i].atomic_number == 1) {
+      // Hydrogen - among your four neighbours, which contains
+      // a heavy atom?
+      cc = 0;
+      for(l=0; l<nodes[i].neighbours.size(); ++l) {
+        in1 = nodes[i].neighbours[l];
+        if (nodes[in1].atomic_number == 6) {
+          cc = in1;
+          break;
         }
-        else {
-          // Heavy atom, probably carbon, should be bonded to all
-          // of its non-empty neighbours
-          carbon.clear();
-          for(l=0; l<nodes[in1].neighbours.size(); ++l) {
-            in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].atomic_number > 0) carbon.push_back(in2);
-          }
-          for(l=0; l<carbon.size(); ++l) {
-            output->add_bond(atom_index[in1],atom_index[carbon[l]],1);
-          }
-        }
+      }
+      output->add_bond(atom_index[i],atom_index[cc],1);
+    }
+    else {
+      // Heavy atom, probably carbon, should be bonded to all
+      // of its non-empty neighbours
+      carbon.clear();
+      for(l=0; l<nodes[i].neighbours.size(); ++l) {
+        in1 = nodes[i].neighbours[l];
+        if (nodes[in1].atomic_number > 0) carbon.push_back(in1);
+      }
+      for(l=0; l<carbon.size(); ++l) {
+        output->add_bond(atom_index[i],atom_index[carbon[l]],1);
       }
     }
   }

@@ -4,6 +4,7 @@ Random::Random()
 {
   gen = new std::mt19937(rd());
   VRG = new std::uniform_real_distribution<>(0.0,1.0);
+  gen->seed(long(std::time(NULL)));
 }
 
 Random::~Random()
@@ -14,13 +15,13 @@ Random::~Random()
 
 void Random::initialize_generator(long seed)
 {
-  assert(seed > 0);
+  if (seed <= 0) throw std::invalid_argument("The random number seed must be positive!");
   gen->seed(seed);
 }
 
 int Random::irandom(int nmax)
 {
-  assert(nmax > 0);
+  if (nmax <= 0) throw std::invalid_argument("The argument to Random::irandom must be positive!");
   int output = int(double(nmax)*drandom());
   return output;
 }
@@ -33,10 +34,8 @@ double Random::drandom()
 
 void Random::shuffle(std::vector<int>& v)
 {
+  if (v.size() < 2) throw std::invalid_argument("The vector to be shuffled must have at least two elements!");
   // Fisher-Yates shuffle algorithm
-#ifdef DEBUG
-  assert(v.size() > 1);
-#endif
   int i,j,q;
   const int n = (signed) v.size();
 

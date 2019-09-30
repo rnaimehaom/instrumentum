@@ -5,7 +5,7 @@
 
 /// A class representing a single node (i.e. potential atom location) in the tetrahedral mesh. 
 class Node {
- public:
+ private:
   /// This STL vector property stores the three integer co-ordinates of the four neighbours 
   /// of the node and so normally has a length of 12 unless the node is on the boundary of the 
   /// mesh.
@@ -29,6 +29,7 @@ class Node {
   /// coordinates.
   double z = std::numeric_limits<double>::quiet_NaN();
 
+ public:
   /// The standard default constructor for this class which reserves a length of 12 for the Node::neighbours property.
   Node();
   /// The standard copy constructor which simply copies over the value of the properties of the source instance of this class.
@@ -37,6 +38,7 @@ class Node {
   ~Node();
   /// The standard assignment operator which simply assigns the value of the properties of the source instance of this class to the target instance.
   Node& operator =(const Node&);
+  friend class Grid;
 };
 #endif
 

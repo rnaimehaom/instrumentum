@@ -14,7 +14,7 @@ instrumentum: $(OBJECTS)
 instrumentum.o: instrumentum.cpp instrumentum.h molecular_assembler.h
 	$(CXX) $(CXX_FLAGS) -c instrumentum.cpp
 
-grid.o: grid.cpp grid.h node.h instrumentum.h
+grid.o: grid.cpp grid.h node.h molecule.h instrumentum.h
 	$(CXX) $(CXX_FLAGS) -c grid.cpp
 
 node.o: node.cpp node.h instrumentum.h
@@ -23,7 +23,7 @@ node.o: node.cpp node.h instrumentum.h
 random.o: random.cpp random.h instrumentum.h
 	$(CXX) $(CXX_FLAGS) -c random.cpp
 
-molecule.o: molecule.cpp molecule.h node.h instrumentum.h 
+molecule.o: molecule.cpp molecule.h instrumentum.h 
 	$(CXX) $(CXX_FLAGS) -c molecule.cpp
 
 molecular_assembler.o: molecular_assembler.cpp molecular_assembler.h grid.h molecule.h instrumentum.h

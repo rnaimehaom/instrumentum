@@ -387,7 +387,7 @@ void Molecular_Assembler::run() const
 #endif
       test = g->initial_deletion(percent,max_attempts);
       if (!test) { 
-        g->restore(0);
+        g->restore_state(0);
         continue;
       }
       for(j=0; j<n_path; ++j) {
@@ -397,7 +397,7 @@ void Molecular_Assembler::run() const
 #endif
         test = g->path_selection(pharm_hardening);
         if (!test) {
-          g->restore(1);
+          g->restore_state(1);
           continue;
         }
         for(k=0; k<n_secondary; ++k) {
@@ -407,7 +407,7 @@ void Molecular_Assembler::run() const
 #endif
           test = g->secondary_deletion(nc4,nc4rings,nrings,max_secondary);
           if (!test) {
-            g->restore(2);
+            g->restore_state(2);
             continue;
           }
           for(l=0; l<n_rationalize; ++l) {
@@ -417,7 +417,7 @@ void Molecular_Assembler::run() const
 #endif
             test = g->rationalize(percent_methyl,min_rings,max_rings);
             if (!test) {
-              g->restore(3);
+              g->restore_state(3);
               continue;
             }
             g->add_hydrogens();
@@ -447,13 +447,13 @@ void Molecular_Assembler::run() const
               m->clear();
             }
             mol_created += build;
-            g->restore(3);
+            g->restore_state(3);
           }
-          g->restore(2);
+          g->restore_state(2);
         }
-        g->restore(1);
+        g->restore_state(1);
       }
-      g->restore(0);
+      g->restore_state(0);
     }
     g->clear();
   }

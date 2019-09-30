@@ -4,11 +4,16 @@
 #ifndef _gridh
 #define _gridh
 
-typedef struct {
-  int atom;
-  int node;
-  int locale;
-} State;
+/// A utility class representing a summary of the state of the essential properties of a grid node, used for backing up the grid.
+class Summary {
+ public:
+  /// This property stores a vector containing the index of the node in the Grid::nodes property for each node with a positive locale.
+  std::vector<int> index;
+  /// This property stores a vector containing the Node::atomic_number property of the grid nodes with a positive locale.
+  std::vector<int> atom;
+  /// This property stores a vector containing the Node::locale property of the grid nodes with a positive locale.
+  std::vector<int> locale;
+};
 
 /// A class representing the entire grid of nodes on which molecules will be built. 
 class Grid {
@@ -56,7 +61,11 @@ class Grid {
   /// This vector stores which nodes are pharmacophoric, i.e. they must be 
   /// included in any molecular skeleton built by this software.
   std::vector<int> pharma_nodes;
-  std::vector<State> backup[4];
+  /// This property stores the four different backup states of the grid, which 
+  /// is used by the save_state() and restore_state() methods to make a snapshot 
+  /// of the grid's state so that the Molecular_Assembler class can work on a 
+  /// given hydrocarbon scaffold many times over.
+  Summary backup[4];
   /// The main property of this class, a pointer of type Node which 
   /// stores the ensemble of nodes associated with the tetrahedral mesh. 
   Node* nodes;
@@ -67,6 +76,10 @@ class Grid {
   inline double distance(int,int) const;
   /// This method sets the Node::locale and Node::atomic_number properties to zero for each node in the grid. 
   inline void clear();
+  /// This method restores the state of the grid properties from one of the four save states in the Grid::backup property, specified by the method's argument.
+  inline void restore_state(int);
+  /// This method saves the current state of the grid properties (the Node::locale and Node::atomic_number properties of each node) to the Grid::backup array, with the element specified by the method's argument.
+  inline void save_state(int);
   /// This method calls the Grid::ring_analysis method and returns its output value.
   inline int ring_count() {return ring_analysis();};
   /// This method accepts as its first three arguments the dimensional indices of a node in the mesh, while the final integer argument represents the state which lies between 1 and 4. The final argument contains the coordinates of this node in the grid. 
@@ -77,18 +90,22 @@ class Grid {
   void allocate(int);
   /// This method converts any neighbouring nodes of carbon atoms which are empty to be hydrogen atoms. 
   void add_hydrogens();
+  /// This method makes a series of deletions of carbon atoms in the initial volume of the molecule via randomly centred "explosions" that eliminate carbon atoms within a given radius, checking that the pharmacophoric connectedness is maintained after each such deletion. The deletions continue until a percentage (first argument) of the original number of carbon atoms is deleted or the maximum number of attempts (second argument) has been made. The method returns true in the first case and false in the second.
   bool initial_deletion(double,int);
+  /// This method constructs a path in the grid linking together the pharmacophoric nodes, beginning with either such a node (when the argument is true) or with a random node (when it is false). The method returns true when it is successful in building such a path.
   bool path_selection(bool);
+  /// This method carries out a series of secondary deletions of carbon atoms from the molecular volume - the maximum number of attempts is set by the final argument. The criteria for exiting the deletion loop are set by the method's first three arguments, specifying the maximum number of carbon atoms with four carbon neighbours, the maximum number of carbon atoms belonging to four separate rings and the maximum number of rings.
   bool secondary_deletion(int,int,int,int);
+  /// This method rationalizes the scaffold by forcing any node that is the neighbour of two or more carbon atoms to become a carbon atom itself. It also eliminates a fixed percentage (the first argument) of randomly selected methyl groups as well as counting the number of rings - if this number is less than the second argument or greater than the third, the method returns false and true otherwise.
   bool rationalize(double,int,int);
   /// This method computes the number of rings in the current molecular scaffold and returns this value, as well as writing all of the nodes which are ring members to the Grid::ring_info vector. 
   int ring_analysis();
+  /// This method fills in the interior of the the space (-rs1:rs1,-rs2:rs2,-rs3:rs3) with carbon atoms, if the Node::locale property is equal to two.
   void fill_interior();
-  void restore(int);
-  void save_state(int);
+  /// This method tests that all of the pharmacophoric nodes are connected together by the molecular scaffold, returning true in that case and false otherwise; carbon nodes which are disconnected from the scaffold are marked as silver for deletion.
   bool connect_pharmacophores();
+  /// This method creates a "blank" pharmacophore whose spherical radius is the method's argument, selecting a set of random boundary nodes in number equal to the length of Grid::pharma_nodes.
   void blank_pharmacophore(double);
-  bool create_scaffold();
   /// This method writes the hydrocarbon scaffold in the current grid to an instance of the Molecule class.
   void write_scaffold(Molecule*) const;
  public:
@@ -110,6 +127,37 @@ void Grid::clear()
   for(int i=0; i<total; ++i) {
     nodes[i].locale = 0;
     nodes[i].atomic_number = 0;
+  }
+}
+
+void Grid::restore_state(int q)
+{
+  int i;
+  unsigned int n,l;
+
+  // First, initialize the whole grid back to zero...
+  clear();
+
+  // Now refill it from the vector created by save_state:
+  n = backup[q].index.size();
+  for(l=0; l<n; ++l) {
+    i = backup[q].index[l];
+    nodes[i].locale = backup[q].locale[l];
+    nodes[i].atomic_number = backup[q].atom[l];
+  }
+}
+
+void Grid::save_state(int q)
+{
+  backup[q].index.clear();
+  backup[q].locale.clear();
+  backup[q].atom.clear();
+
+  for(int i=0; i<total; ++i) {
+    if (nodes[i].locale <= 0) continue;
+    backup[q].index.push_back(i);
+    backup[q].locale.push_back(nodes[i].locale);
+    backup[q].atom.push_back(nodes[i].atomic_number);
   }
 }
 

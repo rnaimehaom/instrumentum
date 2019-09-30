@@ -3,27 +3,68 @@
 #ifndef _masmh
 #define _masmh
 
+/// A class representing the director of this program, reading in the parameter file and assembling the molecules that are written to a database.
 class Molecular_Assembler {
  private:
+  /// This integer property is the maximum number of initial deletion 
+  /// attempts; it is the second argument to the Grid::initial_deletion 
+  /// method. 
   int max_attempts = 100;
-  int nrings = 4;
+  /// This integer property is the number of carbon atoms with four carbon neighbours
+  /// that will be tolerated in a candidate molecule; it is the first argument to the 
+  /// Grid::secondary_deletion method.  
   int nc4 = 2;
+  /// This integer property is the maximum number of carbon atoms belonging to four 
+  /// separate rings that will be tolerated in a candidate molecule; it is the second 
+  /// argument to the Grid::secondary_deletion method. 
   int nc4rings = 0;
-  int min_rings = 1;
-  int max_rings = 6;
-  int n_initial = 3;
-  int n_secondary = 3;
-  int n_path = 3;
+  /// This integer property is the maximum number of rings that will be tolerated in 
+  /// a candidate molecule; it is the third argument to the Grid::secondary_deletion 
+  /// method. 
+  int nrings = 4;
+  /// This integer property is the maximum number of secondary deletion attempts; it is 
+  /// the fourth (and final) argument to the Grid::secondary_deletion method.
   int max_secondary = 100;
+  /// This integer property is the minimum number of rings that are acceptable for a 
+  /// candidate molecule; it is the second argument of the Grid::rationalize method. 
+  int min_rings = 1;
+  /// This integer property is the maximum number of rings that are acceptable for a 
+  /// candidate molecule; it is the third argument of the Grid::rationalize method. 
+  int max_rings = 6;
+  /// This integer property sets the number of iterations for the loop in the run() method 
+  /// over the call of the Grid::initial_deletion method. 
+  int n_initial = 3;
+  /// This integer property sets the number of iterations for the loop in the run() method 
+  /// over the call of the Grid::secondary_deletion method. 
+  int n_secondary = 3;
+  /// This integer property sets the number of iterations for the loop in the run() method 
+  /// over the call of the Grid::path_selection method. 
+  int n_path = 3;
+  /// This integer property sets the number of iterations for the loop in the run() method 
+  /// over the call of the Grid::rationalize method. 
   int n_rationalize = 3;
+  /// This integer property sets the number of iterations for the loop in the run() method 
+  /// over the call of the Grid::add_hydrogens method. 
   int n_desaturate = 1;
+  /// This integer property is the number of pharmacophoric nodes 
+  /// in the grid and is the final argument in the Grid constructor.
   int npharmacophore = 3;
+  /// This integer property is the row number of this ensemble of 
+  /// parameters in the Parameter_Set table of the SQLite database. 
   int parameter_id = 0;
+  /// This integer property is the number of OpenMP threads that will 
+  /// be used to run this software in parallel. 
   int nthread = 0;
-
+  /// This integer property is the number of molecules that will be 
+  /// created, after which the program exits. 
   long n_mols = 50000;
+  /// This integer property is the seed for the pseudo-random number 
+  /// generator, which is set using Random::initialize_generator. 
   long seed = 0;    
 
+  /// This Boolean method controls whether or not random paths are used 
+  /// to keep pharmacophoric nodes connected in the candidate molecule; it 
+  /// is the unique argument to the Grid::path_selection method. 
   bool pharm_hardening = true;
   bool subs_oxygen = true;
   bool subs_nitrogen = true;
@@ -35,18 +76,38 @@ class Molecular_Assembler {
   bool create_triple = false;
   bool kill_axial = true;
   
+  /// This string property is the name of the SQLite database 
+  /// file. 
   std::string database = "";
 
+  /// This floating point property is the percentage of carbon atoms 
+  /// that should be removed from the initial grid volume; it is the 
+  /// first argument to the Grid::initial_deletion method.
   double percent = 0.5;
+  /// This floating point property is the percentage of CH3 groups 
+  /// that should be trimmed from the molecular scaffold; it is the 
+  /// first argument of the Grid::rationalize method. 
   double percent_methyl = 0.4;
+  /// This floating point property is the carbon-carbon bond length 
+  /// (measured in Angstroms) that is used in assembling the grid, where 
+  /// is the inter-node distance; it is the fourth argument to the 
+  /// Grid constructor. 
   double bond_length = 1.52;
+  /// This floating point property is the total volume of the grid and 
+  /// thus sets the maximum dimensions of any candidate molecule; it is 
+  /// the unique argument of the Grid::blank_pharmacophore method.
   double pharmacophore_radius = 3.5;
 
+  /// This method writes a given molecule created by this class to the SQLite database. The first argument is the Molecule::opstring instance which led to this molecule, the second is the molecule itself and the final argument is the SQLite database.
   void database_insertion(const std::string&,const std::string&,sqlite3*) const;
+  /// This method builds a string - the method's argument - containing all of the parameter values (i.e. the properties of this class) in a format appropriate for an SQL statement.
   void create_parameter_string(std::string&) const;
+  /// This method creates the SQLite database if it doesn't exist, creating the two empty tables Parameter_Set and Compound with the appropriate columns. 
   void create_database() const;  
  public:
+  /// The constructor for this class, which accepts as its unique argument the name of the parameter file that it will parse to obtain the values for its properties.
   Molecular_Assembler(const std::string&);
+  /// The principal method for this class, called by the C++ main() program after initializing an instance of this class; this method uses the Grid and Molecule classes to build molecules and then write them to an SQLite database.
   void run() const;
 };
 #endif

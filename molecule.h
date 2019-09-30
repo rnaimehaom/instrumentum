@@ -8,8 +8,7 @@ class Molecule {
   int natoms = 0;
   int nrings = 0;
   int p_allocated = 0;
-  char ops[7] = {'P','N','S','O','T','F','A'};
-  std::string opstring;
+  std::string opstring = "";
   std::vector<int> atom_type;
   std::vector<int> locale;
   std::vector<int> bonds;
@@ -18,9 +17,18 @@ class Molecule {
   std::vector<int> rings;
   std::vector<double> coords;
   std::vector<int>* pieces;
+  static const char ops[7];
 
+  inline int get_bindex(int,int) const;
+  inline int get_rindex(int,int) const;
+  inline bool in_ring(int) const;
+  inline bool in_aromatic(int) const;
+  void saturation_check() const;
   bool consistent() const;
   bool valence_check() const;
+  bool is_aromatic(int) const;
+  void propagate(std::vector<int>&,int) const;
+  void axial_ring_bonds(std::vector<int>&) const;
   bool add_oxygen();
   bool add_sulfur();
   bool add_nitrogen();
@@ -31,23 +39,12 @@ class Molecule {
   void aromatize(std::vector<int>&);
   bool fungrp();
   void get_rings();
-  void axial_ring_bonds(std::vector<int>&) const;
-  int eliminate_atoms(int*,int);
-  int eliminate_atoms(int*,int,std::vector<int>&);
-  inline int get_bindex(int,int) const;
-  inline int get_rindex(int,int) const;
-  inline bool in_ring(int) const;
-  inline bool in_aromatic(int) const;
-  bool is_aromatic(int) const;
+  bool eliminate_atoms(int*,int);
+  bool eliminate_atoms(int*,int,std::vector<int>&);
   bool normalize_aromatic_bonds();
-  void saturation_check() const;
   void normalize_free_ring(int);
   bool normalize_safe(const std::vector<int>&,bool*);
   void connected_components(int);
-  void propagate(std::vector<int>&,int) const;
-  void add_atom(int);
-  void add_atom(int,const double*,int);
-  void add_bond(int,int,int);
   void drop_atom(int);
  public:
   Molecule();
@@ -56,10 +53,11 @@ class Molecule {
   Molecule& operator =(const Molecule&);
   void clear();
   bool decorate(const bool*);
+  void add_atom(int,const double*,int);
+  void add_bond(int,int,int);
   std::string to_MDLMol() const;
   inline std::string get_opstring() const {return opstring;}; 
   friend std::ostream& operator <<(std::ostream&,const Molecule&);
-  friend class Grid;
 };
 
 int Molecule::get_rindex(int n,int s) const

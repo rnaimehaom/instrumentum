@@ -4,6 +4,8 @@ extern Random RND;
 
 extern std::map<int,std::string> element_table;
 
+const char Molecule::ops[7] = {'P','N','S','O','T','F','A'};
+
 Molecule::Molecule()
 {
 
@@ -66,28 +68,9 @@ Molecule& Molecule::operator =(const Molecule& source)
   return *this;
 }
 
-void Molecule::add_atom(int atomic_number)
-{
-#ifdef DEBUG
-  assert(atomic_number >= 1);
-#endif
-  natoms++;
-  atom_type.push_back(atomic_number);
-  locale.push_back(0);
-  coords.push_back(-5000.0);
-  coords.push_back(-5000.0);
-  coords.push_back(-5000.0);
-  for(int i=0; i<4; ++i) {
-    bonds.push_back(-1);
-    btype.push_back(-1);
-  }
-}
-
 void Molecule::add_atom(int atomic_number,const double* x,int ltype)
 {
-#ifdef DEBUG
-  assert(atomic_number >= 1);
-#endif
+  if (atomic_number < 1) throw std::invalid_argument("Error: The atomic number in Molecule::add_atom must be greater than zero!");
   natoms++;
   atom_type.push_back(atomic_number);
   locale.push_back(ltype);
@@ -102,9 +85,7 @@ void Molecule::add_atom(int atomic_number,const double* x,int ltype)
 
 void Molecule::drop_atom(int n)
 {
-#ifdef DEBUG
-  assert(n >= 0 && n < natoms);
-#endif
+  if (n < 0 || n >= natoms) throw std::invalid_argument("Error: The argument to Molecule::drop_atom does not exist!");
   int i,j,neg,nafter,fminus,nminus;  
   std::vector<int> nbonds,nbtype,nlocal,ntype;
   std::vector<double> ncoords;
@@ -213,13 +194,10 @@ void Molecule::drop_atom(int n)
 
 void Molecule::add_bond(int atom1,int atom2,int valence)
 {
+  if (atom1 < 0 || atom1 >= natoms) throw std::invalid_argument("Error: The first argument to Molecule::add_bond does not exist!");
+  if (atom2 < 0 || atom2 >= natoms) throw std::invalid_argument("Error: The second argument to Molecule::add_bond does not exist!");
   int i,next;
   bool done;
-
-#ifdef DEBUG
-  assert(atom1 >= 0 && atom1 < natoms);
-  assert(atom2 >= 0 && atom2 < natoms);
-#endif
 
   done = false;
   for(i=0; i<4; ++i) {
@@ -279,8 +257,8 @@ std::ostream& operator <<(std::ostream& s,const Molecule& source)
 
 void Molecule::saturation_check() const
 {
-  bool found;
   int i,j,k,nz,bcount;
+  bool found;
 
   for(i=0; i<natoms; ++i) {
     if (atom_type[i] == 1) {
@@ -346,6 +324,7 @@ void Molecule::saturation_check() const
 bool Molecule::valence_check() const
 {
   int i,j,bcount;
+
   for(i=0; i<natoms; ++i) {
     bcount = 0;
     for(j=0; j<4; ++j) {
@@ -407,7 +386,7 @@ bool Molecule::valence_check() const
   return true;
 }
 
-int Molecule::eliminate_atoms(int* kill,int nkill)
+bool Molecule::eliminate_atoms(int* kill,int nkill)
 {
   int i,temp;
   bool change;
@@ -432,10 +411,10 @@ int Molecule::eliminate_atoms(int* kill,int nkill)
     drop_atom(kill[i]);
   }
 
-  return 1;
+  return true;
 }
 
-int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
+bool Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
 {
   int i,j,temp;
   bool change;
@@ -474,7 +453,7 @@ int Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
     drop_atom(kill[i]);
   }
 
-  return 1;
+  return true;
 }
 
 bool Molecule::add_nitrogen()
