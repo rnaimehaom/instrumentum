@@ -727,10 +727,9 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
       nodes[convert[l]].atomic_number = 6;
     }
   } while(true);
+
+  if (!connect_pharmacophores()) throw std::runtime_error("Error: Unable to connect pharmacophores in the Grid::rationalize method!");
   // Now the ring counting...
-#ifdef DEBUG
-  assert(connect_pharmacophores());
-#endif
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
@@ -789,7 +788,7 @@ int Grid::ring_analysis()
   // of the edges (and so vertices) that are involved in rings.
   // We will do this by removing a bond from the molecule, and
   // seeing if it remains connected.
-  int i,j,k,in1,in2,nbonds;
+  int i,j,k,in1,in2,nbonds,nv;
   unsigned int l;
   bool found;
   std::vector<int> vertices,ring_vertices,ring_edges,rings,redges,bonds,wcopy;
@@ -879,13 +878,12 @@ int Grid::ring_analysis()
   for(l=0; l<4*ring_vertices.size(); ++l) {
     redges.push_back(-1);
   }
+  nv = (signed) ring_vertices.size();
   for(l=0; l<ring_edges.size(); l+=2) {
     in1 = get_index(ring_edges[l],ring_vertices);
     in2 = get_index(ring_edges[l+1],ring_vertices);
-#ifdef DEBUG
-    assert(in1 >= 0 && in1 < (signed) (4*ring_vertices.size()));
-    assert(in2 >= 0 && in1 < (signed) (4*ring_vertices.size()));
-#endif
+    if (in1 < 0 || in1 >= 4*nv) throw std::runtime_error("Error: Missing ring atom in Grid::ring_analysis method!");
+    if (in2 < 0 || in2 >= 4*nv) throw std::runtime_error("Error: Missing ring atom in Grid::ring_analysis method!");
     for(j=0; j<4; ++j) {
       if (redges[4*in1+j] == -1) {
         redges[4*in1+j] = in2;
@@ -952,7 +950,7 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
       }
       if (nbonds == 0) nodes[vertices[m]].atomic_number = 0;
     }
-    assert(connect_pharmacophores());
+    if (!connect_pharmacophores()) throw std::runtime_error("Error: Unable to connect pharmacophores in Grid::secondary_deletion method!");
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
@@ -1077,9 +1075,7 @@ bool Grid::path_selection(bool random)
           }
         }
       }
-#ifdef DEBUG
-      assert(!winner.empty());
-#endif
+      if (winner.empty()) throw std::runtime_error("Error: Missing link in Grid::path_selection method!");
       next_node = winner[RND.irandom(winner.size())];
       if (nodes[next_node].locale == 6 || next_node == inode) {
         for(l=0; l<pathback.size(); ++l) {
