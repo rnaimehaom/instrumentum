@@ -182,8 +182,8 @@ Grid::~Grid()
 
 Grid::Grid(int i,int j,int k,double lambda,int np)
 {
-  if (i < 1 || j < 1 || k < 1) throw std::invalid_argument("The grid dimensions must be greater than zero!");
-  if (lambda < std::numeric_limits<double>::epsilon()) throw std::invalid_argument("The bond length must be positive!");
+  assert(i >= 1 && j >= 1 && k >= 1);
+  assert(lambda > std::numeric_limits<double>::epsilon());
   D1 = i;
   D2 = j;
   D3 = k;
@@ -572,10 +572,11 @@ bool Grid::initial_deletion(double percent,int max_attempts)
   // initial volume of carbon atoms, checking to preserve the
   // connectivity at each stage, until either "percent" percentage
   // of the original number of heavy atoms remain, or the number
-  // "max_attempts" of deletions has been exhausted
-  if (max_attempts <= 0) throw std::invalid_argument("Error: Illegal argument value in Grid::initial_deletion method!");
+  // "max_attempts" of deletions has been exhausted.
   int i,j,k,alpha1,alpha2,alpha3,target,in1,kount,nkill,nheavy = 0,iterations = 0;
   double r2,radius,delta,n_debut;
+
+  assert(max_attempts > 0);
 
   for(i=-rs1; i<=rs1; ++i) {
     for(j=-rs2; j<=rs2; ++j) {
@@ -665,11 +666,12 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
 {
   // This function eliminates flagpole interactions among
   // hydrogen atoms by forcing any node which is a neighbour
-  // of two or more carbon atoms to become carbon as well
-  if (rings_min < 0 || rings_max < 0) throw std::invalid_argument("Error: Illegal value for ring number argument in Grid::rationalize method!");
+  // of two or more carbon atoms to become carbon as well.
   int i,j,k,in1,in2,alpha,nrings,ncarbon,nkill,kount = 0;
   unsigned int l;
   std::vector<int> methyl,convert;
+
+  assert(rings_min >= 0 && rings_max >= 0);
 
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -727,8 +729,9 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
       nodes[convert[l]].atomic_number = 6;
     }
   } while(true);
-
-  if (!connect_pharmacophores()) throw std::runtime_error("Error: Unable to connect pharmacophores in the Grid::rationalize method!");
+#ifdef DEBUG
+  assert(connect_pharmacophores());
+#endif
   // Now the ring counting...
   for(i=-D1; i<=D1; ++i) {
     for(j=-D2; j<=D2; ++j) {
@@ -822,7 +825,7 @@ int Grid::ring_analysis()
   wcopy = bonds;
 
   // A sanity check...
-  if (!connected(bonds)) throw std::runtime_error("Error: Disconnected bond table in Grid::ring_analysis method!");
+  assert(connected(bonds));
 
   // We will methodically go through this bond table, and eliminate
   // a bond at each occasion, checking to see if the resulting molecule
@@ -882,8 +885,10 @@ int Grid::ring_analysis()
   for(l=0; l<ring_edges.size(); l+=2) {
     in1 = get_index(ring_edges[l],ring_vertices);
     in2 = get_index(ring_edges[l+1],ring_vertices);
-    if (in1 < 0 || in1 >= 4*nv) throw std::runtime_error("Error: Missing ring atom in Grid::ring_analysis method!");
-    if (in2 < 0 || in2 >= 4*nv) throw std::runtime_error("Error: Missing ring atom in Grid::ring_analysis method!");
+#ifdef DEBUG
+    assert(in1 >= 0 && in1 < 4*nv);
+    assert(in2 >= 0 && in2 < 4*nv);
+#endif
     for(j=0; j<4; ++j) {
       if (redges[4*in1+j] == -1) {
         redges[4*in1+j] = in2;
@@ -908,12 +913,16 @@ int Grid::ring_analysis()
 
 bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
 {
-  if (nc4 < 0 || nrings < 0 || nc4rings < 0 || attempts <= 0) throw std::invalid_argument("Error: Illegal argument value in the Grid::secondary_deletion method!");
   int i,j,k,q,alpha1,alpha2,alpha3,target,in1,in2,cring,ring_count,ring_member;
   int nkill,ncarbon,nbonds,iterations = 0;
   unsigned int l,m;
   std::vector<int> vertices,c4;
   double r2,radius,delta;
+
+  assert(nc4 >= 0);
+  assert(nrings >= 0);
+  assert(nc4rings >= 0);
+  assert(attempts > 0);
 
   do {
     alpha1 = -rs1 + RND.irandom(2*rs1);
@@ -950,7 +959,7 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
       }
       if (nbonds == 0) nodes[vertices[m]].atomic_number = 0;
     }
-    if (!connect_pharmacophores()) throw std::runtime_error("Error: Unable to connect pharmacophores in Grid::secondary_deletion method!");
+    assert(connect_pharmacophores());
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
@@ -1075,7 +1084,9 @@ bool Grid::path_selection(bool random)
           }
         }
       }
-      if (winner.empty()) throw std::runtime_error("Error: Missing link in Grid::path_selection method!");
+#ifdef DEBUG
+      assert(!winner.empty());
+#endif
       next_node = winner[RND.irandom(winner.size())];
       if (nodes[next_node].locale == 6 || next_node == inode) {
         for(l=0; l<pathback.size(); ++l) {
@@ -1115,10 +1126,10 @@ bool Grid::path_selection(bool random)
         nbonds++;
       }
     }
-    if (nbonds == 0) throw std::runtime_error("Error: Isolated atom in Grid::path_selection method!");
+    assert(nbonds != 0);
   }
   // A sanity check...
-  if (!connected(bonds)) throw std::runtime_error("Error: Disconnected bond table in Grid::path_selection method!");
+  assert(connected(bonds));
 
   return true;
 }

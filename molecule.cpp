@@ -70,7 +70,9 @@ Molecule& Molecule::operator =(const Molecule& source)
 
 void Molecule::add_atom(int atomic_number,const double* x,int ltype)
 {
-  if (atomic_number < 1) throw std::invalid_argument("Error: The atomic number in Molecule::add_atom must be greater than zero!");
+#ifdef DEBUG
+  assert(atomic_number > 0);
+#endif
   natoms++;
   atom_type.push_back(atomic_number);
   locale.push_back(ltype);
@@ -85,12 +87,9 @@ void Molecule::add_atom(int atomic_number,const double* x,int ltype)
 
 bool Molecule::drop_atom(int n)
 {
-  if (n < 0 || n >= natoms) {
-#ifdef VERBOSE
-    std::cout << "The atom " << n << " does not exist in this molecule!" << std::endl;
+#ifdef DEBUG
+  assert(n >= 0 && n < natoms);
 #endif
-    return false;
-  }
   int i,j,neg,nafter,fminus,nminus;  
   std::vector<int> nbonds,nbtype,nlocal,ntype;
   std::vector<double> ncoords;
@@ -200,8 +199,10 @@ bool Molecule::drop_atom(int n)
 
 void Molecule::add_bond(int atom1,int atom2,int valence)
 {
-  if (atom1 < 0 || atom1 >= natoms) throw std::invalid_argument("Error: The first argument to Molecule::add_bond does not exist!");
-  if (atom2 < 0 || atom2 >= natoms) throw std::invalid_argument("Error: The second argument to Molecule::add_bond does not exist!");
+#ifdef DEBUG
+  assert(atom1 >= 0 && atom1 < natoms);
+  assert(atom2 >= 0 && atom2 < natoms);
+#endif
   int i,next;
   bool done;
 
@@ -373,79 +374,33 @@ bool Molecule::valence_check() const
   return true;
 }
 
-bool Molecule::eliminate_atoms(int* kill,int nkill)
+bool Molecule::eliminate_atoms(std::set<int>& kill) 
 {
-  int i,temp;
-  bool change;
+  if (kill.empty()) return true;
+  if (*(kill.begin()) < 0 || *(kill.rbegin()) >= natoms) return false;
+  std::set<int>::reverse_iterator rit;
 
-#ifdef DEBUG
-  for(i=0; i<nkill; ++i) {
-    if (kill[i] < 0 || kill[i] >= natoms) throw std::runtime_error("Error: Missing atoms in the Molecule::eliminate_atoms method!");
+  for(rit=kill.rbegin(); rit!=kill.rend(); ++rit) {
+    if (!drop_atom(*rit)) return false;
   }
-#endif
-
-  // First we will sort the atoms in "kill" in descending order
-  do {
-    change = false;
-    for(i=0; i<nkill-1; ++i) {
-      if (kill[i] < kill[i+1]) {
-        change = true;
-        temp = kill[i+1];
-        kill[i+1] = kill[i];
-        kill[i] = temp;
-        break;
-      }
-    }
-    if (!change) break;
-  } while(true);
-  // Next we need to make a deep copy of the original set of bonds, rings
-  // and so forth
-  for(i=0; i<nkill; ++i) {
-    if (!drop_atom(kill[i])) return false;
-  }
-
   return true;
 }
 
-bool Molecule::eliminate_atoms(int* kill,int nkill,std::vector<int>& axial)
+bool Molecule::eliminate_atoms(std::set<int>& kill,std::vector<int>& axial) 
 {
-  int i,j,temp;
-  bool change;
+  if (kill.empty()) return true;
+  if (*(kill.begin()) < 0 || *(kill.rbegin()) >= natoms) return false;
+  int i,n;
+  std::set<int>::reverse_iterator rit;
 
-#ifdef DEBUG
-  for(i=0; i<nkill; ++i) {
-    if (kill[i] < 0 || kill[i] >= natoms) throw std::runtime_error("Error: Missing atoms in the Molecule::eliminate_atoms method!");
-  }
-#endif
-
-  // First we will sort the atoms in "kill" in descending order
-  do {
-    change = false;
-    for(i=0; i<nkill-1; ++i) {
-      if (kill[i] < kill[i+1]) {
-        change = true;
-        temp = kill[i+1];
-        kill[i+1] = kill[i];
-        kill[i] = temp;
-        break;
-      }
+  for(rit=kill.rbegin(); rit!=kill.rend(); ++rit) {
+    n = *rit;
+    for(i=0; i<6*nrings; ++i) {
+      if (axial[i] < n) continue;
+      axial[i] = (axial[i] == n) ? -1 : axial[i] - 1;
     }
-    if (!change) break;
-  } while(true);
-  // Next we need to make a deep copy of the original set of bonds, rings
-  // and so forth
-  for(i=0; i<nkill; ++i) {
-    for(j=0; j<6*nrings; ++j) {
-      if (axial[j] == kill[i]) {
-        axial[j] = -1;
-      }
-      else if (axial[j] > kill[i]) {
-        axial[j] -= 1;
-      }
-    }
-    if (!drop_atom(kill[i])) return false;
+    if (!drop_atom(n)) return false;
   }
-
   return true;
 }
 
@@ -456,9 +411,10 @@ bool Molecule::add_nitrogen()
   // unsaturated bonds. It will then seek to convert it to an oxygen atom.
   int i,j,k,l,h,c,con,hh,hcount,alpha,nb,naroma,temp1,temp2,tt,in1;
   int carb1,carb2,the_ring,cand,c1,c2,temp,in2;
-  int to_die[2],candidate[3],aroma_neighbours[3],hydrogen[3],carbon[3];
+  int candidate[3],aroma_neighbours[3],hydrogen[3],carbon[3];
   int candidate_rneighbours[3][2],candidate_hneighbours[3][1];
   bool problem,exotic;
+  std::set<int> drop;
   std::vector<int> indices;
 
   for(i=0; i<natoms; ++i) {
@@ -585,8 +541,9 @@ bool Molecule::add_nitrogen()
             if (cand < 1) continue;
             alpha = RND.irandom(cand);
             atom_type[temp1] = 7;
-            to_die[0] = candidate[alpha];
-            to_die[1] = candidate_hneighbours[alpha][0];
+            drop.clear();
+            drop.insert(candidate[alpha]);
+            drop.insert(candidate_hneighbours[alpha][0]);
             // Get the two ring neighbours of candidate[alpha] to bond to each other rather than
             // candidate[alpha]
             for(l=0; l<4; ++l) {
@@ -595,7 +552,7 @@ bool Molecule::add_nitrogen()
             }
             bonds[4*candidate_rneighbours[alpha][0]+in1] = candidate_rneighbours[alpha][1];
             bonds[4*candidate_rneighbours[alpha][1]+in2] = candidate_rneighbours[alpha][0];
-            eliminate_atoms(to_die,2);
+            eliminate_atoms(drop);
 #ifdef VERBOSE
             std::cout << this << std::endl;
             for(l=0; l<nrings; ++l) {
@@ -609,7 +566,9 @@ bool Molecule::add_nitrogen()
           else if (h == 1) {
             // Let's make the conversion...
             atom_type[temp1] = 7;
-            eliminate_atoms(hydrogen,1);
+            drop.clear();
+            drop.insert(hydrogen[0]);
+            eliminate_atoms(drop);
             return true;
           }
         }
@@ -636,7 +595,9 @@ bool Molecule::add_nitrogen()
       if (h >= 1 && !exotic && nb >= 3) {
         // Let's make the conversion...
         atom_type[temp1] = 7;
-        eliminate_atoms(hydrogen,1);
+        drop.clear();
+        drop.insert(hydrogen[0]);
+        eliminate_atoms(drop);
         return true;
       }
     }
@@ -649,11 +610,11 @@ bool Molecule::add_sulfur()
   // This routine searches for a carbon atom with at least two hydrogen atom
   // bonds, and which is not beside any other heteroatoms or involved in any
   // unsaturated bonds. It will then seek to convert it to a sulfur atom.
-
+  int i,j,k,h,con,hcount,nb;
   int hydrogen[3],temp1,temp2,tt;
   bool exotic,problem;
+  std::set<int> drop;
   std::vector<int> indices;
-  int i,j,k,h,con,hcount,nb;
 
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
@@ -705,7 +666,8 @@ bool Molecule::add_sulfur()
       if (h >= 2 && !exotic && nb == 4) {
         // Let's make the conversion...
         atom_type[temp1] = 16;
-        eliminate_atoms(hydrogen,2);
+        drop.insert(hydrogen[0]); drop.insert(hydrogen[1]);
+        eliminate_atoms(drop);
         return true;
       }
     }
@@ -718,11 +680,11 @@ bool Molecule::add_oxygen()
   // This routine searches for a carbon atom with at least two hydrogen atom
   // bonds, and which is not beside any other heteroatoms or involved in any
   // unsaturated bonds. It will then seek to convert it to an oxygen atom.
-
-  int hydrogen[3],temp1,temp2,tt;
-  std::vector<int> indices;
   int i,j,k,h,nb,hcount,con;
+  int hydrogen[3],temp1,temp2,tt;
   bool problem,exotic;
+  std::set<int> drop;
+  std::vector<int> indices;
 
   for(i=0; i<natoms; ++i) {
     indices.push_back(i);
@@ -775,7 +737,8 @@ bool Molecule::add_oxygen()
       if (h >= 2 && !exotic && nb == 4) {
         // Let's make the conversion...
         atom_type[temp1] = 8;
-        eliminate_atoms(hydrogen,2);
+        drop.insert(hydrogen[0]); drop.insert(hydrogen[1]);
+        eliminate_atoms(drop);
         return true;
       }
     }
@@ -785,10 +748,11 @@ bool Molecule::add_oxygen()
 
 bool Molecule::create_tbond()
 {
-  int temp,a,in1,hydro1[4],hydro2[4],hydro[2];
-  double L1[3],L2[3];
-  bool found;
   int i,j,l,k,h1,h2,candidate = 0;
+  int temp,a,in1,hydro1[4],hydro2[4];
+  bool found;
+  double L1[3],L2[3];
+  std::set<int> drop;
 
   // First see if we can find any carbon-carbon double bonds
   for(i=0; i<natoms; ++i) {
@@ -844,9 +808,9 @@ bool Molecule::create_tbond()
             // create a triple bond
             btype[4*i+candidate] = 3;
             btype[4*a+in1] = 3;
-            hydro[0] = hydro1[j];
-            hydro[1] = hydro2[k];
-            eliminate_atoms(hydro,2);
+            drop.insert(hydro1[j]);
+            drop.insert(hydro2[k]);
+            eliminate_atoms(drop);
             return true;
           }
         }
@@ -858,9 +822,10 @@ bool Molecule::create_tbond()
 
 int Molecule::aromatize(std::vector<int>& axial)
 {
-  int aromatize,kill[6],in1,temp,rindex,naromatized = 0;
-  int i,j,k,l,c,change[4],nkill,kount = 0;
+  int aromatize,in1,temp,rindex,naromatized = 0;
+  int i,j,k,l,c,change[4],kount = 0;
   bool good;
+  std::set<int> drop;
 
   do {
     aromatize = -1;
@@ -911,7 +876,7 @@ int Molecule::aromatize(std::vector<int>& axial)
         }
       }
 #ifdef DEBUG
-      if (c != 2) throw std::runtime_error("Error: Missing ring atom neighbours in Molecule::aromatize method!");
+      assert(c == 2);
 #endif
       for(j=0; j<c; ++j) {
         btype[4*rindex+change[j]] = 4;
@@ -925,14 +890,11 @@ int Molecule::aromatize(std::vector<int>& axial)
         btype[4*in1+l] = 4;
       }
     }
-    nkill = 0;
+    drop.clear();
     for(l=0; l<6; ++l) {
-      if (axial[6*aromatize+l] != -1) {
-        kill[nkill] = axial[6*aromatize+l];
-        nkill++;
-      }
+      if (axial[6*aromatize+l] != -1) drop.insert(axial[6*aromatize+l]);
     }
-    assert(eliminate_atoms(kill,nkill,axial));
+    assert(eliminate_atoms(drop,axial));
     naromatized++;
   } while(true);
 
@@ -1085,10 +1047,11 @@ bool Molecule::fungrp()
 
 bool Molecule::create_dbond()
 {
-  int i,temp,q,in1,in2,to_die[2];
+  int i,temp,q,in1,in2;
   unsigned int j,k,l,m,kount;
-  double p[4][3],A,B,C,D,delta;
   bool done,problem,ring1,ring2;
+  double p[4][3],A,B,C,D,delta;
+  std::set<int> drop;
   std::vector<int> indices,candidate,h1,h2;
 
   for(i=0; i<natoms; ++i) {
@@ -1222,9 +1185,8 @@ bool Molecule::create_dbond()
             }
             btype[4*candidate[i]+in2] = 2;
             btype[4*candidate[i+1]+in1] = 2;
-            to_die[0] = h1[j];
-            to_die[1] = h2[k];
-            eliminate_atoms(to_die,2);
+            drop.insert(h1[j]); drop.insert(h2[k]);
+            eliminate_atoms(drop);
             return true;
           }
           else {
@@ -1266,10 +1228,11 @@ bool Molecule::is_aromatic(int rnumber) const
 
 bool Molecule::create_penta1()
 {
-  int candidates[6],candidate_hneighbours[6][2],candidate_rneighbours[6][2];
-  int c1,c2,temp,in1,in2,to_die[3],the_nitro,hydro[2];
-  double p2[3],rcentre[3],xc[3];
   int i,j,k,cand,nitro,n_atoms[3],bcount1,bcount2,n,alpha,alpha1,alpha2,h;
+  int candidates[6],candidate_hneighbours[6][2],candidate_rneighbours[6][2];
+  int c1,c2,temp,in1,in2,the_nitro,hydro[2];
+  double p2[3],rcentre[3],xc[3];
+  std::set<int> drop;
 
   for(i=0; i<nrings; ++i) {
     if (rings[6*i+5] == -1) continue;
@@ -1319,9 +1282,9 @@ bool Molecule::create_penta1()
           alpha2 = RND.irandom(cand);
           if (alpha2 != alpha1) break;
         } while(true);
-        to_die[0] = candidate_hneighbours[alpha1][0];
-        to_die[1] = candidates[alpha2];
-        to_die[2] = candidate_hneighbours[alpha2][0];
+        drop.insert(candidate_hneighbours[alpha1][0]);
+        drop.insert(candidates[alpha2]);
+        drop.insert(candidate_hneighbours[alpha2][0]);
         alpha = RND.irandom(2);
         if (alpha == 0) {
           atom_type[candidates[alpha1]] = 8;
@@ -1333,7 +1296,7 @@ bool Molecule::create_penta1()
         in2 = get_bindex(candidates[alpha2],candidate_rneighbours[alpha2][1]);
         bonds[4*candidate_rneighbours[alpha2][0]+in1] = candidate_rneighbours[alpha2][1];
         bonds[4*candidate_rneighbours[alpha2][1]+in2] = candidate_rneighbours[alpha2][0];
-        eliminate_atoms(to_die,3);
+        eliminate_atoms(drop);
         return true;
       }
       else if (nitro == 1) {
@@ -1375,12 +1338,14 @@ bool Molecule::create_penta1()
             bcount1++;
           }
         }
-        if (bcount1 != 2) throw std::runtime_error("Error: Bad nitrogen bond count in Molecule::create_penta1 method!");
+#ifdef DEBUG
+        assert(bcount1 == 2);
+#endif
         if (cand < 1) continue;
         // Choose two at random, and do the necessary changes
         alpha1 = RND.irandom(cand);
-        to_die[0] = candidate_hneighbours[alpha1][0];
-        to_die[1] = candidates[alpha1];
+        drop.insert(candidate_hneighbours[alpha1][0]);
+        drop.insert(candidates[alpha1]);
         // Let's compute the ring centre
         rcentre[0] = 0.0;
         rcentre[1] = 0.0;
@@ -1405,11 +1370,13 @@ bool Molecule::create_penta1()
         in2 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][1]);
         bonds[4*candidate_rneighbours[alpha1][0]+in1] = candidate_rneighbours[alpha1][1];
         bonds[4*candidate_rneighbours[alpha1][1]+in2] = candidate_rneighbours[alpha1][0];
-        eliminate_atoms(to_die,2);
+        eliminate_atoms(drop);
         return true;
       }
       else {
-        if (nitro > 2) throw std::runtime_error("Error: Too many nitrogen atoms in Molecule::create_penta1 method!");
+#ifdef DEBUG
+        assert(nitro <= 2);
+#endif        
         // Delete a carbon and add a hydrogen to one of the nitrogens
         cand = 0;
         n = 0;
@@ -1467,8 +1434,8 @@ bool Molecule::create_penta1()
         // Choose two at random, and do the necessary changes
         alpha1 = RND.irandom(cand);
         alpha2 = RND.irandom(2);
-        to_die[0] = candidate_hneighbours[alpha1][0];
-        to_die[1] = candidates[alpha1];
+        drop.insert(candidate_hneighbours[alpha1][0]);
+        drop.insert(candidates[alpha1]);
 
         rcentre[0] = 0.0;
         rcentre[1] = 0.0;
@@ -1494,7 +1461,7 @@ bool Molecule::create_penta1()
         in2 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][1]);
         bonds[4*candidate_rneighbours[alpha1][0]+in1] = candidate_rneighbours[alpha1][1];
         bonds[4*candidate_rneighbours[alpha1][1]+in2] = candidate_rneighbours[alpha1][0];
-        eliminate_atoms(to_die,2);
+        eliminate_atoms(drop);
         return true;
       }
     }
@@ -1535,14 +1502,14 @@ bool Molecule::create_penta1()
       if (cand < 1) continue;
       // Choose two at random, and do the necessary changes
       alpha1 = RND.irandom(cand);
-      to_die[0] = candidate_hneighbours[alpha1][0];
-      to_die[1] = candidates[alpha1];
-      to_die[2] = candidate_hneighbours[alpha1][1];
+      drop.insert(candidate_hneighbours[alpha1][0]);
+      drop.insert(candidates[alpha1]);
+      drop.insert(candidate_hneighbours[alpha1][1]);
       in1 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][0]);
       in2 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][1]);
       bonds[4*candidate_rneighbours[alpha1][0]+in1] = candidate_rneighbours[alpha1][1];
       bonds[4*candidate_rneighbours[alpha1][1]+in2] = candidate_rneighbours[alpha1][0];
-      eliminate_atoms(to_die,3);
+      eliminate_atoms(drop);
       return true;
     }
   }
@@ -1569,6 +1536,7 @@ bool Molecule::create_amide()
   //         |           ESTER
   //         C
   int i,j,a,in1,h1,c1,h2,c2,alpha,candidate,hydro1[4],hydro2[4];
+  std::set<int> drop;
 
   // First see if we can find any carbon-carbon double bonds
   for(i=0; i<natoms; ++i) {
@@ -1704,7 +1672,8 @@ bool Molecule::create_amide()
             btype[4*i+in1] = 1;
             in1 = get_bindex(i,a);
             btype[4*a+in1] = 1;
-            eliminate_atoms(hydro2,1);
+            drop.insert(hydro2[0]);
+            eliminate_atoms(drop);
           }
           return true;
         }
@@ -1773,7 +1742,7 @@ void Molecule::axial_ring_bonds(std::vector<int>& axial) const
       }
     }
 #ifdef DEBUG
-    if (n1 != 2 || n2 != 2) throw std::runtime_error("Error: Missing non-ring neighbours in Molecule::axial_ring_bonds method!");
+    assert(n1 == 2 && n2 == 2);
 #endif
     // Now we simply need to compare these lines to see which is parallel
     a1 = -1;
@@ -1822,7 +1791,7 @@ void Molecule::axial_ring_bonds(std::vector<int>& axial) const
         }
       }
 #ifdef DEBUG
-      if (n != 2) throw std::runtime_error("Error: Missing non-ring neighbours in Molecule::axial_ring_bonds method!");
+      assert(n == 2);
 #endif
       for(j=0; j<2; ++j) {
         for(k=0; k<3; ++k) {
@@ -1872,6 +1841,7 @@ bool Molecule::decorate(const bool* ornaments)
   // their axial methyl groups.
   int i,j,k,h,temp,ndouble,nops,alpha,hydrogen[3],opcount = 0;
   bool methyl,test;
+  std::set<int> drop;
   std::vector<int> axial;
 
   bool kill_axial = ornaments[0];
@@ -1922,7 +1892,10 @@ bool Molecule::decorate(const bool* ornaments)
         std::cout << "Eliminating axial methyl..." << std::endl;
 #endif
         atom_type[temp] = 1;
-        eliminate_atoms(hydrogen,3);
+        drop.clear();
+        drop.insert(hydrogen[0]); drop.insert(hydrogen[1]); drop.insert(hydrogen[2]);
+        eliminate_atoms(drop);
+        //eliminate_atoms(hydrogen,3);
         axial.clear();
       }
       else {
@@ -2031,7 +2004,7 @@ void Molecule::normalize_free_ring(int the_aring)
       if (atom_type[rings[6*the_aring+i]] == 7) nit++;
     }
 #ifdef DEBUG
-    if (oxy > 1 || sul > 1) throw std::runtime_error("Error: Too many ring heteroatoms in the Molecule::normalize_free_ring method!");
+    assert(oxy < 2 && sul < 2);
 #endif
     if (oxy == 1) {
       for(i=0; i<5; ++i) {
@@ -2048,11 +2021,15 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
-      if (rn != 2) throw std::runtime_error("Error: Bad oxygen bond count in Molecule::normalize_free_ring method!");
+#ifdef DEBUG
+      assert(rn == 2);
+#endif
       btype[4*oxygen+rneighbour[0]] = 1;
       btype[4*oxygen+rneighbour[1]] = 1;
       v1 = bonds[4*oxygen+rneighbour[0]];
-      if (get_bindex(oxygen,v1) == -1) throw std::runtime_error("Error: No oxygen ring bond in Molecule::normalize_free_ring method!");
+#ifdef DEBUG
+      assert(get_bindex(oxygen,v1) != -1);
+#endif
       btype[4*v1+get_bindex(oxygen,v1)] = 1;
       v2 = bonds[4*oxygen+rneighbour[1]];
       btype[4*v2+get_bindex(oxygen,v2)] = 1;
@@ -2094,7 +2071,9 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
-      if (rn != 2) throw std::runtime_error("Error: Bad sulfur bond count in Molecule::normalize_free_ring method!");
+#ifdef DEBUG
+      assert(rn == 2);
+#endif
       btype[4*sulfur+rneighbour[0]] = 1;
       btype[4*sulfur+rneighbour[1]] = 1;
       v1 = bonds[4*sulfur+rneighbour[0]];
@@ -2144,7 +2123,9 @@ void Molecule::normalize_free_ring(int the_aring)
 #endif
         }
       }
-      if (nitrogen == -1) throw std::runtime_error("Error: Missing trivalent nitrogen atom in Molecule::normalize_free_ring method!");
+#ifdef DEBUG
+      assert(nitrogen != -1);
+#endif
       for(i=0; i<4; ++i) {
         temp = bonds[4*nitrogen+i];
         if (temp < 0) continue;
@@ -2153,7 +2134,9 @@ void Molecule::normalize_free_ring(int the_aring)
           rn++;
         }
       }
-      if (rn != 2) throw std::runtime_error("Error: Bad nitrogen bond count in Molecule::normalize_free_ring method!");
+#ifdef DEBUG
+      assert(rn == 2);
+#endif
       btype[4*nitrogen+rneighbour[0]] = 1;
       btype[4*nitrogen+rneighbour[1]] = 1;
       v1 = bonds[4*nitrogen+rneighbour[0]];
@@ -2654,7 +2637,7 @@ bool Molecule::normalize_aromatic_bonds()
       if (ring_cluster[nrings*i+j]) sum++;
     }
 #ifdef DEBUG
-    if (sum == 0) throw std::runtime_error("Error: Unable to find any ring clusters in the Molecule::normalize_aromatic_bonds method!");
+    assert(sum != 0);
 #endif
     if (sum > 1) {
       for(j=0; j<nrings; ++j) {
@@ -2748,7 +2731,9 @@ bool Molecule::normalize_aromatic_bonds()
       for(j=0; j<nrings; ++j) {
         if (ring_cluster[nrings*i+j] == 1) the_ring = j;
       }
-      if (the_ring == -1) throw std::runtime_error("Error: No candidate ring in Molecule::normalize_aromatic_bonds method!");
+#ifdef DEBUG
+      assert(the_ring != -1);
+#endif
       if (is_aromatic(the_ring)) normalize_free_ring(the_ring);
     }
   }
@@ -2764,7 +2749,9 @@ std::string Molecule::to_MDLMol() const
   std::ostringstream s;
   std::map<int,std::string>::const_iterator it;
 
-  if (!consistent()) throw std::runtime_error("Error: Inconsistent molecule in the Molecule::to_MDLMol method!");
+#ifdef DEBUG
+  assert(consistent());
+#endif
 
   s << "mol_" << opstring << "_" << seconds << std::endl;
   s << "  MOE2000" << std::endl;
@@ -2777,7 +2764,9 @@ std::string Molecule::to_MDLMol() const
   s << std::setw(3) << natoms << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
   for(i=0; i<natoms; ++i) {
     it = element_table.find(atom_type[i]);
-    if (it == element_table.end()) throw std::runtime_error("Error: Unable to find atom type in the Molecule::to_MDLMol method!");
+#ifdef DEBUG
+    assert(it != element_table.end());
+#endif
     atom = it->second; 
     s << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+1] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+2] << " " << std::setw(3) << std::setiosflags(std::ios::left) << atom << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;
   }

@@ -15,13 +15,12 @@ Random::~Random()
 
 void Random::initialize_generator(long seed)
 {
-  if (seed <= 0) throw std::invalid_argument("The random number seed must be positive!");
+  assert(seed > 0);
   gen->seed(seed);
 }
 
 int Random::irandom(int nmax)
 {
-  if (nmax <= 0) throw std::invalid_argument("The argument to Random::irandom must be positive!");
   int output = int(double(nmax)*drandom());
   return output;
 }
@@ -34,7 +33,9 @@ double Random::drandom()
 
 void Random::shuffle(std::vector<int>& v)
 {
-  if (v.size() < 2) throw std::invalid_argument("The vector to be shuffled must have at least two elements!");
+#ifdef DEBUG
+  assert(v.size() > 1);
+#endif
   // Fisher-Yates shuffle algorithm
   int i,j,q;
   const int n = (signed) v.size();

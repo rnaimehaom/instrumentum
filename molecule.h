@@ -92,10 +92,10 @@ class Molecule {
   bool fungrp();
   /// This method identifies all of the rings in the molecule and returns the number of such rings; it also populates the Molecule::rings property.
   int get_rings();
-  /// This method method removes from the molecule the n atoms stored by index in the first argument, where n is the second argument. The list of atoms is sorted in descending order and then the Molecule::drop_atom method is called on each element. The method returns true if removing the atoms succeeds and false otherwise. 
-  bool eliminate_atoms(int*,int);
-  /// This method removes from the molecule the n atoms stored by index in the first argument, where n is the second argument. The list of atoms is sorted in descending order and then the Molecule::drop_atom method is called on each element. The third argument is a vector of axial atoms whose indexing is updated by this method if necessary; the method returns true if removing the atoms succeeds and false otherwise. 
-  bool eliminate_atoms(int*,int,std::vector<int>&);
+  /// This method method removes from the molecule the atoms stored by index in the method's unique argument. The method iterates in reverse order over the set of atoms and then the Molecule::drop_atom method is called on each member. The method returns true if removing the atoms succeeds and false otherwise. 
+  bool eliminate_atoms(std::set<int>&);
+  /// This method removes from the molecule the atoms stored by index in the first argument. The method iterates in reverse order over the set of atoms and then the Molecule::drop_atom method is called on each member. The third argument is a vector of axial atoms whose indexing is updated by this method if necessary; the method returns true if removing the atoms succeeds and false otherwise. 
+  bool eliminate_atoms(std::set<int>&,std::vector<int>&);
   /// This method converts the molecule's aromatic ring bonds, of type equal to four, and changes them to alternative values of one and two, necessary for being output to an MDL MOL file; it returns true if the bond type conversion is successful.
   bool normalize_aromatic_bonds();
   /// This method converts the aromatic ring bonds of an isolated ring whose index is specified by the method's argument, changing the bond type from four to an alternating pattern of one and two values, needed to satisfy the requirements of the MDL MOL file format.  
