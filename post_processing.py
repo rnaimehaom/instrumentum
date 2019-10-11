@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import time
 import sqlite3
-import pybel
+import openbabel.pybel as pybel
 import math
 import sys
 
@@ -56,7 +56,7 @@ def synthetic_feasibility(molecule):
 	return sigma
 
 if (len(sys.argv) != 2):
-	print "Usage: ./post-processing.py database file"
+	print("Usage: ./post-processing.py database file")
 	sys.exit(0)
 dbname = sys.argv[1]
 rms_cutoff = 10.0
@@ -68,21 +68,21 @@ while True:
 	q = db.execute(query1)
 	result = q.fetchall()
 	for row_id in result:
-		print "Doing energy minimization on molecule",row_id[0]
+		print("Doing energy minimization on molecule",row_id[0])
 		output = energy_minimization(row_id[1])
 		update = "UPDATE Compound SET minimized_structure='" + output[1] + "',root_mean_square=" + str(output[0]) + " WHERE compound_id=" + str(row_id[0]) + ";"
 		db.execute(update);
 		db.commit()
-	print "Done energy minimization"
+	print("Done energy minimization")
 	q = db.execute(query2)
 	result = q.fetchall()
 	for row_id in result:
-		print "Doing synthetic feasibility on molecule",row_id[0]
+		print("Doing synthetic feasibility on molecule",row_id[0])
 		output = synthetic_feasibility(row_id[1])
 		update = "UPDATE Compound SET synthetic_feasibility=" + str(output) + " WHERE compound_id=" + str(row_id[0]) + ";"
 		db.execute(update);
 		db.commit()
 	db.close()
-	print "Done synthetic feasibility, sleeping..."
+	print("Done synthetic feasibility, sleeping...")
 	time.sleep(180)
 
