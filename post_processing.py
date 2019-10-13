@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
 
-import time
-import sqlite3
+# To install the OpenBabel library and Python module,
+# git clone https://github.com/openbabel/openbabel.git
+# cd openbabel
+# mkdir build
+# cd build
+# cmake .. -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_BINDINGS=ON -DRUN_SWIG=ON
+# make -j2
+# sudo make install
 import openbabel.pybel as pybel
+# Use the command 
+# sudo pip3 install sqlite3
+# to install the SQLite3 module for Python 3.x.
+import sqlite3
+import time
 import math
 import sys
 

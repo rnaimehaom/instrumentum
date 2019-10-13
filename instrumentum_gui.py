@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
-import os
+# Use the command 
+# sudo pip3 install tkinter 
+# to install the Tkinter module for Python 3.x.
 import tkinter
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
+import os
 
 # One point to note is that this GUI must be run on a monitor with
 # resolution at least 800 x 675 for proper viewing of the complete interface. 
