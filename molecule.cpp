@@ -2660,7 +2660,7 @@ bool Molecule::normalize_aromatic_bonds()
         }
         for(it=aromatic.begin(); it!=aromatic.end(); ++it) {
           j = *it;
-          if (rings[6*aromatic[j]+5] == -1) {
+          if (rings[6*j+5] == -1) {
             fiver = j;
             break;
           }
@@ -2676,10 +2676,9 @@ bool Molecule::normalize_aromatic_bonds()
             }
             else {
               need_to_do = -1;
-              for(it=aromatic.begin(); it!=aromatic.end(); ++it) {
-                k = *it;
-                if (!done[k]) {
-                  need_to_do = k;
+              for(l=0; l<aromatic.size(); ++l) {
+                if (!done[l]) {
+                  need_to_do = l;
                   break;
                 }
               }
@@ -2707,10 +2706,9 @@ bool Molecule::normalize_aromatic_bonds()
             }
             else {
               need_to_do = -1;
-              for(it=aromatic.begin(); it!=aromatic.end(); ++it) {
-                k = *it;
-                if (!done[k]) {
-                  need_to_do = k;
+              for(l=0; l<aromatic.size(); ++l) {
+                if (!done[l]) {
+                  need_to_do = l;
                   break;
                 }
               }
