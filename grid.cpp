@@ -791,7 +791,7 @@ int Grid::ring_analysis()
   // of the edges (and so vertices) that are involved in rings.
   // We will do this by removing a bond from the molecule, and
   // seeing if it remains connected.
-  int i,j,k,in1,in2,nbonds,nv;
+  int i,j,k,in1,in2,nbonds;
   unsigned int l;
   bool found;
   std::vector<int> vertices,ring_vertices,ring_edges,rings,redges,bonds,wcopy;
@@ -881,7 +881,9 @@ int Grid::ring_analysis()
   for(l=0; l<4*ring_vertices.size(); ++l) {
     redges.push_back(-1);
   }
-  nv = (signed) ring_vertices.size();
+#ifdef DEBUG
+  const int nv = (signed) ring_vertices.size();
+#endif  
   for(l=0; l<ring_edges.size(); l+=2) {
     in1 = get_index(ring_edges[l],ring_vertices);
     in2 = get_index(ring_edges[l+1],ring_vertices);
@@ -907,8 +909,7 @@ int Grid::ring_analysis()
   for(l=0; l<rings.size(); ++l) {
     ring_info.push_back(vertices[ring_vertices[rings[l]]]);
   }
-  int output = (signed) ring_info.size()/6;
-  return output;
+  return (signed) ring_info.size()/6;
 }
 
 bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)

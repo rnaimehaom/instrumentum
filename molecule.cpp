@@ -2257,12 +2257,10 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
   int i,j,k,l,atype,winner,test1,test2,ratom,atom,atom2,btype1,btype2;
   int valence,nringp,ring_partners[2];
   bool found,change;
-  std::vector<int>::const_iterator it;
 
   do {
     winner = -1;
-    for(it=aromatic.begin(); it!=aromatic.end(); ++it) {
-      i = *it;
+    for(i=0; i<(signed) aromatic.size(); ++i) {
       if (done[i]) continue;
       // Now see if this ring has any bonds which have been converted to
       // one or two
