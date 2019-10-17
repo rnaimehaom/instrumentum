@@ -2533,7 +2533,6 @@ bool Molecule::normalize_aromatic_bonds()
   bool found,test,done[6];
   bool* ring_cluster;
   std::vector<int> aromatic,ratom;
-  std::vector<int>::const_iterator it;
 
   for(i=0; i<nrings; ++i) {
     if (is_aromatic(i)) {
@@ -2652,14 +2651,13 @@ bool Molecule::normalize_aromatic_bonds()
       else {
         // The hard case... see if any of the aromatic rings are
         // five-membered
-        fiver = -1;
         for(l=0; l<aromatic.size(); ++l) {
           done[l] = false;
         }
-        for(it=aromatic.begin(); it!=aromatic.end(); ++it) {
-          j = *it;
-          if (rings[6*j+5] == -1) {
-            fiver = j;
+        fiver = -1;
+        for(l=0; l<aromatic.size(); ++l) {
+          if (rings[6*aromatic[l]+5] == -1) {
+            fiver = l;
             break;
           }
         }
