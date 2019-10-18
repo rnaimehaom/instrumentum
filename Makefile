@@ -1,12 +1,18 @@
 OBJECTS = instrumentum.o random.o node.o grid.o molecule.o molecular_assembler.o
 
+CXX = g++
+
+DEBUG = -g -Wall
+
+OPENMP = -fopenmp
+
 #CXX_FLAGS += $(CXX_OPT) $(OPENMP) 
 CXX_FLAGS += $(DEBUG) $(OPENMP)
 
 #LD_FLAGS += $(CXX_OPT) $(OPENMP)
 LD_FLAGS += $(DEBUG) $(OPENMP)
 
-LIBS = $(BOOST_FILESYSTEM) $(BOOST_SYSTEM) -lsqlite3 -lm
+LIBS = -lboost_filesystem -lboost_system -lsqlite3 -lm
 
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
