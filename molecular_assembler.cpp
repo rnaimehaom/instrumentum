@@ -8,6 +8,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   // of which is passed in as an argument to the method
   // The file format should be '#' for a comment, otherwise 
   // varname = value
+  int tvalue;
   std::string line,name,value,parameter_string;
   std::vector<std::string> ppair;
 
@@ -33,104 +34,114 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       // any of the known parameters. If so, read in the value and
       // assign it
       if (name == "PharmacophoreRadius") {
-        pharmacophore_radius = boost::lexical_cast<double>(value);
+        pharmacophore_radius = std::stod(value);
       }
       else if (name == "InitialPercentage") {
-        percent = boost::lexical_cast<double>(value);
+        percent = std::stod(value);
       }
       else if (name == "PercentMethyl") {
-        percent_methyl = boost::lexical_cast<double>(value);
+        percent_methyl = std::stod(value);
       }
       else if (name == "BondLength") {
-        bond_length = boost::lexical_cast<double>(value);
+        bond_length = std::stod(value);
       }
       else if (name == "DatabaseFile") {
         database = value;
       }
       else if (name == "RandomSeed") {
-        seed = boost::lexical_cast<long>(value);
+        seed = std::stol(value);
       }
       else if (name == "MaximumAttempts") {
-        max_attempts = boost::lexical_cast<int>(value);
+        max_attempts = std::stoi(value);
       }
       else if (name == "NumberRings") {
-        nrings = boost::lexical_cast<int>(value);
+        nrings = std::stoi(value);
       }
       else if (name == "NumberC4Atoms") {
-        nc4 = boost::lexical_cast<int>(value);
+        nc4 = std::stoi(value);
       }
       else if (name == "NumberC4Rings") {
-        nc4rings = boost::lexical_cast<int>(value);
+        nc4rings = std::stoi(value);
       }
       else if (name == "MinimumRings") { 
-        min_rings = boost::lexical_cast<int>(value);
+        min_rings = std::stoi(value);
       }
       else if (name == "MaximumRings") {
-        max_rings = boost::lexical_cast<int>(value);
+        max_rings = std::stoi(value);
       }
       else if (name == "NumberInitial") { 
-        n_initial = boost::lexical_cast<int>(value);
+        n_initial = std::stoi(value);
       }
       else if (name == "NumberSecondary") {
-        n_secondary = boost::lexical_cast<int>(value);
+        n_secondary = std::stoi(value);
       }
       else if (name == "NumberPath") {
-        n_path = boost::lexical_cast<int>(value);
+        n_path = std::stoi(value);
       }
       else if (name == "MaximumSecondary") {
-        max_secondary = boost::lexical_cast<int>(value);
+        max_secondary = std::stoi(value);
       }
       else if (name == "NumberRationalize") {
-        n_rationalize = boost::lexical_cast<int>(value);
+        n_rationalize = std::stoi(value);
       }
       else if (name == "NumberDesaturate") {
-        n_desaturate = boost::lexical_cast<int>(value);
+        n_desaturate = std::stoi(value);
       }
       else if (name == "NumberMolecules") {
-        n_mols = boost::lexical_cast<int>(value);
+        n_mols = std::stoi(value);
       }
       else if (name == "NumberPharmacophores") {
-        npharmacophore = boost::lexical_cast<int>(value);
+        npharmacophore = std::stoi(value);
       }
       else if (name == "CreateFiveMemberRings") {
-        boost::to_upper(value);
-        create_penta = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        create_penta = (tvalue == 1) ? true : false;
       }
       else if (name == "SubstituteFunctionalGroups") {
-        boost::to_upper(value);
-        subs_functional = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        subs_functional = (tvalue == 1) ? true : false;
       }
-      else if (name == "CreateDoubleBonds") { 
-        boost::to_upper(value);
-        create_double = (value == "YES") ? true : false;
+      else if (name == "CreateDoubleBonds") {
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1); 
+        create_double = (tvalue == 1) ? true : false;
       }
       else if (name == "CreateTripleBonds") {
-        boost::to_upper(value);
-        create_triple = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        create_triple = (tvalue == 1) ? true : false;
       }
       else if (name == "CreateExotic") {
-        boost::to_upper(value);
-        create_exotic = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        create_exotic = (tvalue == 1) ? true : false;
       }
       else if (name == "PharmacophoreHardening") {
-        boost::to_upper(value);
-        pharm_hardening = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        pharm_hardening = (tvalue == 1) ? true : false;
       }
       else if (name == "SubstituteOxygen") {
-        boost::to_upper(value);
-        subs_oxygen = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        subs_oxygen = (tvalue == 1) ? true : false;
       }
       else if (name == "SubstituteNitrogen") {
-        boost::to_upper(value);
-        subs_nitrogen = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        subs_nitrogen = (tvalue == 1) ? true : false;
       }
       else if (name == "SubstituteSulfur") {
-        boost::to_upper(value);
-        subs_sulfur = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        subs_sulfur = (tvalue == 1) ? true : false;
       }
       else if (name == "StripAxialMethyls") {
-        boost::to_upper(value);
-        kill_axial = (value == "YES") ? true : false;
+        tvalue = std::stoi(value);
+        assert(tvalue == 0 || tvalue == 1);
+        kill_axial = (tvalue == 1) ? true : false;
       }
     }
   }
