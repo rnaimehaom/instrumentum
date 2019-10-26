@@ -11,11 +11,9 @@
 #include <string>
 #include <random>
 #include <algorithm>
+
 // To handle the database interactions
 #include <sqlite3.h>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -23,6 +21,8 @@
 
 #ifndef _globalh
 #define _globalh
+std::string& trim(std::string&,const std::string& chars = "\t\n\v\f\r ");
+bool file_exists(const std::string&);
 bool connected(const std::vector<int>&);
 void ring_perception(const std::vector<int>&,std::vector<int>&);
 

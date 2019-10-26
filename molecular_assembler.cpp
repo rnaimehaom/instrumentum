@@ -8,14 +8,16 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   // of which is passed in as an argument to the method
   // The file format should be '#' for a comment, otherwise 
   // varname = value
-  int tvalue;
+  int n,tvalue;
   std::string line,name,value,parameter_string;
-  std::vector<std::string> ppair;
-
-  // Open the file
   std::ifstream s; 
+  //std::vector<std::string> ppair;
+
+  // Prepare to catch exceptions from the ifstream object 
   s.exceptions(std::ifstream::badbit);
+  
   try {
+    // Open the file
     s.open(filename,std::ios_base::in);
     // Loop through all lines in the parameter file
     while(std::getline(s,line)) {
@@ -25,11 +27,14 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       if (line[0] == '#') continue;
       // If there's no equals sign in this line, continue
       if (line.find('=') == std::string::npos) continue;
-      boost::split(ppair,line,boost::is_any_of("="));
-      name = ppair[0];
-      value = ppair[1];
-      boost::algorithm::trim(name);
-      boost::algorithm::trim(value);
+      n = line.find('=');
+      name = line.substr(0,n);
+      value = line.substr(n+1,line.length());
+      //boost::split(ppair,line,boost::is_any_of("="));
+      //name = ppair[0];
+      //value = ppair[1];
+      trim(name);
+      trim(value);
       // Now that we have the parameter name, see if it matches
       // any of the known parameters. If so, read in the value and
       // assign it
@@ -174,7 +179,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 #endif
 
   // Check if the database exists, if not the tables need to be created!
-  if (!boost::filesystem::exists(database)) create_database();
+  if (!file_exists(database)) create_database();
 
   sqlite3* dbase;
   sqlite3_open(database.c_str(),&dbase);
