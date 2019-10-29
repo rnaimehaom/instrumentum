@@ -57,10 +57,10 @@ class Molecular_Assembler {
   int nthread = 0;
   /// This integer property is the number of molecules that will be 
   /// created, after which the program exits. 
-  long n_mols = 50000;
+  unsigned long n_mols = 50000;
   /// This integer property is the seed for the pseudo-random number 
   /// generator, which is set using Random::initialize_generator. 
-  long seed = 0;    
+  unsigned long seed = 0;    
 
   /// This Boolean property controls whether or not random paths are used 
   /// to keep pharmacophoric nodes connected in the candidate molecule; it 

@@ -4,18 +4,17 @@ Random RND;
 
 Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 {
-  // This method reads in the parameters from a file, the name 
-  // of which is passed in as an argument to the method
-  // The file format should be '#' for a comment, otherwise 
-  // varname = value
+  // This method reads in the parameters from a file, the name
+  // of which is passed in as an argument to the method.
+  // The file format should be '#' for a comment, otherwise
+  // varname = value.
   int n,tvalue;
   std::string line,name,value,parameter_string;
-  std::ifstream s; 
-  //std::vector<std::string> ppair;
+  std::ifstream s;
 
-  // Prepare to catch exceptions from the ifstream object 
+  // Prepare to catch exceptions from the ifstream object
   s.exceptions(std::ifstream::badbit);
-  
+
   try {
     // Open the file
     s.open(filename,std::ios_base::in);
@@ -54,7 +53,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
         database = value;
       }
       else if (name == "RandomSeed") {
-        seed = std::stol(value);
+        seed = (unsigned) std::stol(value);
       }
       else if (name == "MaximumAttempts") {
         max_attempts = std::stoi(value);
@@ -68,13 +67,13 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       else if (name == "NumberC4Rings") {
         nc4rings = std::stoi(value);
       }
-      else if (name == "MinimumRings") { 
+      else if (name == "MinimumRings") {
         min_rings = std::stoi(value);
       }
       else if (name == "MaximumRings") {
         max_rings = std::stoi(value);
       }
-      else if (name == "NumberInitial") { 
+      else if (name == "NumberInitial") {
         n_initial = std::stoi(value);
       }
       else if (name == "NumberSecondary") {
@@ -110,7 +109,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       }
       else if (name == "CreateDoubleBonds") {
         tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1); 
+        assert(tvalue == 0 || tvalue == 1);
         create_double = (tvalue == 1) ? true : false;
       }
       else if (name == "CreateTripleBonds") {
@@ -368,7 +367,7 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
 void Molecular_Assembler::run() const
 {
   sqlite3* dbase;
-  long mol_created = 0;
+  unsigned long mol_created = 0;
   bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
 
   sqlite3_open(database.c_str(),&dbase);
@@ -378,7 +377,7 @@ void Molecular_Assembler::run() const
   {
 #endif
   int build,i,j,k,l,q;
-  long s = seed;
+  unsigned long s = seed;
   bool test;
   std::string mstring,ops;
   Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
