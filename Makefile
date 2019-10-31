@@ -1,18 +1,20 @@
 OBJECTS = instrumentum.o global.o random.o node.o grid.o molecule.o molecular_assembler.o
 
-CXX = g++ -std=c++17 -fopenmp
+CXX = g++ -std=c++14
 
 OPT = -O3 -fstrict-aliasing -ffast-math -ftree-vectorize -funroll-loops
 
 DEBUG = -g -Wall -DVERBOSE -DDEBUG
 
-#CXX_FLAGS = $(OPT)  
+#CXX_FLAGS = $(OPT)
 CXX_FLAGS = $(DEBUG)
+
+LD_FLAGS = $(CXX_FLAGS) -pthread
 
 LIBS = -lsqlite3 -lm
 
 instrumentum: $(OBJECTS)
-	$(CXX) $(CXX_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)  
+	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)
 
 instrumentum.o: instrumentum.cpp instrumentum.h molecular_assembler.h
 	$(CXX) $(CXX_FLAGS) -c instrumentum.cpp
@@ -29,7 +31,7 @@ node.o: node.cpp node.h instrumentum.h
 random.o: random.cpp random.h instrumentum.h
 	$(CXX) $(CXX_FLAGS) -c random.cpp
 
-molecule.o: molecule.cpp molecule.h instrumentum.h 
+molecule.o: molecule.cpp molecule.h instrumentum.h
 	$(CXX) $(CXX_FLAGS) -c molecule.cpp
 
 molecular_assembler.o: molecular_assembler.cpp molecular_assembler.h grid.h molecule.h instrumentum.h

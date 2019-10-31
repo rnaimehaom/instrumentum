@@ -10,14 +10,10 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <thread>
 #include <algorithm>
-
 // To handle the database interactions
 #include <sqlite3.h>
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #ifndef _globalh
 #define _globalh

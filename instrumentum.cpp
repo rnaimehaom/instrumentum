@@ -24,7 +24,7 @@ int main(int argc,char** argv)
 
   std::string filename(argv[1]);
   Molecular_Assembler masm(filename);
-  masm.run();
+  masm.assemble();
 
   return 0;
 }

@@ -124,11 +124,12 @@ class Molecular_Assembler {
   /// This method builds a string - the method's argument - containing all of the parameter values (i.e. the properties of this class) in a format appropriate for an SQL statement.
   void create_parameter_string(std::string&) const;
   /// This method creates the SQLite database if it doesn't exist, creating the two empty tables Parameter_Set and Compound with the appropriate columns. 
-  void create_database() const;  
+  void create_database() const;
+  void run(int = 0) const;  
  public:
   /// The constructor for this class, which accepts as its unique argument the name of the parameter file that it will parse to obtain the values for its properties.
   Molecular_Assembler(const std::string&);
   /// The principal method for this class, called by the C++ main() program after initializing an instance of this class; this method uses the Grid and Molecule classes to build molecules and then write them to an SQLite database.
-  void run() const;
+  void assemble() const;
 };
 #endif

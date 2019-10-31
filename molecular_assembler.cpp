@@ -92,7 +92,10 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
         n_desaturate = std::stoi(value);
       }
       else if (name == "NumberMolecules") {
-        n_mols = std::stoi(value);
+        n_mols = (unsigned) std::stol(value);
+      }
+      else if (name == "NumberThreads") {
+        nthread = std::stoi(value);
       }
       else if (name == "NumberPharmacophores") {
         npharmacophore = std::stoi(value);
@@ -156,6 +159,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   s.close();
   // Sanity checks...
   assert(n_mols > 0);
+  assert(nthread > 0);
   assert(n_rationalize > 0);
   assert(n_desaturate > 0);
   assert(n_path > 0);
@@ -171,11 +175,9 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
 
-  if (seed == 0) seed = long(std::time(nullptr));
+  if (seed == 0) seed = (unsigned) std::time(nullptr);
 
-#ifdef _OPENMP
-  nthread = atoi(std::getenv("OMP_NUM_THREADS"));
-#endif
+  if (nthread > 1) assert(sqlite3_config(SQLITE_CONFIG_MULTITHREAD) == SQLITE_OK);
 
   // Check if the database exists, if not the tables need to be created!
   if (!file_exists(database)) create_database();
@@ -364,32 +366,38 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   output = s.str();
 }
 
-void Molecular_Assembler::run() const
+void Molecular_Assembler::assemble() const
 {
-  sqlite3* dbase;
-  unsigned long mol_created = 0;
-  bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
+  if (nthread == 1) {
+    run();
+  }
+  else {
+    std::vector<std::thread> pool;
+    for(int i=0; i<nthread; ++i) {
+      pool.emplace_back(&Molecular_Assembler::run,this,i);
+    }
+    for(auto& entry: pool) {
+      entry.join();
+    }
+  }
+}
 
-  sqlite3_open(database.c_str(),&dbase);
-
-#ifdef _OPENMP
-#pragma omp parallel default(shared) reduction(+:mol_created)
-  {
-#endif
-  int build,i,j,k,l,q;
-  unsigned long s = seed;
-  bool test;
+void Molecular_Assembler::run(int thread_id) const
+{
+  int i,j,k,l,q,build;
+  unsigned long s = seed,mol_created = 0;
+  bool test,ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
   std::string mstring,ops;
+  sqlite3* dbase;
   Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
   Molecule* m = new Molecule;
 
-#ifdef _OPENMP
-  s *= (1 + omp_get_thread_num());
-#endif
+  sqlite3_open(database.c_str(),&dbase);
 
+  s *= (1 + thread_id);
   RND.initialize_generator(s);
 
-  while(mol_created < n_mols) {
+  do {
 #if VERBOSE
     std::cout << "Putting pharmacophore..." << std::endl;
 #endif
@@ -450,17 +458,11 @@ void Molecular_Assembler::run() const
                 build++;
                 mstring = m->to_MDLMol();
                 ops = m->get_opstring();
-#ifdef _OPENMP
-#pragma omp critical 
-        {
-#endif
                 database_insertion(ops,mstring,dbase);
-#ifdef _OPENMP
-        }
-#endif
               }
               m->clear();
             }
+            // Mutex here...
             mol_created += build;
             g->restore_state(3);
           }
@@ -471,12 +473,11 @@ void Molecular_Assembler::run() const
       g->restore_state(0);
     }
     g->clear();
-  }
+    // And the same mutex here...
+    if (mol_created >= n_mols) break;
+  } while(true);
   delete g;
   delete m;
-#ifdef _OPENMP
-  }
-#endif
   sqlite3_close(dbase);
 }
 
