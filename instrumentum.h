@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <mutex>
 #include <thread>
 #include <algorithm>
 // To handle the database interactions

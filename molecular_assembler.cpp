@@ -1,6 +1,7 @@
 #include "molecular_assembler.h"
 
 Random RND;
+std::mutex global_lock;
 
 Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 {
@@ -386,7 +387,8 @@ void Molecular_Assembler::run(int thread_id) const
 {
   int i,j,k,l,q,build;
   unsigned long s = seed,mol_created = 0;
-  bool test,ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
+  bool test,done = false;
+  bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
   std::string mstring,ops;
   sqlite3* dbase;
   Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
@@ -462,8 +464,10 @@ void Molecular_Assembler::run(int thread_id) const
               }
               m->clear();
             }
-            // Mutex here...
-            mol_created += build;
+            if (build > 0) {
+              std::lock_guard<std::mutex> guard(global_lock);
+              mol_created += build;
+            }
             g->restore_state(3);
           }
           g->restore_state(2);
@@ -473,9 +477,11 @@ void Molecular_Assembler::run(int thread_id) const
       g->restore_state(0);
     }
     g->clear();
-    // And the same mutex here...
-    if (mol_created >= n_mols) break;
-  } while(true);
+    {
+      std::lock_guard<std::mutex> guard(global_lock);
+      if (mol_created >= n_mols) done = true;
+    }
+  } while(!done);
   delete g;
   delete m;
   sqlite3_close(dbase);
