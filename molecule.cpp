@@ -239,6 +239,58 @@ void Molecule::add_bond(int atom1,int atom2,int valence)
   }
 }
 
+int Molecule::write(std::ofstream& s) const
+{
+  // This method writes the Molecule properties "natoms", "opstring", "bonds", 
+  // "btype" and "coords" to a binary diskfile.
+  int i,j,n,bcount = 0;
+  double x[3];
+
+  s.write((char*)(&natoms),sizeof(int)); bcount += sizeof(int);
+  n = opstring.length();
+  for(i=0; i<n; ++i) {
+    s.write((char*)(&opstring[i]),sizeof(char));    
+  }
+  bcount += n*sizeof(char);
+
+  for(i=0; i<natoms; ++i) {
+    for(j=0; j<4; ++j) {
+      n = bonds[4*i+j];
+      s.write((char*)(&n),sizeof(int));
+    }
+  }
+  bcount += 4*natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    for(j=0; j<4; ++j) {
+      n = btype[4*i+j];
+      s.write((char*)(&n),sizeof(int)); 
+    }
+  }
+  bcount += 4*natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    x[0] = coords[3*i];
+    x[1] = coords[3*i+1];
+    x[2] = coords[3*i+2];
+    s.write((char*)(&x[0]),3*sizeof(double));
+  }
+  bcount += 3*natoms*sizeof(double);
+
+  return bcount;
+}
+
+int Molecule::read(std::ifstream& s)
+{
+  int bcount = 0;
+
+  clear();
+
+  s.read((char*)(&natoms),sizeof(int)); bcount += sizeof(int);
+
+  return bcount;  
+}
+
 std::ostream& operator <<(std::ostream& s,const Molecule& source)
 {
   int i,j;

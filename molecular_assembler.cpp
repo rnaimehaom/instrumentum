@@ -2,7 +2,8 @@
 
 Random RND;
 std::mutex global_lock;
-
+unsigned long mol_created = 0;
+ 
 Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 {
   // This method reads in the parameters from a file, the name
@@ -30,9 +31,6 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       n = line.find('=');
       name = line.substr(0,n);
       value = line.substr(n+1,line.length());
-      //boost::split(ppair,line,boost::is_any_of("="));
-      //name = ppair[0];
-      //value = ppair[1];
       trim(name);
       trim(value);
       // Now that we have the parameter name, see if it matches
@@ -381,25 +379,30 @@ void Molecular_Assembler::assemble() const
       entry.join();
     }
   }
+  std::cout << "The total number of molecules created is " << mol_created << std::endl;
 }
 
 void Molecular_Assembler::run(int thread_id) const
 {
-  int i,j,k,l,q,build;
-  unsigned long s = seed,mol_created = 0;
+  int i,j,k,l,q,ncreated;
+  unsigned long s = seed;
   bool test,done = false;
   bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
   std::string mstring,ops;
-  sqlite3* dbase;
+  //sqlite3* dbase;
   Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
-  Molecule* m = new Molecule;
+  Molecule m;
+  std::vector<Molecule> mvector;
 
-  sqlite3_open(database.c_str(),&dbase);
+  //sqlite3_open(database.c_str(),&dbase);
+  std::string filename = "molecules_" + std::to_string(getpid()) + "_" + std::to_string(1 + thread_id) + ".dat";
+  std::ofstream ofile(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
   s *= (1 + thread_id);
   RND.initialize_generator(s);
 
   do {
+    ncreated = 0;
 #if VERBOSE
     std::cout << "Putting pharmacophore..." << std::endl;
 #endif
@@ -446,27 +449,17 @@ void Molecular_Assembler::run(int thread_id) const
               continue;
             }
             g->add_hydrogens();
-            build = 0;
             for(q=0; q<n_desaturate; ++q) {
 #ifdef VERBOSE
               std::cout << "Writing grid to molecule..." << std::endl;
 #endif
-              g->write_scaffold(m);
+              g->write_scaffold(&m);
 #ifdef VERBOSE
               std::cout << "Decorating molecule..." << std::endl;
 #endif
-              test = m->decorate(ornaments);
-              if (test) {
-                build++;
-                mstring = m->to_MDLMol();
-                ops = m->get_opstring();
-                database_insertion(ops,mstring,dbase);
-              }
-              m->clear();
-            }
-            if (build > 0) {
-              std::lock_guard<std::mutex> guard(global_lock);
-              mol_created += build;
+              test = m.decorate(ornaments);
+              if (test) mvector.push_back(m);
+              m.clear();
             }
             g->restore_state(3);
           }
@@ -477,14 +470,30 @@ void Molecular_Assembler::run(int thread_id) const
       g->restore_state(0);
     }
     g->clear();
+    ncreated = long(mvector.size());
     {
       std::lock_guard<std::mutex> guard(global_lock);
+      mol_created += long(ncreated);
       if (mol_created >= n_mols) done = true;
     }
+    // November 2, 2019
+    // The real bottleneck for the performance of this code lies here - when creating 
+    // 10000 molecules with a single thread, if this loop is commented out the runtime 
+    // is 20.3 seconds. When the molecules are written to the database, the runtime is 
+    // 147.3 seconds, over a sevenfold increase. 
+    // The solution - probably create a method for the Molecule class that will write 
+    // the essential properties of a Molecule instance to a binary file for some sort 
+    // of post-processing, including conversion to an MDL MOL string and insertion into 
+    // a relational database.
+    for(i=0; i<ncreated; ++i) {
+      mvector[i].write(ofile);
+    }
+    mvector.clear();
   } while(!done);
+
   delete g;
-  delete m;
-  sqlite3_close(dbase);
+  ofile.close();
+  //sqlite3_close(dbase);
 }
 
 void Molecular_Assembler::database_insertion(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const

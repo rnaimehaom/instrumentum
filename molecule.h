@@ -119,6 +119,8 @@ class Molecule {
   void clear();
   /// This method is the main public one - it takes the molecule, which begins as one consisting exclusively of carbon and hydrogen atoms linked by single bonds, and adds double and triple bonds, aromatic rings, oxygen, nitrogen, sulfur and halogen atoms and so forth. The argument controls which of these decoration operations will be attempted. 
   bool decorate(const bool*);
+  int write(std::ofstream&) const;
+  int read(std::ifstream&);
   /// This method adds an atom to the molecule - the first argument is the atom's type (by atomic number), the second is the atom's geometric coordinates and the final argument is the atom's locale (e.g. whether it is a pharmacophoric atom).
   void add_atom(int,const double*,int);
   /// This method adds a bond, the type of which is the method's final argument, between the two atoms specified by the method's first two arguments.

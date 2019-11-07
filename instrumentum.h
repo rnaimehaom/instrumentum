@@ -13,6 +13,7 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
+#include <unistd.h>
 // To handle the database interactions
 #include <sqlite3.h>
 
