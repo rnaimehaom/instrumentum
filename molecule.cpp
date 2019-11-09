@@ -248,10 +248,23 @@ int Molecule::write(std::ofstream& s) const
 
   s.write((char*)(&natoms),sizeof(int)); bcount += sizeof(int);
   n = opstring.length();
+  s.write((char*)(&n),sizeof(int)); bcount += sizeof(int);
   for(i=0; i<n; ++i) {
-    s.write((char*)(&opstring[i]),sizeof(char));    
+    s.write((char*)(&opstring[i]),sizeof(char));   
   }
   bcount += n*sizeof(char);
+
+  for(i=0; i<natoms; ++i) {
+    n = atom_type[i];
+    s.write((char*)(&n),sizeof(int));
+  }
+  bcount += natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    n = locale[i];
+    s.write((char*)(&n),sizeof(int));
+  }
+  bcount += natoms*sizeof(int);
 
   for(i=0; i<natoms; ++i) {
     for(j=0; j<4; ++j) {
@@ -282,11 +295,55 @@ int Molecule::write(std::ofstream& s) const
 
 int Molecule::read(std::ifstream& s)
 {
-  int bcount = 0;
+  int i,j,n,bcount = 0;
+  char c;
+  double x[3];
 
   clear();
 
   s.read((char*)(&natoms),sizeof(int)); bcount += sizeof(int);
+  s.read((char*)(&n),sizeof(int)); bcount += sizeof(int);
+  for(i=0; i<n; ++i) {
+    s.read((char*)(&c),sizeof(char)); 
+    opstring += c; 
+  }
+  bcount += n*sizeof(char);
+
+  for(i=0; i<natoms; ++i) {
+    s.read((char*)(&n),sizeof(int));
+    atom_type.push_back(n);
+  }
+  bcount += natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    s.read((char*)(&n),sizeof(int));
+    locale.push_back(n);
+  }
+  bcount += natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    for(j=0; j<4; ++j) {
+      s.read((char*)(&n),sizeof(int));
+      bonds.push_back(n);
+    }
+  }
+  bcount += 4*natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    for(j=0; j<4; ++j) {
+      s.read((char*)(&n),sizeof(int));
+      btype.push_back(n); 
+    }
+  }
+  bcount += 4*natoms*sizeof(int);
+
+  for(i=0; i<natoms; ++i) {
+    s.read((char*)(&x[0]),3*sizeof(double));
+    coords.push_back(x[0]);
+    coords.push_back(x[1]);
+    coords.push_back(x[2]);
+  }
+  bcount += 3*natoms*sizeof(double);
 
   return bcount;  
 }
@@ -1872,13 +1929,17 @@ bool Molecule::consistent() const
     for(j=0; j<4; ++j) {
       if (bonds[4*i+j] == -1) continue;
       if (bonds[4*i+j] < 0 || bonds[4*i+j] >= natoms) {
+#ifdef VERBOSE
         std::cout << "Illegal bond value " << i << "  " << j << "  " << bonds[4*i+j] << "  " << natoms << std::endl;
+#endif
         return false;
       }
     }
     for(j=0; j<3; ++j) {
       if (std::abs(coords[3*i+j]) > 1000.0) {
+#ifdef VERBOSE
         std::cout << "Illegal coordinate value " << i << "  " << j << "  " << coords[3*i+j] << std::endl;
+#endif
         return false;
       }
     }
@@ -2795,9 +2856,7 @@ std::string Molecule::to_MDLMol() const
   std::ostringstream s;
   std::map<int,std::string>::const_iterator it;
 
-#ifdef DEBUG
   assert(consistent());
-#endif
 
   s << "mol_" << opstring << "_" << seconds << std::endl;
   s << "  MOE2000" << std::endl;

@@ -1,5 +1,6 @@
 *.o
 instrumentum
 *.sqlite3
+*.dat
 documentation
 

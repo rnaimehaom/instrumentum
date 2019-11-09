@@ -176,12 +176,11 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 
   if (seed == 0) seed = (unsigned) std::time(nullptr);
 
-  if (nthread > 1) assert(sqlite3_config(SQLITE_CONFIG_MULTITHREAD) == SQLITE_OK);
-
   // Check if the database exists, if not the tables need to be created!
   if (!file_exists(database)) create_database();
 
   sqlite3* dbase;
+
   sqlite3_open(database.c_str(),&dbase);
   create_parameter_string(parameter_string);
   std::string query = "INSERT INTO Parameter_Set(";
@@ -367,35 +366,55 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
 
 void Molecular_Assembler::assemble() const
 {
+  int i,pid = getpid();
+  std::string query,filename;
+  Molecule* m = new Molecule;
+  sqlite3* dbase;
+
   if (nthread == 1) {
-    run();
+    run(0,pid);
   }
   else {
     std::vector<std::thread> pool;
-    for(int i=0; i<nthread; ++i) {
-      pool.emplace_back(&Molecular_Assembler::run,this,i);
+    for(i=0; i<nthread; ++i) {
+      pool.emplace_back(&Molecular_Assembler::run,this,i,pid);
     }
     for(auto& entry: pool) {
       entry.join();
     }
   }
+#ifdef VERBOSE
   std::cout << "The total number of molecules created is " << mol_created << std::endl;
+#endif
+  // Now write all these molecules to the SQLite database...
+  sqlite3_open(database.c_str(),&dbase);
+  for(i=0; i<nthread; ++i) {
+    filename = "molecules_" + std::to_string(pid) + "_" + std::to_string(1+i) + ".dat";
+    std::ifstream s(filename,std::ios::binary);
+    while(s.peek() != EOF) {
+      m->read(s);
+      query = "INSERT INTO Compound (parameter_id,op_string,raw_structure) VALUES (" + std::to_string(parameter_id) + ",";
+      query += "\'" + m->get_opstring() + "\',\'" + m->to_MDLMol() + "\');";
+      sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr); 
+    }
+    s.close();  
+  }
+  sqlite3_close(dbase);
+  delete m;
 }
 
-void Molecular_Assembler::run(int thread_id) const
+void Molecular_Assembler::run(int thread_id,int pid) const
 {
   int i,j,k,l,q,ncreated;
   unsigned long s = seed;
   bool test,done = false;
   bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
   std::string mstring,ops;
-  //sqlite3* dbase;
   Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
   Molecule m;
   std::vector<Molecule> mvector;
 
-  //sqlite3_open(database.c_str(),&dbase);
-  std::string filename = "molecules_" + std::to_string(getpid()) + "_" + std::to_string(1 + thread_id) + ".dat";
+  std::string filename = "molecules_" + std::to_string(pid) + "_" + std::to_string(1 + thread_id) + ".dat";
   std::ofstream ofile(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
   s *= (1 + thread_id);
@@ -493,14 +512,9 @@ void Molecular_Assembler::run(int thread_id) const
 
   delete g;
   ofile.close();
-  //sqlite3_close(dbase);
 }
 
 void Molecular_Assembler::database_insertion(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const
 {
-  std::string query = "INSERT INTO Compound (parameter_id,op_string,raw_structure) VALUES (";
-  std::stringstream sstream;
-  sstream << parameter_id;
-  query += sstream.str() + ",\'" + opstring + "\',\'" + molecule + "\');";
-  sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr); 
+
 }

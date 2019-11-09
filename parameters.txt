@@ -28,5 +28,5 @@ NumberSecondary = 3
 NumberRationalize = 3
 NumberDesaturate = 4
 RandomSeed = 91
-NumberThreads = 1
+NumberThreads = 2
 DatabaseFile = alchemy.sqlite3

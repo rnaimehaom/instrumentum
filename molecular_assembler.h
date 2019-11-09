@@ -125,7 +125,7 @@ class Molecular_Assembler {
   void create_parameter_string(std::string&) const;
   /// This method creates the SQLite database if it doesn't exist, creating the two empty tables Parameter_Set and Compound with the appropriate columns. 
   void create_database() const;
-  void run(int = 0) const;  
+  void run(int,int) const;  
  public:
   /// The constructor for this class, which accepts as its unique argument the name of the parameter file that it will parse to obtain the values for its properties.
   Molecular_Assembler(const std::string&);
