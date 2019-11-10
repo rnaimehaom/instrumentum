@@ -2856,7 +2856,9 @@ std::string Molecule::to_MDLMol() const
   std::ostringstream s;
   std::map<int,std::string>::const_iterator it;
 
+#ifdef DEBUG
   assert(consistent());
+#endif
 
   s << "mol_" << opstring << "_" << seconds << std::endl;
   s << "  MOE2000" << std::endl;

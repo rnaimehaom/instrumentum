@@ -371,6 +371,7 @@ void Molecular_Assembler::assemble() const
   Molecule* m = new Molecule;
   sqlite3* dbase;
 
+  auto start = std::chrono::high_resolution_clock::now();
   if (nthread == 1) {
     run(0,pid);
   }
@@ -383,8 +384,11 @@ void Molecular_Assembler::assemble() const
       entry.join();
     }
   }
+  auto finish = std::chrono::high_resolution_clock::now();
 #ifdef VERBOSE
+  std::chrono::duration<double> elapsed = finish - start;
   std::cout << "The total number of molecules created is " << mol_created << std::endl;
+  std::cout << "Elapsed time: " << elapsed.count() << " seconds." << std::endl;
 #endif
   // Now write all these molecules to the SQLite database...
   sqlite3_open(database.c_str(),&dbase);
@@ -512,9 +516,4 @@ void Molecular_Assembler::run(int thread_id,int pid) const
 
   delete g;
   ofile.close();
-}
-
-void Molecular_Assembler::database_insertion(const std::string& opstring,const std::string& molecule,sqlite3* dbase) const
-{
-
 }

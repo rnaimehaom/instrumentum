@@ -4,7 +4,7 @@ CXX = g++ -std=c++14
 
 OPT = -O3 -fstrict-aliasing -ffast-math -ftree-vectorize -funroll-loops
 
-DEBUG = -g -Wall -DDEBUG #-DVERBOSE
+DEBUG = -g -Wall -DDEBUG -DVERBOSE
 
 #CXX_FLAGS = $(OPT)
 CXX_FLAGS = $(DEBUG)

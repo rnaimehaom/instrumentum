@@ -119,8 +119,6 @@ class Molecular_Assembler {
   /// the unique argument of the Grid::blank_pharmacophore method.
   double pharmacophore_radius = 3.5;
 
-  /// This method writes a given molecule created by this class to the SQLite database. The first argument is the Molecule::opstring instance which led to this molecule, the second is the molecule itself and the final argument is the SQLite database.
-  void database_insertion(const std::string&,const std::string&,sqlite3*) const;
   /// This method builds a string - the method's argument - containing all of the parameter values (i.e. the properties of this class) in a format appropriate for an SQL statement.
   void create_parameter_string(std::string&) const;
   /// This method creates the SQLite database if it doesn't exist, creating the two empty tables Parameter_Set and Compound with the appropriate columns. 
