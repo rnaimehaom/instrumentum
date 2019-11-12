@@ -806,10 +806,8 @@ int Grid::ring_analysis()
   }
 
   const int nvertices = (signed) vertices.size();
-  for(i=0; i<nvertices; ++i) {
-    for(j=0; j<4; ++j) {
-      bonds.push_back(-1);
-    }
+  for(i=0; i<4*nvertices; ++i) {
+    bonds.push_back(-1);
   }
 
   for(i=0; i<nvertices; ++i) {
@@ -825,7 +823,7 @@ int Grid::ring_analysis()
   wcopy = bonds;
 
   // A sanity check...
-  assert(connected(bonds));
+  if (!connected(bonds)) return -1;
 
   // We will methodically go through this bond table, and eliminate
   // a bond at each occasion, checking to see if the resulting molecule
@@ -990,6 +988,7 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
     // Next, see how many of these four carbon neighbours are in four separate
     // rings
     ring_count = ring_analysis();
+    if (ring_count < 0) return false;
     if (ring_count > nrings) continue;
     cring = 0;
     for(l=0; l<c4.size(); ++l) {
@@ -1085,9 +1084,7 @@ bool Grid::path_selection(bool random)
           }
         }
       }
-#ifdef DEBUG
-      assert(!winner.empty());
-#endif
+      if (winner.empty()) return false;
       next_node = winner[RND.irandom(winner.size())];
       if (nodes[next_node].locale == 6 || next_node == inode) {
         for(l=0; l<pathback.size(); ++l) {
@@ -1127,10 +1124,10 @@ bool Grid::path_selection(bool random)
         nbonds++;
       }
     }
-    assert(nbonds != 0);
+    if (nbonds == 0) return false;
   }
   // A sanity check...
-  assert(connected(bonds));
+  if (!connected(bonds)) return false;
 
   return true;
 }
