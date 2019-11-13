@@ -52,12 +52,14 @@ class instrumentum:
         label24 = tkinter.Label(global_group,text='Bond Length (in angstroms):',wraplength=250,justify=tkinter.LEFT)
         label45 = tkinter.Label(global_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
         label46 = tkinter.Label(global_group,text='Random Number Generator Seed',wraplength=250,justify=tkinter.LEFT)
+        label47 = tkinter.Label(global_group,text='Number of threads:',wraplength=250,justify=tkinter.LEFT)
 
         chem_label1 = tkinter.Label(ratio_group,text='Percentage of Methyl Groups to Prune:',wraplength=250,justify=tkinter.LEFT)
         chem_label2 = tkinter.Label(ratio_group,text='Minimum Number of Rings for Desaturating Scaffold:',wraplength=250,justify=tkinter.LEFT)
         chem_label3 = tkinter.Label(ratio_group,text='Maximum Number of Rings for Desaturating Scaffold:',wraplength=250,justify=tkinter.LEFT)
         
         self.nmol = tkinter.IntVar()
+        self.nthread = tkinter.IntVar()
         self.database = tkinter.StringVar()
         self.parameter_filename = tkinter.StringVar()
         self.percent_methyl = tkinter.DoubleVar()
@@ -112,6 +114,7 @@ class instrumentum:
         entry45 = tkinter.Entry(global_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
         entry46 = tkinter.Entry(global_group,width=18,textvariable=self.database)
         entry47 = tkinter.Entry(global_group,width=7,textvariable=self.rng_seed)
+        entry48 = tkinter.Entry(global_group,width=7,textvariable=self.nthread)
 
         axial_methyl_check = tkinter.Checkbutton(desat_group,text='Strip axial methyls from rings?',variable=self.strip_axial_methyls)
         dbond_check = tkinter.Checkbutton(desat_group,text='Create double bonds?',variable=self.dbond,command=self.dbond_change)
@@ -138,10 +141,12 @@ class instrumentum:
         entry24.grid(row=1,column=1,sticky=tkinter.W)
         label46.grid(row=2,column=0,sticky=tkinter.W)
         entry47.grid(row=2,column=1,sticky=tkinter.W)
-        label45.grid(row=3,column=0,sticky=tkinter.W)
-        entry45.grid(row=3,column=1,sticky=tkinter.W)
-        label2.grid(row=4,column=0,sticky=tkinter.W)
-        entry46.grid(row=4,column=1,sticky=tkinter.W)
+        label47.grid(row=3,column=0,sticky=tkinter.W)
+        entry48.grid(row=3,column=1,sticky=tkinter.W)
+        label45.grid(row=4,column=0,sticky=tkinter.W)
+        entry45.grid(row=4,column=1,sticky=tkinter.W)
+        label2.grid(row=5,column=0,sticky=tkinter.W)
+        entry46.grid(row=5,column=1,sticky=tkinter.W)
 
         label8.grid(row=0,column=0,sticky=tkinter.W)
         entry8.grid(row=0,column=1,sticky=tkinter.W)
@@ -233,6 +238,7 @@ class instrumentum:
         self.database.set("")
         self.parameter_filename.set("")
         self.nmol.set(50000)
+        self.nthread.set(1)
         self.rng_seed.set(0)
         self.blength.set(1.52)
         self.pharm_radius.set(3.5)
@@ -283,6 +289,8 @@ class instrumentum:
             value = data[1].strip()
             if (name == "NumberMolecules"):
                 self.nmol.set(int(value))
+            elif (name == "NumberThreads"):
+                self.nthread.set(int(value))
             elif (name == "DatabaseFile"):
                 self.database.set(value)
             elif (name == "MinimumRings"):
@@ -350,6 +358,9 @@ class instrumentum:
             return
         if (self.rng_seed.get() < 0):
             messagebox.showerror("Illegal Value","The random number seed must be non-negative!")
+            return
+        if (self.nthread.get() < 1):
+            messagebox.showerror("Illegal Value","The number of threads must be greater than zero!")
             return
         if (self.percent.get() < 0 or self.percent.get() > 100):
             messagebox.showerror("Illegal Value","The initial percentage parameter must be between 0 and 100!")
@@ -436,6 +447,7 @@ class instrumentum:
         pfile.write('PharmacophoreHardening = ' + self.convert_boolean(self.pharm_harden.get()) + '\n')
         pfile.write('PercentMethyl = ' + str(self.percent_methyl.get()/100.0) + '\n')
         pfile.write('NumberMolecules = ' + str(self.nmol.get()) + '\n')
+        pfile.write('NumberThreads = ' + str(self.nthread.get()) + '\n')
         pfile.write('MinimumRings = ' + str(self.min_rings.get()) + '\n')
         pfile.write('MaximumRings = ' + str(self.max_rings.get()) + '\n')
         pfile.close()

@@ -371,6 +371,8 @@ void Molecular_Assembler::assemble() const
   Molecule* m = new Molecule;
   sqlite3* dbase;
 
+  if (std::system("mkdir -p scratch") < 0) throw std::runtime_error("Unable to create scratch directory!");
+
   auto start = std::chrono::high_resolution_clock::now();
   if (nthread == 1) {
     run(0,pid);
@@ -393,7 +395,7 @@ void Molecular_Assembler::assemble() const
   // Now write all these molecules to the SQLite database...
   sqlite3_open(database.c_str(),&dbase);
   for(i=0; i<nthread; ++i) {
-    filename = "molecules_" + std::to_string(pid) + "_" + std::to_string(1+i) + ".dat";
+    filename = "scratch/molecules_" + std::to_string(pid) + "_" + std::to_string(1+i) + ".dat";
     std::ifstream s(filename,std::ios::binary);
     while(s.peek() != EOF) {
       m->read(s);
@@ -418,7 +420,7 @@ void Molecular_Assembler::run(int thread_id,int pid) const
   Molecule m;
   std::vector<Molecule> mvector;
 
-  std::string filename = "molecules_" + std::to_string(pid) + "_" + std::to_string(1 + thread_id) + ".dat";
+  std::string filename = "scratch/molecules_" + std::to_string(pid) + "_" + std::to_string(1 + thread_id) + ".dat";
   std::ofstream ofile(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
   s *= (1 + thread_id);

@@ -52,9 +52,9 @@ class Molecular_Assembler {
   /// This integer property is the row number of this ensemble of 
   /// parameters in the Parameter_Set table of the SQLite database. 
   int parameter_id = 0;
-  /// This integer property is the number of OpenMP threads that will 
+  /// This integer property is the number of C++11 threads that will 
   /// be used to run this software in parallel. 
-  int nthread = 0;
+  int nthread = 1;
   /// This integer property is the number of molecules that will be 
   /// created, after which the program exits. 
   unsigned long n_mols = 50000;
@@ -123,11 +123,12 @@ class Molecular_Assembler {
   void create_parameter_string(std::string&) const;
   /// This method creates the SQLite database if it doesn't exist, creating the two empty tables Parameter_Set and Compound with the appropriate columns. 
   void create_database() const;
+  /// This method uses the Grid and Molecule classes to build molecules, storing them in a binary file in the scratch directory. The first argument is the thread number and the second the program's process ID, needed to name the binary molecule file. 
   void run(int,int) const;  
  public:
   /// The constructor for this class, which accepts as its unique argument the name of the parameter file that it will parse to obtain the values for its properties.
   Molecular_Assembler(const std::string&);
-  /// The principal method for this class, called by the C++ main() program after initializing an instance of this class; this method uses the Grid and Molecule classes to build molecules and then write them to an SQLite database.
+  /// The principal method for this class, called by the C++ main() program after initializing an instance of this class; it creates the "scratch" directory for storing the binary molecule files, calls the run() method and then reads the binary molecule files to write their content to the SQLite database.
   void assemble() const;
 };
 #endif
