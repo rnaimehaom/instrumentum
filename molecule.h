@@ -115,11 +115,13 @@ class Molecule {
   ~Molecule();
   /// The overloaded assignment operator, which copies over all of the properties of the source instance, deleting and re-allocating the Molecule::pieces property if necessary.
   Molecule& operator =(const Molecule&);
-  /// This method restores all of the properties of the class to their default values.
+  /// This method restores all of the properties of the class to their default values and empties all of the extended properties like Molecule::bonds, Molecule::rings and Molecule::coords.
   void clear();
   /// This method is the main public one - it takes the molecule, which begins as one consisting exclusively of carbon and hydrogen atoms linked by single bonds, and adds double and triple bonds, aromatic rings, oxygen, nitrogen, sulfur and halogen atoms and so forth. The argument controls which of these decoration operations will be attempted. 
   bool decorate(const bool*);
+  /// This method writes the properties Molecule::natoms, Molecule::opstring, Molecule::bonds, Molecule::btype and Molecule::coords in binary form to an output stream (the method's argument) and returns the number of bytes written to the stream.
   int write(std::ofstream&) const;
+  /// This method calls the clear() method and then reads the properties Molecule::natoms, Molecule::opstring, Molecule::bonds, Molecule::btype and Molecule::coords in binary form from an input stream (the method's argument) and returns the number of bytes read from the stream.  
   int read(std::ifstream&);
   /// This method adds an atom to the molecule - the first argument is the atom's type (by atomic number), the second is the atom's geometric coordinates and the final argument is the atom's locale (e.g. whether it is a pharmacophoric atom).
   void add_atom(int,const double*,int);
