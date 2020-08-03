@@ -71,17 +71,17 @@ class Grid {
   Node* nodes;
 
   /// This method accepts the three mesh coordinates of a node and returns the index to this node in the array Grid::nodes. 
-  inline int index1(int,int,int) const;
+  int index1(int,int,int) const;
   /// This method accepts as its arguments the indices of two nodes and calculates the square of the geometric distance separating them. 
-  inline double distance(int,int) const;
+  double distance(int,int) const;
   /// This method sets the Node::locale and Node::atomic_number properties to zero for each node in the grid. 
-  inline void clear();
+  void clear();
   /// This method restores the state of the grid properties from one of the four save states in the Grid::backup property, specified by the method's argument.
-  inline void restore_state(int);
+  void restore_state(int);
   /// This method saves the current state of the grid properties (the Node::locale and Node::atomic_number properties of each node) to the Grid::backup array, with the element specified by the method's argument.
-  inline void save_state(int);
+  void save_state(int);
   /// This method calls the Grid::ring_analysis method and returns its output value.
-  inline int ring_count() {return ring_analysis();};
+  int ring_count();
   /// This method accepts as its first three arguments the dimensional indices of a node in the mesh, while the final integer argument represents the state which lies between 1 and 4. The final argument contains the coordinates of this node in the grid. 
   void next_door(int,int,int,int,const double*);
   /// This method is called by the constructor and builds the tetrahedral mesh with the node coordinates and the neighbour relations using the Grid::next_door method. 
@@ -116,13 +116,13 @@ class Grid {
   friend class Molecular_Assembler;
 };
 
-int Grid::index1(int i,int j,int k) const
+inline int Grid::index1(int i,int j,int k) const
 {
   int output = (k+D3) + (1+2*D3)*(j+D2) + (1+2*D3)*(1+2*D2)*(i+D1);
   return output;
 }
 
-void Grid::clear()
+inline void Grid::clear()
 {
   for(int i=0; i<total; ++i) {
     nodes[i].locale = 0;
@@ -130,7 +130,12 @@ void Grid::clear()
   }
 }
 
-void Grid::restore_state(int q)
+inline int Grid::ring_count()
+{
+  return ring_analysis();
+}
+
+inline void Grid::restore_state(int q)
 {
   int i;
   unsigned int n,l;
@@ -147,7 +152,7 @@ void Grid::restore_state(int q)
   }
 }
 
-void Grid::save_state(int q)
+inline void Grid::save_state(int q)
 {
   backup[q].index.clear();
   backup[q].locale.clear();
@@ -161,7 +166,7 @@ void Grid::save_state(int q)
   }
 }
 
-double Grid::distance(int in1,int in2) const
+inline double Grid::distance(int in1,int in2) const
 {
   double x[3],y[3],output;
   x[0] = nodes[in1].x;

@@ -53,13 +53,13 @@ class Molecule {
   static const char ops[7];
 
   /// Given a pair of atoms in the molecule, specified by the method's two arguments, this method returns the index of this bond in the property Molecule::bonds and -1 if no such bond can be found. 
-  inline int get_bindex(int,int) const;
+  int get_bindex(int,int) const;
   /// Given a pair of atoms in the molecule, specified by the method's two arguments, this method returns the index of the ring in Molecule::rings that contains the two atoms and -1 if no such ring can be found. 
-  inline int get_rindex(int,int) const;
+  int get_rindex(int,int) const;
   /// This method returns true if the atom whose index is the method's unique argument is a member of a ring, false otherwise. 
-  inline bool in_ring(int) const;
+  bool in_ring(int) const;
   /// This method returns true if the atom whose index is the method's unique argument is a member of an aromatic ring, false otherwise. 
-  inline bool in_aromatic(int) const;
+  bool in_aromatic(int) const;
   /// This method performs a basic check of the bond valences for the molecule's carbon and hydrogen atoms, which are the main kind of atoms we expect to find in the molecule when this method is called at the beginning of the Molecule::decorate() method; it returns true if all is well and false otherwise.
   bool saturation_check() const;
   /// This method performs a broad check on the consistency of the various Molecule properties in terms of the lengths of the vector properties and the number of atoms, as well as the size of the geometric coordinates and the bond table values. The method returns true if all is well and false otherwise.
@@ -130,12 +130,12 @@ class Molecule {
   /// This method writes the content of the molecule to a string corresponding to the MDL MOL format for the molecule, which is how the molecule is stored in an SQLite database. 
   std::string to_MDLMol() const;
   /// This method returns the current value of the Molecule::opstring property.
-  inline std::string get_opstring() const {return opstring;}; 
+  std::string get_opstring() const; 
   /// This overloaded ostream operator writes the essential properties (atom type, coordinates, bond table and ring structure) of the instance of this class to the screen.
   friend std::ostream& operator <<(std::ostream&,const Molecule&);
 };
 
-int Molecule::get_rindex(int n,int s) const
+inline int Molecule::get_rindex(int n,int s) const
 {
   for(int i=0; i<6; ++i) {
     if (rings[6*s+i] == n) return i;
@@ -143,7 +143,7 @@ int Molecule::get_rindex(int n,int s) const
   return -1;
 }
 
-int Molecule::get_bindex(int n,int s) const
+inline int Molecule::get_bindex(int n,int s) const
 {
   for(int i=0; i<4; ++i) {
     if (bonds[4*s+i] == n) return i;
@@ -151,7 +151,7 @@ int Molecule::get_bindex(int n,int s) const
   return -1;
 }
 
-bool Molecule::in_ring(int x) const
+inline bool Molecule::in_ring(int x) const
 {
   // Return one if this atom is contained inside at least one ring
   int i,j;
@@ -163,12 +163,17 @@ bool Molecule::in_ring(int x) const
   return false;
 }
 
-bool Molecule::in_aromatic(int x) const
+inline bool Molecule::in_aromatic(int x) const
 {
   // Return one if this atom is contained inside at least one aromatic ring
   for(int i=0; i<4; ++i) {
     if (btype[4*x+i] == 4) return true;
   }
   return false;
+}
+
+inline std::string Molecule::get_opstring() const
+{
+  return opstring;
 }
 #endif
