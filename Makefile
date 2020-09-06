@@ -16,26 +16,26 @@ LIBS = -lsqlite3 -lm
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)
 
-instrumentum.o: instrumentum.cpp instrumentum.h molecular_assembler.h
-	$(CXX) $(CXX_FLAGS) -c instrumentum.cpp
+instrumentum.o: instrumentum.cxx instrumentum.h molecular_assembler.h
+	$(CXX) $(CXX_FLAGS) -c instrumentum.cxx
 
-global.o: global.cpp instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c global.cpp
+global.o: global.cxx instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c global.cxx
 
-grid.o: grid.cpp grid.h node.h molecule.h instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c grid.cpp
+grid.o: grid.cxx grid.h node.h molecule.h instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c grid.cxx
 
-node.o: node.cpp node.h instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c node.cpp
+node.o: node.cxx node.h instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c node.cxx
 
-random.o: random.cpp random.h instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c random.cpp
+random.o: random.cxx random.h instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c random.cxx
 
-molecule.o: molecule.cpp molecule.h instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c molecule.cpp
+molecule.o: molecule.cxx molecule.h instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c molecule.cxx
 
-molecular_assembler.o: molecular_assembler.cpp molecular_assembler.h grid.h molecule.h instrumentum.h
-	$(CXX) $(CXX_FLAGS) -c molecular_assembler.cpp
+molecular_assembler.o: molecular_assembler.cxx molecular_assembler.h grid.h molecule.h instrumentum.h
+	$(CXX) $(CXX_FLAGS) -c molecular_assembler.cxx
 
 clean:
 	rm -f $(OBJECTS)
