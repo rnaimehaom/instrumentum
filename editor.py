@@ -9,37 +9,38 @@ from tkinter import messagebox
 import os
 
 # One point to note is that this GUI must be run on a monitor with
-# resolution at least 800 x 675 for proper viewing of the complete interface. 
+# resolution at least 800 x 665 for proper viewing of the complete interface. 
 
 class instrumentum:
     def __init__(self,master=None):
         self.master = master
-        self.master.title('Instrumentum')
-        self.master.geometry('800x675')
+        self.master.title('Parameter File Editor')
+        self.master.geometry('800x665')
         self.master.resizable(0,0)
 
-        global_group = tkinter.LabelFrame(self.master,text="Global",padx=5,pady=5)
-        pharma_group = tkinter.LabelFrame(self.master,text="Pharmacophore",padx=5,pady=5)
-        skeleton_group = tkinter.LabelFrame(self.master,text="Carbon Skeleton",padx=5,pady=5)
-        ratio_group = tkinter.LabelFrame(self.master,text="Rationalization",padx=5,pady=5)
-        desat_group = tkinter.LabelFrame(self.master,text="Desaturation & Heteroatoms",padx=5,pady=5)
-        masm_group = tkinter.LabelFrame(self.master,text="Molecular Assembly",padx=5,pady=5)
+        global_group = tkinter.LabelFrame(self.master,text='Global',padx=5,pady=5)
+        pharma_group = tkinter.LabelFrame(self.master,text='Pharmacophore',padx=5,pady=5)
+        skeleton_group = tkinter.LabelFrame(self.master,text='Hydrocarbon Skeleton',padx=5,pady=5)
+        ratio_group = tkinter.LabelFrame(self.master,text='Rationalization',padx=5,pady=5)
+        desat_group = tkinter.LabelFrame(self.master,text='Desaturation & Heteroatoms',padx=5,pady=5)
+        masm_group = tkinter.LabelFrame(self.master,text='Molecular Assembly',padx=5,pady=5)
+        button_group = tkinter.LabelFrame(self.master,text='',padx=5,pady=5,bd=0)
 
-        global_group.grid(row=0,column=0,sticky="ns")
-        pharma_group.grid(row=1,column=0,sticky="ns")
-        skeleton_group.grid(row=2,column=0,rowspan=2,sticky="ns")
+        global_group.grid(row=0,column=0,sticky='ns')
+        pharma_group.grid(row=1,column=0,sticky='ns')
+        skeleton_group.grid(row=2,column=0,rowspan=2,padx=5,pady=5,sticky='ns')
 
-        ratio_group.grid(row=0,column=1,sticky="ns")
-        desat_group.grid(row=1,column=1,rowspan=2,sticky="ns")
-        masm_group.grid(row=3,column=1,sticky="ns")
+        ratio_group.grid(row=0,column=1,sticky='ns')
+        desat_group.grid(row=1,column=1,rowspan=2,sticky='ns')
+        masm_group.grid(row=3,column=1,sticky='ns')
+        button_group.grid(row=4,column=0,columnspan=2,sticky='ns')
 
-
-        label1 = tkinter.Label(global_group,text='Number of molecules to create:',wraplength=250,justify=tkinter.LEFT)
-        label2 = tkinter.Label(global_group,text='Database in which to store molecules:',wraplength=250,justify=tkinter.LEFT)
+        label1 = tkinter.Label(global_group,text='Number of Molecules to Create:',wraplength=250,justify=tkinter.LEFT)
+        label2 = tkinter.Label(global_group,text='Molecular Database:',wraplength=250,justify=tkinter.LEFT)
         label5 = tkinter.Label(skeleton_group,text='Initial Percentage of Nodes to Delete:',wraplength=250,justify=tkinter.LEFT)
         label6 = tkinter.Label(skeleton_group,text='Maximum Number of Initial Deletion Attempts:',wraplength=250,justify=tkinter.LEFT)
         label7 = tkinter.Label(skeleton_group,text='Maximum Number of Secondary Deletion Attempts:',wraplength=250,justify=tkinter.LEFT)
-        label8 = tkinter.Label(pharma_group,text='Pharmacophore Radius (in angstroms):',wraplength=250,justify=tkinter.LEFT)
+        label8 = tkinter.Label(pharma_group,text='Pharmacophore Radius (Å):',wraplength=250,justify=tkinter.LEFT)
         label9 = tkinter.Label(pharma_group,text='Number of Pharmacophoric Nodes:',wraplength=250,justify=tkinter.LEFT)
         label14 = tkinter.Label(skeleton_group,text='Maximum Number of Quaternary Carbon Atoms for Ending Secondary Deletion:',wraplength=250,justify=tkinter.LEFT)
         label15 = tkinter.Label(skeleton_group,text='Maximum Number of Four Ring Carbons for Ending Secondary Deletion:',wraplength=250,justify=tkinter.LEFT)
@@ -49,10 +50,10 @@ class instrumentum:
         label19 = tkinter.Label(masm_group,text='Number of Path Hardening Iterations:',wraplength=250,justify=tkinter.LEFT)
         label20 = tkinter.Label(masm_group,text='Number of Demethylation Iterations:',wraplength=250,justify=tkinter.LEFT)
         label21 = tkinter.Label(masm_group,text='Number of Desaturation/Heteroatom Substitution Iterations:',wraplength=250,justify=tkinter.LEFT)
-        label24 = tkinter.Label(global_group,text='Bond Length (in angstroms):',wraplength=250,justify=tkinter.LEFT)
-        label45 = tkinter.Label(global_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
-        label46 = tkinter.Label(global_group,text='Random Number Generator Seed',wraplength=250,justify=tkinter.LEFT)
-        label47 = tkinter.Label(global_group,text='Number of threads:',wraplength=250,justify=tkinter.LEFT)
+        label24 = tkinter.Label(global_group,text='Bond Length (Å):',wraplength=250,justify=tkinter.LEFT)
+        label45 = tkinter.Label(button_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
+        label46 = tkinter.Label(global_group,text='Random Number Seed',wraplength=250,justify=tkinter.LEFT)
+        label47 = tkinter.Label(global_group,text='Number of Threads:',wraplength=250,justify=tkinter.LEFT)
 
         chem_label1 = tkinter.Label(ratio_group,text='Percentage of Methyl Groups to Prune:',wraplength=250,justify=tkinter.LEFT)
         chem_label2 = tkinter.Label(ratio_group,text='Minimum Number of Rings for Desaturating Scaffold:',wraplength=250,justify=tkinter.LEFT)
@@ -111,29 +112,29 @@ class instrumentum:
         entry23 = tkinter.Entry(masm_group,width=7,textvariable=self.iteration4)
         entry25 = tkinter.Entry(masm_group,width=7,textvariable=self.iteration5)
         entry24 = tkinter.Entry(global_group,width=7,textvariable=self.blength)
-        entry45 = tkinter.Entry(global_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
+        entry45 = tkinter.Entry(button_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
         entry46 = tkinter.Entry(global_group,width=18,textvariable=self.database)
         entry47 = tkinter.Entry(global_group,width=7,textvariable=self.rng_seed)
         entry48 = tkinter.Entry(global_group,width=7,textvariable=self.nthread)
 
-        axial_methyl_check = tkinter.Checkbutton(desat_group,text='Strip axial methyls from rings?',variable=self.strip_axial_methyls)
-        dbond_check = tkinter.Checkbutton(desat_group,text='Create double bonds?',variable=self.dbond,command=self.dbond_change)
-        self.tbond_check = tkinter.Checkbutton(desat_group,text='Create triple bonds?',variable=self.tbond)
-        oxy_check = tkinter.Checkbutton(desat_group,text='Substitute oxygen atoms?',variable=self.oxy)
-        nit_check = tkinter.Checkbutton(desat_group,text='Substitute nitrogen atoms?',variable=self.nit)
-        sul_check = tkinter.Checkbutton(desat_group,text='Substitute sulfur atoms?',variable=self.sul)
-        penta_check = tkinter.Checkbutton(desat_group,text='Create penta-atomic rings?',variable=self.penta)
-        fgrp_check = tkinter.Checkbutton(desat_group,text='Substitute functional groups?',variable=self.fgrp)
-        self.amide_check = tkinter.Checkbutton(desat_group,text='Substitute amides, sulfonamides and esters?',variable=self.amide)
+        axial_methyl_check = tkinter.Checkbutton(desat_group,text='Strip Axial Methyls from Rings',variable=self.strip_axial_methyls)
+        dbond_check = tkinter.Checkbutton(desat_group,text='Create Double Bonds',variable=self.dbond,command=self.dbond_change)
+        self.tbond_check = tkinter.Checkbutton(desat_group,text='Create Triple Bonds',variable=self.tbond)
+        oxy_check = tkinter.Checkbutton(desat_group,text='Substitute Oxygen Atoms',variable=self.oxy)
+        nit_check = tkinter.Checkbutton(desat_group,text='Substitute Nitrogen Atoms',variable=self.nit)
+        sul_check = tkinter.Checkbutton(desat_group,text='Substitute Sulfur Atoms',variable=self.sul)
+        penta_check = tkinter.Checkbutton(desat_group,text='Create Penta-Atomic Rings',variable=self.penta)
+        fgrp_check = tkinter.Checkbutton(desat_group,text='Substitute Functional Groups',variable=self.fgrp)
+        self.amide_check = tkinter.Checkbutton(desat_group,text='Substitute Amides, Sulfonamides and Esters',variable=self.amide)
         
-        label26 = tkinter.Label(skeleton_group,text='Initial Node for Path Hardening is a',wraplength=250,justify=tkinter.LEFT)
+        label26 = tkinter.Label(skeleton_group,text='Initial Node for Path Hardening:',wraplength=250,justify=tkinter.LEFT)
         rbutton5 = tkinter.Radiobutton(skeleton_group,text='Random Interior Node',value=0,variable=self.pharm_harden)
         rbutton6 = tkinter.Radiobutton(skeleton_group,text='Pharmacophoric Node',value=1,variable=self.pharm_harden)
         
-        button1 = tkinter.Button(text='Save Parameters to Disk',command=self.save_parameters)
-        button2 = tkinter.Button(text='Exit',command=root.quit)
-        button3 = tkinter.Button(text='Load Parameters from Disk',command=self.load_parameters)
-        button4 = tkinter.Button(text='Clear Parameters',command=self.clear_parameters)
+        button1 = tkinter.Button(button_group,text='Save Parameters',command=self.save_parameters)
+        button2 = tkinter.Button(button_group,text='Exit',command=root.quit)
+        button3 = tkinter.Button(button_group,text='Load Parameters',command=self.load_parameters)
+        button4 = tkinter.Button(button_group,text='Restore Default Values',command=self.clear_parameters)
 
         label1.grid(row=0,column=0,sticky=tkinter.W)
         entry1.grid(row=0,column=1,sticky=tkinter.W)
@@ -143,8 +144,6 @@ class instrumentum:
         entry47.grid(row=2,column=1,sticky=tkinter.W)
         label47.grid(row=3,column=0,sticky=tkinter.W)
         entry48.grid(row=3,column=1,sticky=tkinter.W)
-        label45.grid(row=4,column=0,sticky=tkinter.W)
-        entry45.grid(row=4,column=1,sticky=tkinter.W)
         label2.grid(row=5,column=0,sticky=tkinter.W)
         entry46.grid(row=5,column=1,sticky=tkinter.W)
 
@@ -197,13 +196,15 @@ class instrumentum:
         nit_check.grid(row=7,column=0,sticky=tkinter.W)      
         sul_check.grid(row=8,column=0,sticky=tkinter.W)      
 
-        button1.grid(row=4,column=0)
-        button4.grid(row=4,column=1)
-        button3.grid(row=5,column=0)
-        button2.grid(row=5,column=1)
+        button1.grid(row=0,column=0)
+        button4.grid(row=0,column=1)
+        button3.grid(row=1,column=0)
+        button2.grid(row=1,column=1)
+        label45.grid(row=2,column=0,sticky=tkinter.W)
+        entry45.grid(row=2,column=1,sticky=tkinter.W)
 
     def dbond_change(self):
-        if (self.dbond.get() == 1):
+        if self.dbond.get():
             self.tbond_check.config(state = tkinter.NORMAL)
             self.amide_check.select()
             self.amide_check.config(state = tkinter.NORMAL)
@@ -214,8 +215,8 @@ class instrumentum:
             self.amide_check.config(state = tkinter.DISABLED)
 
     def load_parameters(self):
-        if (self.parameter_filename.get() == ""):
-            filename = askopenfilename(filetypes=(("Text File", "*.txt"),("All Files","*.*")))
+        if not self.parameter_filename.get():
+            filename = askopenfilename(filetypes=(('Text File', '*.txt'),('All Files','*.*')))
             if filename:
             	self.parameter_filename.set(os.path.basename(filename))
             else:
@@ -223,8 +224,8 @@ class instrumentum:
             self.read_parameters()
 
     def save_parameters(self):
-        if (self.parameter_filename.get() == ""):
-            filename = tkinter.filedialog.SaveFileDialog(root).go("*.txt")
+        if not self.parameter_filename.get():
+            filename = tkinter.filedialog.SaveFileDialog(root).go('*.txt')
             if filename:
                 self.parameter_filename.set(os.path.basename(filename))
             else:
@@ -235,8 +236,8 @@ class instrumentum:
         self.percent_methyl.set(35.0)
         self.min_rings.set(1)
         self.max_rings.set(6)
-        self.database.set("")
-        self.parameter_filename.set("")
+        self.database.set('output.sqlite3')
+        self.parameter_filename.set('')
         self.nmol.set(50000)
         self.nthread.set(1)
         self.rng_seed.set(0)
@@ -266,155 +267,148 @@ class instrumentum:
         self.strip_axial_methyls.set(1)
         
     def convert_boolean(self,bvalue):
-        if (bvalue == 0):
-            return "No"
+        if bvalue:
+            return '1'
         else:
-            return "Yes"
-
-    def convert_string(self,val):
-        val.upper()
-        if (val == "YES"):
-            return 1
-        else:
-            return 0
+            return '0'
 
     def read_parameters(self):
         parameter_filename = self.parameter_filename.get()
         pfile = open(parameter_filename,'r')
         for line in pfile:
             data = line.split('=')
-            if (len(data) != 2):
+            if len(data) != 2:
                 continue
             name = data[0].strip()
             value = data[1].strip()
-            if (name == "NumberMolecules"):
+            if (name == 'NumberMolecules'):
                 self.nmol.set(int(value))
-            elif (name == "NumberThreads"):
+            elif (name == 'NumberThreads'):
                 self.nthread.set(int(value))
-            elif (name == "DatabaseFile"):
+            elif (name == 'DatabaseFile'):
                 self.database.set(value)
-            elif (name == "MinimumRings"):
+            elif (name == 'MinimumRings'):
                 self.min_rings.set(int(value))
-            elif (name == "MaximumRings"):
+            elif (name == 'MaximumRings'):
                 self.max_rings.set(int(value))
-            elif (name == "InitialPercentage"):
+            elif (name == 'InitialPercentage'):
                 self.percent.set(100.0*float(value))
-            elif (name == "RandomSeed"):
+            elif (name == 'RandomSeed'):
                 self.rng_seed.set(int(value))
-            elif (name == "BondLength"):
+            elif (name == 'BondLength'):
                 self.blength.set(float(value))
-            elif (name == "MaximumAttempts"):
+            elif (name == 'MaximumAttempts'):
                 self.nattempts1.set(int(value))
-            elif (name == "MaximumSecondary"):
+            elif (name == 'MaximumSecondary'):
                 self.nattempts2.set(int(value))
-            elif (name == "NumberC4Atoms"):
+            elif (name == 'NumberC4Atoms'):
                 self.nc4.set(int(value))
-            elif (name == "NumberC4Rings"):
+            elif (name == 'NumberC4Rings'):
                 self.nc4rings.set(int(value))
-            elif (name == "NumberPharmacophores"):
+            elif (name == 'NumberPharmacophores'):
                 self.npharm.set(int(value))
-            elif (name == "PharmacophoreRadius"):
+            elif (name == 'PharmacophoreRadius'):
                 self.pharm_radius.set(float(value))
-            elif (name == "NumberRings"):
+            elif (name == 'NumberRings'):
                 self.nrings.set(int(value))
-            elif (name == "NumberInitial"):
+            elif (name == 'NumberInitial'):
                 self.iteration1.set(int(value))
-            elif (name == "NumberPath"):
+            elif (name == 'NumberPath'):
                 self.iteration2.set(int(value))
-            elif (name == "NumberSecondary"):
+            elif (name == 'NumberSecondary'):
                 self.iteration3.set(int(value))
-            elif (name == "NumberRationalize"):
+            elif (name == 'NumberRationalize'):
                 self.iteration4.set(int(value))
-            elif (name == "NumberDesaturate"):
+            elif (name == 'NumberDesaturate'):
                 self.iteration5.set(int(value))
-            elif (name == "PharmacophoreHardening"):
-                self.pharm_harden.set(self.convert_string(value))
-            elif (name == "CreateDoubleBonds"):
-                self.dbond.set(self.convert_string(value))
-            elif (name == "CreateTripleBonds"):
-                self.tbond.set(self.convert_string(value))
-            elif (name == "CreateExotic"):
-                self.amide.set(self.convert_string(value))
-            elif (name == "CreateFiveMemberRings"):
-                self.penta.set(self.convert_string(value))
-            elif (name == "SubstituteOxygen"):
-                self.oxy.set(self.convert_string(value))
-            elif (name == "SubstituteNitrogen"):
-                self.nit.set(self.convert_string(value))
-            elif (name == "SubstituteSulfur"):
-                self.sul.set(self.convert_string(value))
-            elif (name == "SubstituteFunctionalGroups"):
-                self.fgrp.set(self.convert_string(value))
-            elif (name == "StripAxialMethyls"):
-                self.strip_axial_methyls.set(self.convert_string(value))
-            elif (name == "PercentMethyl"):
+            elif (name == 'PharmacophoreHardening'):
+                self.pharm_harden.set(value)
+            elif (name == 'CreateDoubleBonds'):
+                self.dbond.set(value)
+            elif (name == 'CreateTripleBonds'):
+                self.tbond.set(value)
+            elif (name == 'CreateExotic'):
+                self.amide.set(value)
+            elif (name == 'CreateFiveMemberRings'):
+                self.penta.set(value)
+            elif (name == 'SubstituteOxygen'):
+                self.oxy.set(value)
+            elif (name == 'SubstituteNitrogen'):
+                self.nit.set(value)
+            elif (name == 'SubstituteSulfur'):
+                self.sul.set(value)
+            elif (name == 'SubstituteFunctionalGroups'):
+                self.fgrp.set(value)
+            elif (name == 'StripAxialMethyls'):
+                self.strip_axial_methyls.set(value)
+            elif (name == 'PercentMethyl'):
                 self.percent_methyl.set(100.0*float(value))
         pfile.close()        
 
     def write_parameters(self):
         # Various sanity checks are now required...
-        if (self.database.get() is None):
-            messagebox.showerror("Illegal Value","The database filename must not be empty!")
+        if not self.database.get():
+            messagebox.showerror('Illegal Value','The database filename must not be empty!')
             return
-        if (self.rng_seed.get() < 0):
-            messagebox.showerror("Illegal Value","The random number seed must be non-negative!")
+        if self.rng_seed.get() < 0:
+            messagebox.showerror('Illegal Value','The random number seed must be non-negative!')
             return
-        if (self.nthread.get() < 1):
-            messagebox.showerror("Illegal Value","The number of threads must be greater than zero!")
+        if self.nthread.get() < 1:
+            messagebox.showerror('Illegal Value','The number of threads must be greater than zero!')
             return
-        if (self.percent.get() < 0 or self.percent.get() > 100):
-            messagebox.showerror("Illegal Value","The initial percentage parameter must be between 0 and 100!")
+        if self.percent.get() < 0 or self.percent.get() > 100:
+            messagebox.showerror('Illegal Value','The initial percentage parameter must be between 0 and 100!')
             return
-        if (self.percent_methyl.get() < 0 or self.percent_methyl.get() > 100):
-            messagebox.showerror("Illegal Value","The methyl pruning parameter must be between 0 and 100!")
+        if self.percent_methyl.get() < 0.0 or self.percent_methyl.get() > 100.0:
+            messagebox.showerror('Illegal Value','The methyl pruning parameter must be between 0 and 100!')
             return
-        if not(self.blength.get() > 0):
-            messagebox.showerror("Illegal Value","The bond length must be positive!")
+        if not(self.blength.get() > 0.0):
+            messagebox.showerror('Illegal Value','The bond length must be positive!')
             return
-        if (self.min_rings.get() < 0):
-            messagebox.showerror("Illegal Value","The minimum ring number must be non-negative!")
+        if self.min_rings.get() < 0:
+            messagebox.showerror('Illegal Value','The minimum ring number must be non-negative!')
             return
-        if (self.max_rings.get() < self.min_rings.get()):
-            messagebox.showerror("Illegal Value","The maximum ring number must not be less than the minimum ring number!")
+        if self.max_rings.get() < self.min_rings.get():
+            messagebox.showerror('Illegal Value','The maximum ring number must not be less than the minimum ring number!')
             return
-        if (self.npharm.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of pharmacophores must be positive!")
+        if self.npharm.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of pharmacophores must be positive!')
             return
-        if not(self.pharm_radius.get() > 0):
-            messagebox.showerror("Illegal Value","The pharmacophore radius must be positive!")
+        if not(self.pharm_radius.get() > 0.0):
+            messagebox.showerror('Illegal Value','The pharmacophore radius must be positive!')
             return
-        if (self.nmol.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of molecules must be positive!")
+        if self.nmol.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of molecules must be positive!')
             return
-        if (self.nc4.get() < 0):
-            messagebox.showerror("Illegal Value","The number of quaternary carbons must be non-negative!")
+        if self.nc4.get() < 0:
+            messagebox.showerror('Illegal Value','The number of quaternary carbons must be non-negative!')
             return
-        if (self.nc4rings.get() < 0):
-            messagebox.showerror("Illegal Value","The number of four-ring carbons must be non-negative!")
+        if self.nc4rings.get() < 0:
+            messagebox.showerror('Illegal Value','The number of four-ring carbons must be non-negative!')
             return
-        if (self.nrings.get() < 0):
-            messagebox.showerror("Illegal Value","The number of rings must be non-negative!")
+        if self.nrings.get() < 0:
+            messagebox.showerror('Illegal Value','The number of rings must be non-negative!')
             return
-        if (self.nattempts1.get() <= 0):
-            messagebox.showerror("Illegal Value","The maximum number of initial deletion attempts must be positive!")
+        if self.nattempts1.get() <= 0:
+            messagebox.showerror('Illegal Value','The maximum number of initial deletion attempts must be positive!')
             return
-        if (self.nattempts2.get() <= 0):
-            messagebox.showerror("Illegal Value","The maximum number of secondary deletion attempts must be positive!")
+        if self.nattempts2.get() <= 0:
+            messagebox.showerror('Illegal Value','The maximum number of secondary deletion attempts must be positive!')
             return
-        if (self.iteration1.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of initial deletion iterations must be positive!")
+        if self.iteration1.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of initial deletion iterations must be positive!')
             return
-        if (self.iteration2.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of secondary deletion iterations must be positive!")
+        if self.iteration2.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of secondary deletion iterations must be positive!')
             return
-        if (self.iteration3.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of path hardening iterations must be positive!")
+        if self.iteration3.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of path hardening iterations must be positive!')
             return
-        if (self.iteration4.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of rationalization iterations must be positive!")
+        if self.iteration4.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of rationalization iterations must be positive!')
             return
-        if (self.iteration5.get() <= 0):
-            messagebox.showerror("Illegal Value","The number of desaturation and heteroatom iterations must be positive!")
+        if self.iteration5.get() <= 0:
+            messagebox.showerror('Illegal Value','The number of desaturation and heteroatom iterations must be positive!')
             return
 
         parameter_filename = self.parameter_filename.get()
