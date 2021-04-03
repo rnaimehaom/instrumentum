@@ -37,9 +37,13 @@ molecule.o: molecule.cxx molecule.h instrumentum.h
 molecular_assembler.o: molecular_assembler.cxx molecular_assembler.h grid.h molecule.h instrumentum.h
 	$(CXX) $(CXX_FLAGS) -c molecular_assembler.cxx
 
+docs:
+	doxygen docs.config
+
 clean:
 	rm -f $(OBJECTS)
 	rm -f instrumentum
+	rm -rf documentation/*
 
 
 
