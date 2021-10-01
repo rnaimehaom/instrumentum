@@ -7,6 +7,7 @@ import tkinter
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 import os
+import xml.etree.ElementTree as ET
 
 # One point to note is that this GUI must be run on a monitor with
 # resolution at least 800 x 665 for proper viewing of the complete interface. 
@@ -216,7 +217,7 @@ class instrumentum:
 
     def load_parameters(self):
         if not self.parameter_filename.get():
-            filename = askopenfilename(filetypes=(('Text File', '*.txt'),('All Files','*.*')))
+            filename = askopenfilename(filetypes=(('XML File', '*.xml'),('All Files','*.*')))
             if filename:
             	self.parameter_filename.set(os.path.basename(filename))
             else:
@@ -225,7 +226,7 @@ class instrumentum:
 
     def save_parameters(self):
         if not self.parameter_filename.get():
-            filename = tkinter.filedialog.SaveFileDialog(root).go('*.txt')
+            filename = tkinter.filedialog.SaveFileDialog(root).go('*.xml')
             if filename:
                 self.parameter_filename.set(os.path.basename(filename))
             else:
@@ -273,77 +274,72 @@ class instrumentum:
             return '0'
 
     def read_parameters(self):
-        parameter_filename = self.parameter_filename.get()
-        pfile = open(parameter_filename,'r')
-        for line in pfile:
-            data = line.split('=')
-            if len(data) != 2:
-                continue
-            name = data[0].strip()
-            value = data[1].strip()
+        tree = ET.parse(self.parameter_filename.get())
+        root = tree.getroot()
+        for child in root:
+            name = child.tag
             if (name == 'NumberMolecules'):
-                self.nmol.set(int(value))
+                self.nmol.set(int(child.text))
             elif (name == 'NumberThreads'):
-                self.nthread.set(int(value))
+                self.nthread.set(int(child.text))
             elif (name == 'DatabaseFile'):
-                self.database.set(value)
+                self.database.set(child.text)
             elif (name == 'MinimumRings'):
-                self.min_rings.set(int(value))
+                self.min_rings.set(int(child.text))
             elif (name == 'MaximumRings'):
-                self.max_rings.set(int(value))
+                self.max_rings.set(int(child.text))
             elif (name == 'InitialPercentage'):
-                self.percent.set(100.0*float(value))
+                self.percent.set(100.0*float(child.text))
             elif (name == 'RandomSeed'):
-                self.rng_seed.set(int(value))
+                self.rng_seed.set(int(child.text))
             elif (name == 'BondLength'):
-                self.blength.set(float(value))
+                self.blength.set(float(child.text))
             elif (name == 'MaximumAttempts'):
-                self.nattempts1.set(int(value))
+                self.nattempts1.set(int(child.text))
             elif (name == 'MaximumSecondary'):
-                self.nattempts2.set(int(value))
+                self.nattempts2.set(int(child.text))
             elif (name == 'NumberC4Atoms'):
-                self.nc4.set(int(value))
+                self.nc4.set(int(child.text))
             elif (name == 'NumberC4Rings'):
-                self.nc4rings.set(int(value))
+                self.nc4rings.set(int(child.text))
             elif (name == 'NumberPharmacophores'):
-                self.npharm.set(int(value))
+                self.npharm.set(int(child.text))
             elif (name == 'PharmacophoreRadius'):
-                self.pharm_radius.set(float(value))
+                self.pharm_radius.set(float(child.text))
             elif (name == 'NumberRings'):
-                self.nrings.set(int(value))
+                self.nrings.set(int(child.text))
             elif (name == 'NumberInitial'):
-                self.iteration1.set(int(value))
+                self.iteration1.set(int(child.text))
             elif (name == 'NumberPath'):
-                self.iteration2.set(int(value))
+                self.iteration2.set(int(child.text))
             elif (name == 'NumberSecondary'):
-                self.iteration3.set(int(value))
+                self.iteration3.set(int(child.text))
             elif (name == 'NumberRationalize'):
-                self.iteration4.set(int(value))
+                self.iteration4.set(int(child.text))
             elif (name == 'NumberDesaturate'):
-                self.iteration5.set(int(value))
+                self.iteration5.set(int(child.text))
             elif (name == 'PharmacophoreHardening'):
-                self.pharm_harden.set(value)
+                self.pharm_harden.set(child.text)
             elif (name == 'CreateDoubleBonds'):
-                self.dbond.set(value)
+                self.dbond.set(child.text)
             elif (name == 'CreateTripleBonds'):
-                self.tbond.set(value)
+                self.tbond.set(child.text)
             elif (name == 'CreateExotic'):
-                self.amide.set(value)
+                self.amide.set(child.text)
             elif (name == 'CreateFiveMemberRings'):
-                self.penta.set(value)
+                self.penta.set(child.text)
             elif (name == 'SubstituteOxygen'):
-                self.oxy.set(value)
+                self.oxy.set(child.text)
             elif (name == 'SubstituteNitrogen'):
-                self.nit.set(value)
+                self.nit.set(child.text)
             elif (name == 'SubstituteSulfur'):
-                self.sul.set(value)
+                self.sul.set(child.text)
             elif (name == 'SubstituteFunctionalGroups'):
-                self.fgrp.set(value)
+                self.fgrp.set(child.text)
             elif (name == 'StripAxialMethyls'):
-                self.strip_axial_methyls.set(value)
+                self.strip_axial_methyls.set(child.text)
             elif (name == 'PercentMethyl'):
-                self.percent_methyl.set(100.0*float(value))
-        pfile.close()        
+                self.percent_methyl.set(100.0*float(child.text))
 
     def write_parameters(self):
         # Various sanity checks are now required...
@@ -410,7 +406,8 @@ class instrumentum:
         if self.iteration5.get() <= 0:
             messagebox.showerror('Illegal Value','The number of desaturation and heteroatom iterations must be positive!')
             return
-
+        #root = ET.Element('Parameters')
+        #tree = ET.ElementTree(root)
         parameter_filename = self.parameter_filename.get()
         pfile = open(parameter_filename,'w')
         pfile.write('DatabaseFile = ' + self.database.get() + '\n')
@@ -445,7 +442,8 @@ class instrumentum:
         pfile.write('MinimumRings = ' + str(self.min_rings.get()) + '\n')
         pfile.write('MaximumRings = ' + str(self.max_rings.get()) + '\n')
         pfile.close()
-        
+        #tree.write(self.parameter_filename.get())
+
 root = tkinter.Tk()
 gui = instrumentum(root)
 root.mainloop()

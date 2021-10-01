@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Parameters>
+	<InitialPercentage>0.75</InitialPercentage>
+	<PharmacophoreRadius>4.0</PharmacophoreRadius>
+	<NumberPharmacophores>3</NumberPharmacophores>
+	<MaximumAttempts>100</MaximumAttempts>
+	<NumberC4Atoms>2</NumberC4Atoms> 
+	<NumberRings>4</NumberRings>
+	<PercentMethyl>0.4</PercentMethyl>
+	<MinimumRings>1</MinimumRings>
+	<MaximumRings>6</MaximumRings>
+	<NumberC4Rings>0</NumberC4Rings>
+	<StripAxialMethyls>1</StripAxialMethyls>
+	<NumberMolecules>10000</NumberMolecules>
+	<BondLength>1.4</BondLength>
+	<CreateFiveMemberRings>1</CreateFiveMemberRings>
+	<CreateExotic>1</CreateExotic>
+	<CreateDoubleBonds>1</CreateDoubleBonds>
+	<CreateTripleBonds>1</CreateTripleBonds>
+	<SubstituteOxygen>1</SubstituteOxygen>
+	<SubstituteNitrogen>1</SubstituteNitrogen>
+	<SubstituteSulfur>1</SubstituteSulfur>
+	<SubstituteFunctionalGroups>1</SubstituteFunctionalGroups>
+	<PharmacophoreHardening>1</PharmacophoreHardening>
+	<MaximumSecondary>100</MaximumSecondary>
+	<NumberInitial>3</NumberInitial>
+	<NumberPath>3</NumberPath>
+	<NumberSecondary>3</NumberSecondary>
+	<NumberRationalize>3</NumberRationalize>
+	<NumberDesaturate>4</NumberDesaturate>
+	<RandomSeed>0</RandomSeed>
+	<NumberThreads>2</NumberThreads>
+	<DatabaseFile>alchemy.sqlite3</DatabaseFile>
+</Parameters>

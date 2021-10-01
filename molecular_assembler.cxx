@@ -10,152 +10,136 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   // of which is passed in as an argument to the method.
   // The file format should be '#' for a comment, otherwise
   // varname = value.
-  int n,tvalue;
-  std::string line,name,value,parameter_string;
-  std::ifstream s;
+  int tvalue;
+  pugi::xml_document pfile;
+  pugi::xml_node global;
+  std::string name,value,parameter_string;
 
-  // Prepare to catch exceptions from the ifstream object
-  s.exceptions(std::ifstream::badbit);
+  // Open the file
+  if (!(pfile.load_file(filename.c_str()))) throw std::invalid_argument("Unable to parse parameter file!");
 
-  try {
-    // Open the file
-    s.open(filename,std::ios_base::in);
-    // Loop through all lines in the parameter file
-    while(std::getline(s,line)) {
-      // If it's an empty line, continue
-      if (line.empty()) continue;
-      // If the line begins with a #, ignore it
-      if (line[0] == '#') continue;
-      // If there's no equals sign in this line, continue
-      if (line.find('=') == std::string::npos) continue;
-      n = line.find('=');
-      name = line.substr(0,n);
-      value = line.substr(n+1,line.length());
-      trim(name);
-      trim(value);
-      // Now that we have the parameter name, see if it matches
-      // any of the known parameters. If so, read in the value and
-      // assign it
-      if (name == "PharmacophoreRadius") {
-        pharmacophore_radius = std::stod(value);
-      }
-      else if (name == "InitialPercentage") {
-        percent = std::stod(value);
-      }
-      else if (name == "PercentMethyl") {
-        percent_methyl = std::stod(value);
-      }
-      else if (name == "BondLength") {
-        bond_length = std::stod(value);
-      }
-      else if (name == "DatabaseFile") {
-        database = value;
-      }
-      else if (name == "RandomSeed") {
-        seed = (unsigned) std::stol(value);
-      }
-      else if (name == "MaximumAttempts") {
-        max_attempts = std::stoi(value);
-      }
-      else if (name == "NumberRings") {
-        nrings = std::stoi(value);
-      }
-      else if (name == "NumberC4Atoms") {
-        nc4 = std::stoi(value);
-      }
-      else if (name == "NumberC4Rings") {
-        nc4rings = std::stoi(value);
-      }
-      else if (name == "MinimumRings") {
-        min_rings = std::stoi(value);
-      }
-      else if (name == "MaximumRings") {
-        max_rings = std::stoi(value);
-      }
-      else if (name == "NumberInitial") {
-        n_initial = std::stoi(value);
-      }
-      else if (name == "NumberSecondary") {
-        n_secondary = std::stoi(value);
-      }
-      else if (name == "NumberPath") {
-        n_path = std::stoi(value);
-      }
-      else if (name == "MaximumSecondary") {
-        max_secondary = std::stoi(value);
-      }
-      else if (name == "NumberRationalize") {
-        n_rationalize = std::stoi(value);
-      }
-      else if (name == "NumberDesaturate") {
-        n_desaturate = std::stoi(value);
-      }
-      else if (name == "NumberMolecules") {
-        n_mols = (unsigned) std::stol(value);
-      }
-      else if (name == "NumberThreads") {
-        nthread = std::stoi(value);
-      }
-      else if (name == "NumberPharmacophores") {
-        npharmacophore = std::stoi(value);
-      }
-      else if (name == "CreateFiveMemberRings") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        create_penta = (tvalue == 1) ? true : false;
-      }
-      else if (name == "SubstituteFunctionalGroups") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        subs_functional = (tvalue == 1) ? true : false;
-      }
-      else if (name == "CreateDoubleBonds") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        create_double = (tvalue == 1) ? true : false;
-      }
-      else if (name == "CreateTripleBonds") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        create_triple = (tvalue == 1) ? true : false;
-      }
-      else if (name == "CreateExotic") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        create_exotic = (tvalue == 1) ? true : false;
-      }
-      else if (name == "PharmacophoreHardening") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        pharm_hardening = (tvalue == 1) ? true : false;
-      }
-      else if (name == "SubstituteOxygen") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        subs_oxygen = (tvalue == 1) ? true : false;
-      }
-      else if (name == "SubstituteNitrogen") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        subs_nitrogen = (tvalue == 1) ? true : false;
-      }
-      else if (name == "SubstituteSulfur") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        subs_sulfur = (tvalue == 1) ? true : false;
-      }
-      else if (name == "StripAxialMethyls") {
-        tvalue = std::stoi(value);
-        assert(tvalue == 0 || tvalue == 1);
-        kill_axial = (tvalue == 1) ? true : false;
-      }
+  global = pfile.child("Parameters");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    // Now that we have the parameter name, see if it matches
+    // any of the known parameters. If so, read in the value and
+    // assign it
+    if (name == "PharmacophoreRadius") {
+      pharmacophore_radius = std::stod(value);
+    }
+    else if (name == "InitialPercentage") {
+      percent = std::stod(value);
+    }
+    else if (name == "PercentMethyl") {
+      percent_methyl = std::stod(value);
+    }
+    else if (name == "BondLength") {
+      bond_length = std::stod(value);
+    }
+    else if (name == "DatabaseFile") {
+      database = value;
+    }
+    else if (name == "RandomSeed") {
+      seed = (unsigned) std::stol(value);
+    }
+    else if (name == "MaximumAttempts") {
+      max_attempts = std::stoi(value);
+    }
+    else if (name == "NumberRings") {
+      nrings = std::stoi(value);
+    }
+    else if (name == "NumberC4Atoms") {
+      nc4 = std::stoi(value);
+    }
+    else if (name == "NumberC4Rings") {
+      nc4rings = std::stoi(value);
+    }
+    else if (name == "MinimumRings") {
+      min_rings = std::stoi(value);
+    }
+    else if (name == "MaximumRings") {
+      max_rings = std::stoi(value);
+    }
+    else if (name == "NumberInitial") {
+      n_initial = std::stoi(value);
+    }
+    else if (name == "NumberSecondary") {
+      n_secondary = std::stoi(value);
+    }
+    else if (name == "NumberPath") {
+      n_path = std::stoi(value);
+    }
+    else if (name == "MaximumSecondary") {
+      max_secondary = std::stoi(value);
+    }
+    else if (name == "NumberRationalize") {
+      n_rationalize = std::stoi(value);
+    }
+    else if (name == "NumberDesaturate") {
+      n_desaturate = std::stoi(value);
+    }
+    else if (name == "NumberMolecules") {
+      n_mols = (unsigned) std::stol(value);
+    }
+    else if (name == "NumberThreads") {
+      nthread = std::stoi(value);
+    }
+    else if (name == "NumberPharmacophores") {
+      npharmacophore = std::stoi(value);
+    }
+    else if (name == "CreateFiveMemberRings") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      create_penta = (tvalue == 1) ? true : false;
+    }
+    else if (name == "SubstituteFunctionalGroups") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      subs_functional = (tvalue == 1) ? true : false;
+    }
+    else if (name == "CreateDoubleBonds") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      create_double = (tvalue == 1) ? true : false;
+    }
+    else if (name == "CreateTripleBonds") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      create_triple = (tvalue == 1) ? true : false;
+    }
+    else if (name == "CreateExotic") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      create_exotic = (tvalue == 1) ? true : false;
+    }
+    else if (name == "PharmacophoreHardening") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      pharm_hardening = (tvalue == 1) ? true : false;
+    }
+    else if (name == "SubstituteOxygen") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      subs_oxygen = (tvalue == 1) ? true : false;
+    }
+    else if (name == "SubstituteNitrogen") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      subs_nitrogen = (tvalue == 1) ? true : false;
+    }
+    else if (name == "SubstituteSulfur") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      subs_sulfur = (tvalue == 1) ? true : false;
+    }
+    else if (name == "StripAxialMethyls") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      kill_axial = (tvalue == 1) ? true : false;
     }
   }
-  catch (const std::ifstream::failure& e) {
-    // File doesn't exist, print an error message and die
-    std::cout << "The file " << filename << " cannot be opened!" << std::endl;
-  }
-  s.close();
+
   // Sanity checks...
   assert(n_mols > 0);
   assert(nthread > 0);

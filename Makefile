@@ -11,7 +11,7 @@ CXX_FLAGS = $(DEBUG)
 
 LD_FLAGS = $(CXX_FLAGS) -pthread
 
-LIBS = -lsqlite3 -lm
+LIBS = -lsqlite3 -lpugixml -lm
 
 instrumentum: $(OBJECTS)
 	$(CXX) $(LD_FLAGS) -o instrumentum $(OBJECTS) $(LIBS)

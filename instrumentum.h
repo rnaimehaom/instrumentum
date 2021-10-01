@@ -17,10 +17,11 @@
 #include <unistd.h>
 // To handle the database interactions
 #include <sqlite3.h>
+// To read the XML parameter file
+#include <pugixml.hpp>
 
 #ifndef _globalh
 #define _globalh
-std::string& trim(std::string&,const std::string& chars = "\t\n\v\f\r ");
 bool file_exists(const std::string&);
 bool connected(const std::vector<int>&);
 void ring_perception(const std::vector<int>&,std::vector<int>&);
