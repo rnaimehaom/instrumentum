@@ -5,8 +5,8 @@ std::map<int,std::string> element_table;
 int main(int argc,char** argv)
 {
   if (argc != 2) {
-    std::cout << "Usage: ./instrumentum parameter_file" << std::endl;
-    return 0;
+    std::cerr << "Usage: ./instrumentum <parameter file>" << std::endl;
+    return 1;
   }
 
   // Element names...

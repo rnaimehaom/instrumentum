@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
-# Use the command 
-# sudo pip3 install tkinter 
+# Use the command
+# sudo pip3 install tkinter
 # to install the Tkinter module for Python 3.x.
 import tkinter
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 import os
 import xml.etree.ElementTree as ET
+import xml.dom.minidom as MD
 
 # One point to note is that this GUI must be run on a monitor with
-# resolution at least 800 x 665 for proper viewing of the complete interface. 
+# resolution at least 800 x 665 for proper viewing of the complete interface.
 
 class instrumentum:
     def __init__(self,master=None):
@@ -59,7 +60,7 @@ class instrumentum:
         chem_label1 = tkinter.Label(ratio_group,text='Percentage of Methyl Groups to Prune:',wraplength=250,justify=tkinter.LEFT)
         chem_label2 = tkinter.Label(ratio_group,text='Minimum Number of Rings for Desaturating Scaffold:',wraplength=250,justify=tkinter.LEFT)
         chem_label3 = tkinter.Label(ratio_group,text='Maximum Number of Rings for Desaturating Scaffold:',wraplength=250,justify=tkinter.LEFT)
-        
+
         self.nmol = tkinter.IntVar()
         self.nthread = tkinter.IntVar()
         self.database = tkinter.StringVar()
@@ -94,7 +95,7 @@ class instrumentum:
         self.strip_axial_methyls = tkinter.BooleanVar()
 
         self.clear_parameters()
-        
+
         chem_entry1 = tkinter.Entry(ratio_group,width=7,textvariable=self.percent_methyl)
         chem_entry2 = tkinter.Entry(ratio_group,width=7,textvariable=self.min_rings)
         chem_entry3 = tkinter.Entry(ratio_group,width=7,textvariable=self.max_rings)
@@ -127,11 +128,11 @@ class instrumentum:
         penta_check = tkinter.Checkbutton(desat_group,text='Create Penta-Atomic Rings',variable=self.penta)
         fgrp_check = tkinter.Checkbutton(desat_group,text='Substitute Functional Groups',variable=self.fgrp)
         self.amide_check = tkinter.Checkbutton(desat_group,text='Substitute Amides, Sulfonamides and Esters',variable=self.amide)
-        
+
         label26 = tkinter.Label(skeleton_group,text='Initial Node for Path Hardening:',wraplength=250,justify=tkinter.LEFT)
         rbutton5 = tkinter.Radiobutton(skeleton_group,text='Random Interior Node',value=0,variable=self.pharm_harden)
         rbutton6 = tkinter.Radiobutton(skeleton_group,text='Pharmacophoric Node',value=1,variable=self.pharm_harden)
-        
+
         button1 = tkinter.Button(button_group,text='Save Parameters',command=self.save_parameters)
         button2 = tkinter.Button(button_group,text='Exit',command=root.quit)
         button3 = tkinter.Button(button_group,text='Load Parameters',command=self.load_parameters)
@@ -193,9 +194,9 @@ class instrumentum:
         self.amide_check.grid(row=3,column=0,sticky=tkinter.W)
         penta_check.grid(row=4,column=0,sticky=tkinter.W)
         fgrp_check.grid(row=5,column=0,sticky=tkinter.W)
-        oxy_check.grid(row=6,column=0,sticky=tkinter.W)        
-        nit_check.grid(row=7,column=0,sticky=tkinter.W)      
-        sul_check.grid(row=8,column=0,sticky=tkinter.W)      
+        oxy_check.grid(row=6,column=0,sticky=tkinter.W)
+        nit_check.grid(row=7,column=0,sticky=tkinter.W)
+        sul_check.grid(row=8,column=0,sticky=tkinter.W)
 
         button1.grid(row=0,column=0)
         button4.grid(row=0,column=1)
@@ -211,13 +212,13 @@ class instrumentum:
             self.amide_check.config(state = tkinter.NORMAL)
         else:
             self.tbond_check.deselect()
-            self.tbond_check.config(state = tkinter.DISABLED) 
+            self.tbond_check.config(state = tkinter.DISABLED)
             self.amide_check.deselect()
             self.amide_check.config(state = tkinter.DISABLED)
 
     def load_parameters(self):
         if not self.parameter_filename.get():
-            filename = askopenfilename(filetypes=(('XML File', '*.xml'),('All Files','*.*')))
+            filename = askopenfilename(filetypes=(('XML File','*.xml'),('All Files','*.*')))
             if filename:
             	self.parameter_filename.set(os.path.basename(filename))
             else:
@@ -266,7 +267,7 @@ class instrumentum:
         self.iteration4.set(3)
         self.iteration5.set(5)
         self.strip_axial_methyls.set(1)
-        
+
     def convert_boolean(self,bvalue):
         if bvalue:
             return '1'
@@ -275,74 +276,105 @@ class instrumentum:
 
     def read_parameters(self):
         tree = ET.parse(self.parameter_filename.get())
-        root = tree.getroot()
+
+        root = tree.find('Global')
         for child in root:
-            name = child.tag
+            name = child.tag.strip()
+            value = child.text.strip()
             if (name == 'NumberMolecules'):
-                self.nmol.set(int(child.text))
+                self.nmol.set(int(value))
             elif (name == 'NumberThreads'):
-                self.nthread.set(int(child.text))
+                self.nthread.set(int(value))
             elif (name == 'DatabaseFile'):
-                self.database.set(child.text)
-            elif (name == 'MinimumRings'):
-                self.min_rings.set(int(child.text))
-            elif (name == 'MaximumRings'):
-                self.max_rings.set(int(child.text))
-            elif (name == 'InitialPercentage'):
-                self.percent.set(100.0*float(child.text))
+                self.database.set(value)
             elif (name == 'RandomSeed'):
-                self.rng_seed.set(int(child.text))
+                self.rng_seed.set(int(value))
             elif (name == 'BondLength'):
-                self.blength.set(float(child.text))
-            elif (name == 'MaximumAttempts'):
-                self.nattempts1.set(int(child.text))
-            elif (name == 'MaximumSecondary'):
-                self.nattempts2.set(int(child.text))
-            elif (name == 'NumberC4Atoms'):
-                self.nc4.set(int(child.text))
-            elif (name == 'NumberC4Rings'):
-                self.nc4rings.set(int(child.text))
-            elif (name == 'NumberPharmacophores'):
-                self.npharm.set(int(child.text))
+                self.blength.set(float(value))
+
+        root = tree.find('Pharmacophore')
+        for child in root:
+            name = child.tag.strip()
+            value = child.text.strip()
+            if (name == 'NumberPharmacophores'):
+                self.npharm.set(int(value))
             elif (name == 'PharmacophoreRadius'):
-                self.pharm_radius.set(float(child.text))
+                self.pharm_radius.set(float(value))
+
+        root = tree.find('HydrocarbonSkeleton')
+        for child in root:
+            name = child.tag.strip()
+            value = child.text.strip()
+            if (name == 'InitialPercentage'):
+                self.percent.set(100.0*float(value))
+            elif (name == 'MaximumAttempts'):
+                self.nattempts1.set(int(value))
+            elif (name == 'MaximumSecondary'):
+                self.nattempts2.set(int(value))
+            elif (name == 'QuaternaryCarbonAtoms'):
+                self.nc4.set(int(value))
+            elif (name == 'FourRingCarbonAtoms'):
+                self.nc4rings.set(int(value))
             elif (name == 'NumberRings'):
-                self.nrings.set(int(child.text))
-            elif (name == 'NumberInitial'):
-                self.iteration1.set(int(child.text))
-            elif (name == 'NumberPath'):
-                self.iteration2.set(int(child.text))
-            elif (name == 'NumberSecondary'):
-                self.iteration3.set(int(child.text))
-            elif (name == 'NumberRationalize'):
-                self.iteration4.set(int(child.text))
-            elif (name == 'NumberDesaturate'):
-                self.iteration5.set(int(child.text))
+                self.nrings.set(int(value))
             elif (name == 'PharmacophoreHardening'):
-                self.pharm_harden.set(child.text)
-            elif (name == 'CreateDoubleBonds'):
-                self.dbond.set(child.text)
-            elif (name == 'CreateTripleBonds'):
-                self.tbond.set(child.text)
-            elif (name == 'CreateExotic'):
-                self.amide.set(child.text)
+                self.pharm_harden.set(value)
+
+        root = tree.find('Rationalization')
+        for child in root:
+            name = child.tag.strip()
+            value = child.text.strip()
+            if (name == 'PercentMethyl'):
+                self.percent_methyl.set(100.0*float(value))
+            elif (name == 'MinimumRings'):
+                self.min_rings.set(int(value))
+            elif (name == 'MaximumRings'):
+                self.max_rings.set(int(value))
+
+
+        root = tree.find('MolecularAssembly')
+        for child in root:
+            name = child.tag.strip()
+            value = child.text.strip()
+            if (name == 'NumberInitial'):
+                self.iteration1.set(int(value))
+            elif (name == 'NumberSecondary'):
+                self.iteration3.set(int(value))
+            elif (name == 'NumberPath'):
+                self.iteration2.set(int(value))
+            elif (name == 'NumberRationalize'):
+                self.iteration4.set(int(value))
+            elif (name == 'NumberDesaturate'):
+                self.iteration5.set(int(value))
+
+        root = tree.find('Desaturation')
+        for child in root:
+            name = child.tag.strip()
+            value = child.text.strip()
+            if (name == 'StripAxialMethyls'):
+                self.strip_axial_methyls.set(value)
             elif (name == 'CreateFiveMemberRings'):
-                self.penta.set(child.text)
+                self.penta.set(value)
+            elif (name == 'CreateExotic'):
+                self.amide.set(value)
+            elif (name == 'CreateDoubleBonds'):
+                self.dbond.set(value)
+            elif (name == 'CreateTripleBonds'):
+                self.tbond.set(value)
             elif (name == 'SubstituteOxygen'):
-                self.oxy.set(child.text)
+                self.oxy.set(value)
             elif (name == 'SubstituteNitrogen'):
-                self.nit.set(child.text)
+                self.nit.set(value)
             elif (name == 'SubstituteSulfur'):
-                self.sul.set(child.text)
+                self.sul.set(value)
             elif (name == 'SubstituteFunctionalGroups'):
-                self.fgrp.set(child.text)
-            elif (name == 'StripAxialMethyls'):
-                self.strip_axial_methyls.set(child.text)
-            elif (name == 'PercentMethyl'):
-                self.percent_methyl.set(100.0*float(child.text))
+                self.fgrp.set(value)
 
     def write_parameters(self):
         # Various sanity checks are now required...
+        if not self.parameter_filename.get():
+            messagebox.showerror('Illegal Value','The parameter filename must not be empty!')
+            return
         if not self.database.get():
             messagebox.showerror('Illegal Value','The database filename must not be empty!')
             return
@@ -377,10 +409,10 @@ class instrumentum:
             messagebox.showerror('Illegal Value','The number of molecules must be positive!')
             return
         if self.nc4.get() < 0:
-            messagebox.showerror('Illegal Value','The number of quaternary carbons must be non-negative!')
+            messagebox.showerror('Illegal Value','The number of quaternary carbon atoms must be non-negative!')
             return
         if self.nc4rings.get() < 0:
-            messagebox.showerror('Illegal Value','The number of four-ring carbons must be non-negative!')
+            messagebox.showerror('Illegal Value','The number of four-ring carbon atoms must be non-negative!')
             return
         if self.nrings.get() < 0:
             messagebox.showerror('Illegal Value','The number of rings must be non-negative!')
@@ -406,43 +438,87 @@ class instrumentum:
         if self.iteration5.get() <= 0:
             messagebox.showerror('Illegal Value','The number of desaturation and heteroatom iterations must be positive!')
             return
-        #root = ET.Element('Parameters')
-        #tree = ET.ElementTree(root)
-        parameter_filename = self.parameter_filename.get()
-        pfile = open(parameter_filename,'w')
-        pfile.write('DatabaseFile = ' + self.database.get() + '\n')
-        pfile.write('RandomSeed = ' + str(self.rng_seed.get()) + '\n')
-        pfile.write('InitialPercentage = ' + str(self.percent.get()/100.0) + '\n')
-        pfile.write('MaximumAttempts = ' + str(self.nattempts1.get()) + '\n')
-        pfile.write('MaximumSecondary = ' + str(self.nattempts2.get()) + '\n')
-        pfile.write('BondLength = ' + str(self.blength.get()) + '\n')
-        pfile.write('NumberPharmacophores = ' + str(self.npharm.get()) + '\n')
-        pfile.write('PharmacophoreRadius = ' + str(self.pharm_radius.get()) + '\n')
-        pfile.write('NumberC4Atoms = ' + str(self.nc4.get()) + '\n')
-        pfile.write('NumberC4Rings = ' + str(self.nc4rings.get()) + '\n')
-        pfile.write('NumberRings = ' + str(self.nrings.get()) + '\n')
-        pfile.write('SubstituteOxygen = ' + self.convert_boolean(self.oxy.get()) + '\n')
-        pfile.write('SubstituteNitrogen = ' + self.convert_boolean(self.nit.get()) + '\n')
-        pfile.write('SubstituteSulfur = ' + self.convert_boolean(self.sul.get()) + '\n')
-        pfile.write('SubstituteFunctionalGroups = ' + self.convert_boolean(self.fgrp.get()) + '\n')
-        pfile.write('CreateDoubleBonds = ' + self.convert_boolean(self.dbond.get()) + '\n')
-        pfile.write('CreateTripleBonds = ' + self.convert_boolean(self.tbond.get()) + '\n')
-        pfile.write('CreateExotic = ' + self.convert_boolean(self.amide.get()) + '\n')
-        pfile.write('CreateFiveMemberRings = ' + self.convert_boolean(self.penta.get()) + '\n')
-        pfile.write('StripAxialMethyls = ' + self.convert_boolean(self.strip_axial_methyls.get()) + '\n')
-        pfile.write('NumberInitial = ' + str(self.iteration1.get()) + '\n')
-        pfile.write('NumberPath = ' + str(self.iteration2.get()) + '\n')
-        pfile.write('NumberSecondary = ' + str(self.iteration3.get()) + '\n')
-        pfile.write('NumberRationalize = ' + str(self.iteration4.get()) + '\n')
-        pfile.write('NumberDesaturate = ' + str(self.iteration5.get()) + '\n')
-        pfile.write('PharmacophoreHardening = ' + self.convert_boolean(self.pharm_harden.get()) + '\n')
-        pfile.write('PercentMethyl = ' + str(self.percent_methyl.get()/100.0) + '\n')
-        pfile.write('NumberMolecules = ' + str(self.nmol.get()) + '\n')
-        pfile.write('NumberThreads = ' + str(self.nthread.get()) + '\n')
-        pfile.write('MinimumRings = ' + str(self.min_rings.get()) + '\n')
-        pfile.write('MaximumRings = ' + str(self.max_rings.get()) + '\n')
-        pfile.close()
-        #tree.write(self.parameter_filename.get())
+
+        content = ET.Element('Parameters')
+
+        global_params = ET.SubElement(content,'Global')
+        ptype = ET.SubElement(global_params,'NumberMolecules')
+        ptype.text = str(self.nmol.get())
+        ptype = ET.SubElement(global_params,'DatabaseFile')
+        ptype.text = self.database.get()
+        ptype = ET.SubElement(global_params,'BondLength')
+        ptype.text = str(self.blength.get())
+        ptype = ET.SubElement(global_params,'RandomSeed')
+        ptype.text = str(self.rng_seed.get())
+        ptype = ET.SubElement(global_params,'NumberThreads')
+        ptype.text = str(self.nthread.get())
+
+        pharma_params = ET.SubElement(content,'Pharmacophore')
+        ptype = ET.SubElement(pharma_params,'NumberPharmacophores')
+        ptype.text = str(self.npharm.get())
+        ptype = ET.SubElement(pharma_params,'PharmacophoreRadius')
+        ptype.text = str(self.pharm_radius.get())
+
+        hydro_params = ET.SubElement(content,'HydrocarbonSkeleton')
+        ptype = ET.SubElement(hydro_params,'InitialPercentage')
+        ptype.text = str(self.percent.get()/100.0)
+        ptype = ET.SubElement(hydro_params,'MaximumAttempts')
+        ptype.text = str(self.nattempts1.get())
+        ptype = ET.SubElement(hydro_params,'MaximumSecondary')
+        ptype.text = str(self.nattempts2.get())
+        ptype = ET.SubElement(hydro_params,'QuaternaryCarbonAtoms')
+        ptype.text = str(self.nc4.get())
+        ptype = ET.SubElement(hydro_params,'FourRingCarbonAtoms')
+        ptype.text = str(self.nc4rings.get())
+        ptype = ET.SubElement(hydro_params,'NumberRings')
+        ptype.text = str(self.nrings.get())
+        ptype = ET.SubElement(hydro_params,'PharmacophoreHardening')
+        ptype.text = self.convert_boolean(self.pharm_harden.get())
+
+        rational_params = ET.SubElement(content,'Rationalization')
+        ptype = ET.SubElement(rational_params,'PercentMethyl')
+        ptype.text = str(self.percent_methyl.get()/100.0)
+        ptype = ET.SubElement(rational_params,'MinimumRings')
+        ptype.text = str(self.min_rings.get())
+        ptype = ET.SubElement(rational_params,'MaximumRings')
+        ptype.text = str(self.max_rings.get())
+
+        desaturation_params = ET.SubElement(content,'Desaturation')
+        ptype = ET.SubElement(desaturation_params,'StripAxialMethyls')
+        ptype.text = self.convert_boolean(self.strip_axial_methyls.get())
+        ptype = ET.SubElement(desaturation_params,'CreateFiveMemberRings')
+        ptype.text = self.convert_boolean(self.penta.get())
+        ptype = ET.SubElement(desaturation_params,'CreateExotic')
+        ptype.text = self.convert_boolean(self.amide.get())
+        ptype = ET.SubElement(desaturation_params,'CreateDoubleBonds')
+        ptype.text = self.convert_boolean(self.dbond.get())
+        ptype = ET.SubElement(desaturation_params,'CreateTripleBonds')
+        ptype.text = self.convert_boolean(self.tbond.get())
+        ptype = ET.SubElement(desaturation_params,'SubstituteOxygen')
+        ptype.text = self.convert_boolean(self.oxy.get())
+        ptype = ET.SubElement(desaturation_params,'SubstituteNitrogen')
+        ptype.text = self.convert_boolean(self.nit.get())
+        ptype = ET.SubElement(desaturation_params,'SubstituteSulfur')
+        ptype.text = self.convert_boolean(self.sul.get())
+        ptype = ET.SubElement(desaturation_params,'SubstituteFunctionalGroups')
+        ptype.text = self.convert_boolean(self.fgrp.get())
+
+        assembly_params = ET.SubElement(content,'MolecularAssembly')
+        ptype = ET.SubElement(assembly_params,'NumberInitial')
+        ptype.text = str(self.iteration1.get())
+        ptype = ET.SubElement(assembly_params,'NumberSecondary')
+        ptype.text = str(self.iteration3.get())
+        ptype = ET.SubElement(assembly_params,'NumberPath')
+        ptype.text = str(self.iteration2.get())
+        ptype = ET.SubElement(assembly_params,'NumberRationalize')
+        ptype.text = str(self.iteration4.get())
+        ptype = ET.SubElement(assembly_params,'NumberDesaturate')
+        ptype.text = str(self.iteration5.get())
+
+        body = MD.parseString(ET.tostring(content,'utf-8')).toprettyxml(indent='\t')
+        fhandle = open(self.parameter_filename.get(),'w')
+        fhandle.write(body)
+        fhandle.close()
 
 root = tkinter.Tk()
 gui = instrumentum(root)

@@ -12,27 +12,21 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   // varname = value.
   int tvalue;
   pugi::xml_document pfile;
-  pugi::xml_node global;
+  pugi::xml_node global,skeleton,assembly,rationalization,desaturation,pharmacophore;
   std::string name,value,parameter_string;
 
   // Open the file
   if (!(pfile.load_file(filename.c_str()))) throw std::invalid_argument("Unable to parse parameter file!");
 
-  global = pfile.child("Parameters");
+  global = pfile.child("Parameters").child("Global");
   for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
     name = params.name();
     value = params.first_child().value();
     // Now that we have the parameter name, see if it matches
     // any of the known parameters. If so, read in the value and
     // assign it
-    if (name == "PharmacophoreRadius") {
-      pharmacophore_radius = std::stod(value);
-    }
-    else if (name == "InitialPercentage") {
-      percent = std::stod(value);
-    }
-    else if (name == "PercentMethyl") {
-      percent_methyl = std::stod(value);
+    if (name == "NumberMolecules") {
+      n_mols = (unsigned) std::stol(value);
     }
     else if (name == "BondLength") {
       bond_length = std::stod(value);
@@ -43,17 +37,58 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
     else if (name == "RandomSeed") {
       seed = (unsigned) std::stol(value);
     }
+    else if (name == "NumberThreads") {
+      nthread = std::stoi(value);
+    }
+  }
+
+  pharmacophore = pfile.child("Parameters").child("Pharmacophore");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    if (name == "PharmacophoreRadius") {
+      pharmacophore_radius = std::stod(value);
+    }
+    else if (name == "NumberPharmacophores") {
+      npharmacophore = std::stoi(value);
+    }
+  }
+
+  skeleton = pfile.child("Parameters").child("HydrocarbonSkeleton");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    if (name == "InitialPercentage") {
+      percent = std::stod(value);
+    }
     else if (name == "MaximumAttempts") {
       max_attempts = std::stoi(value);
+    }
+    else if (name == "MaximumSecondary") {
+      max_secondary = std::stoi(value);
+    }
+    else if (name == "QuaternaryCarbonAtoms") {
+      nc4 = std::stoi(value);
+    }
+    else if (name == "FourRingCarbonAtoms") {
+      nc4rings = std::stoi(value);
     }
     else if (name == "NumberRings") {
       nrings = std::stoi(value);
     }
-    else if (name == "NumberC4Atoms") {
-      nc4 = std::stoi(value);
+    else if (name == "PharmacophoreHardening") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      pharm_hardening = (tvalue == 1) ? true : false;
     }
-    else if (name == "NumberC4Rings") {
-      nc4rings = std::stoi(value);
+  }
+
+  rationalization = pfile.child("Parameters").child("Rationalization");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    if (name == "PercentMethyl") {
+      percent_methyl = std::stod(value);
     }
     else if (name == "MinimumRings") {
       min_rings = std::stoi(value);
@@ -61,42 +96,26 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
     else if (name == "MaximumRings") {
       max_rings = std::stoi(value);
     }
-    else if (name == "NumberInitial") {
-      n_initial = std::stoi(value);
-    }
-    else if (name == "NumberSecondary") {
-      n_secondary = std::stoi(value);
-    }
-    else if (name == "NumberPath") {
-      n_path = std::stoi(value);
-    }
-    else if (name == "MaximumSecondary") {
-      max_secondary = std::stoi(value);
-    }
-    else if (name == "NumberRationalize") {
-      n_rationalize = std::stoi(value);
-    }
-    else if (name == "NumberDesaturate") {
-      n_desaturate = std::stoi(value);
-    }
-    else if (name == "NumberMolecules") {
-      n_mols = (unsigned) std::stol(value);
-    }
-    else if (name == "NumberThreads") {
-      nthread = std::stoi(value);
-    }
-    else if (name == "NumberPharmacophores") {
-      npharmacophore = std::stoi(value);
+  }
+
+  desaturation = pfile.child("Parameters").child("Desaturation");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    if (name == "StripAxialMethyls") {
+      tvalue = std::stoi(value);
+      assert(tvalue == 0 || tvalue == 1);
+      kill_axial = (tvalue == 1) ? true : false;
     }
     else if (name == "CreateFiveMemberRings") {
       tvalue = std::stoi(value);
       assert(tvalue == 0 || tvalue == 1);
       create_penta = (tvalue == 1) ? true : false;
     }
-    else if (name == "SubstituteFunctionalGroups") {
+    else if (name == "CreateExotic") {
       tvalue = std::stoi(value);
       assert(tvalue == 0 || tvalue == 1);
-      subs_functional = (tvalue == 1) ? true : false;
+      create_exotic = (tvalue == 1) ? true : false;
     }
     else if (name == "CreateDoubleBonds") {
       tvalue = std::stoi(value);
@@ -107,16 +126,6 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       tvalue = std::stoi(value);
       assert(tvalue == 0 || tvalue == 1);
       create_triple = (tvalue == 1) ? true : false;
-    }
-    else if (name == "CreateExotic") {
-      tvalue = std::stoi(value);
-      assert(tvalue == 0 || tvalue == 1);
-      create_exotic = (tvalue == 1) ? true : false;
-    }
-    else if (name == "PharmacophoreHardening") {
-      tvalue = std::stoi(value);
-      assert(tvalue == 0 || tvalue == 1);
-      pharm_hardening = (tvalue == 1) ? true : false;
     }
     else if (name == "SubstituteOxygen") {
       tvalue = std::stoi(value);
@@ -133,10 +142,31 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
       assert(tvalue == 0 || tvalue == 1);
       subs_sulfur = (tvalue == 1) ? true : false;
     }
-    else if (name == "StripAxialMethyls") {
+    else if (name == "SubstituteFunctionalGroups") {
       tvalue = std::stoi(value);
       assert(tvalue == 0 || tvalue == 1);
-      kill_axial = (tvalue == 1) ? true : false;
+      subs_functional = (tvalue == 1) ? true : false;
+    }
+  }
+
+  assembly = pfile.child("Parameters").child("MolecularAssembly");
+  for(pugi::xml_node params = global.first_child(); params; params = params.next_sibling()) {
+    name = params.name();
+    value = params.first_child().value();
+    if (name == "NumberInitial") {
+      n_initial = std::stoi(value);
+    }
+    else if (name == "NumberSecondary") {
+      n_secondary = std::stoi(value);
+    }
+    else if (name == "NumberPath") {
+      n_path = std::stoi(value);
+    }
+    else if (name == "NumberRationalize") {
+      n_rationalize = std::stoi(value);
+    }
+    else if (name == "NumberDesaturate") {
+      n_desaturate = std::stoi(value);
     }
   }
 

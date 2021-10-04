@@ -6,7 +6,7 @@ be used to minimize their geometry via a Python 3 script, <code>post-processing.
 development version of the SQLite 3 library is installed and the post-processing script depends on the <code>sqlite3</code> and 
 <code>openbabel</code> modules. The C++ source code has been parallelized using the threading constructs introduced in the 2011 
 C++ standard along with other aspects of modern C++ and it therefore requires a compiler compatible with the 2014 C++ standard. 
-The Instrumentum software reads its parameters from a plain text file, an example of which is the included <code>parameters.txt</code> 
+The Instrumentum software reads its parameters from an XML file, an example of which is the included <code>parameters.xml</code> 
 file, and there is also a Python 3 script, <code>editor.py</code>, which provides a portable graphical interface based on 
 [Tkinter](https://en.wikipedia.org/wiki/Tkinter) for editing these parameter files which are used by the software. The Instrumentum 
 software is released under the GNU Public License version 3.0; see the <code>LICENSE.txt</code> file or the 
