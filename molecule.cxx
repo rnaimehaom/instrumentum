@@ -2,9 +2,10 @@
 
 extern Random RND;
 
-extern std::map<int,std::string> element_table;
-
+// Molecular operations...
 const char Molecule::ops[7] = {'P','N','S','O','T','F','A'};
+// Element symbols...
+const std::string Molecule::atom_names[12] = {"","C","H","N","O","F","P","S","Cl","Br","Ag","I"};
 
 Molecule::Molecule()
 {
@@ -68,10 +69,10 @@ Molecule& Molecule::operator =(const Molecule& source)
   return *this;
 }
 
-void Molecule::add_atom(int atomic_number,const double* x,int ltype)
+void Molecule::add_atom(const Atom_Type& atomic_number,const double* x,int ltype)
 {
 #ifdef DEBUG
-  assert(atomic_number > 0);
+  assert(atomic_number != Atom_Type::empty);
 #endif
   natoms++;
   atom_type.push_back(atomic_number);
@@ -91,8 +92,9 @@ bool Molecule::drop_atom(int n)
   assert(n >= 0 && n < natoms);
 #endif
   int i,j,neg,nafter,fminus,nminus;  
-  std::vector<int> nbonds,nbtype,nlocal,ntype;
+  std::vector<int> nbonds,nbtype,nlocal;
   std::vector<double> ncoords;
+  std::vector<Atom_Type> ntype;
 
   for(i=0; i<n; ++i) {
     nlocal.push_back(locale[i]);
@@ -245,6 +247,7 @@ int Molecule::write(std::ofstream& s) const
   // "btype" and "coords" to a binary diskfile.
   int i,j,n,bcount = 0;
   double x[3];
+  Atom_Type a;
 
   s.write((char*)(&natoms),sizeof(int)); bcount += sizeof(int);
   n = opstring.length();
@@ -255,10 +258,10 @@ int Molecule::write(std::ofstream& s) const
   bcount += n*sizeof(char);
 
   for(i=0; i<natoms; ++i) {
-    n = atom_type[i];
-    s.write((char*)(&n),sizeof(int));
+    a = atom_type[i];
+    s.write((char*)(&a),sizeof(Atom_Type));
   }
-  bcount += natoms*sizeof(int);
+  bcount += natoms*sizeof(Atom_Type);
 
   for(i=0; i<natoms; ++i) {
     n = locale[i];
@@ -298,6 +301,7 @@ int Molecule::read(std::ifstream& s)
   int i,j,n,bcount = 0;
   char c;
   double x[3];
+  Atom_Type a;
 
   clear();
 
@@ -310,10 +314,10 @@ int Molecule::read(std::ifstream& s)
   bcount += n*sizeof(char);
 
   for(i=0; i<natoms; ++i) {
-    s.read((char*)(&n),sizeof(int));
-    atom_type.push_back(n);
+    s.read((char*)(&a),sizeof(Atom_Type));
+    atom_type.push_back(a);
   }
-  bcount += natoms*sizeof(int);
+  bcount += natoms*sizeof(Atom_Type);
 
   for(i=0; i<natoms; ++i) {
     s.read((char*)(&n),sizeof(int));
@@ -352,7 +356,7 @@ std::ostream& operator <<(std::ostream& s,const Molecule& source)
 {
   int i,j;
   for(i=0; i<source.natoms; ++i) {
-    s << i << "  " << source.atom_type[i] << "  " << source.locale[i] << std::endl;
+    s << i << "  " << Molecule::atom_names[static_cast<int>(source.atom_type[i])] << "  " << source.locale[i] << std::endl;
     s << "       " << source.coords[3*i] << "  " << source.coords[3*i+1] << "  " << source.coords[3*i+2] << std::endl;
   }
   for(i=0; i<source.natoms; ++i) {
@@ -377,7 +381,7 @@ bool Molecule::saturation_check() const
   bool found;
 
   for(i=0; i<natoms; ++i) {
-    if (atom_type[i] == 1) {
+    if (atom_type[i] == Atom_Type::hydrogen) {
       bcount = 0;
       for(j=0; j<natoms; ++j) {
         found = false;
@@ -410,7 +414,7 @@ bool Molecule::saturation_check() const
         return false;
       }
     }
-    else if (atom_type[i] == 6) {
+    else if (atom_type[i] == Atom_Type::carbon) {
       bcount = 0;
       for(j=0; j<natoms; ++j) {
         found = false;
@@ -455,25 +459,25 @@ bool Molecule::valence_check() const
     for(j=0; j<4; ++j) {
       if (btype[4*i+j] > 0) bcount += btype[4*i+j];
     }
-    if (atom_type[i] == 1 && bcount != 1) {
+    if (atom_type[i] == Atom_Type::hydrogen && bcount != 1) {
 #ifdef VERBOSE
       std::cout << "Hydrogen valence error for " << i << " with " << bcount << std::endl;
 #endif
       return false;
     }
-    else if (atom_type[i] == 9 && bcount != 1) {
+    else if (atom_type[i] == Atom_Type::fluorine && bcount != 1) {
 #ifdef VERBOSE
       std::cout << "Fluorine valence error for " << i << " with " << bcount << std::endl;
 #endif
       return false;
     }
-    else if (atom_type[i] == 15 && bcount != 3) {
+    else if (atom_type[i] == Atom_Type::phosphorus && bcount != 3) {
 #ifdef VERBOSE
       std::cout << "Phosphorus valence error for " << i << " with " << bcount << std::endl;
 #endif
       return false;
     }
-    else if (atom_type[i] == 17 && bcount != 1) {
+    else if (atom_type[i] == Atom_Type::chlorine && bcount != 1) {
 #ifdef VERBOSE
       std::cout << "Chlorine valence error for " << i << " with " << bcount << std::endl;
 #endif
@@ -532,7 +536,7 @@ bool Molecule::add_nitrogen()
   RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
-    if (atom_type[temp1] == 6) {
+    if (atom_type[temp1] == Atom_Type::carbon) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
       if (in_ring(temp1)) {
         // See if the ring(s) already contain two heteroatoms
@@ -544,7 +548,7 @@ bool Molecule::add_nitrogen()
             tt = rings[6*j+k];
             if (tt == temp1) con = 1;
             if (tt >= 0) {
-              if (atom_type[tt] != 6) hcount++;
+              if (atom_type[tt] != Atom_Type::carbon) hcount++;
             }
           }
           if (con == 1 && hcount >= 2) {
@@ -568,14 +572,14 @@ bool Molecule::add_nitrogen()
             temp2 = bonds[4*temp1+j];
             if (temp2 >= 0) {
               nb++;
-              if (atom_type[temp2] == 1) {
+              if (atom_type[temp2] == Atom_Type::hydrogen) {
                 hydrogen[h] = temp2;
                 h++;
               }
-              else if (atom_type[temp2] != 6) {
+              else if (atom_type[temp2] != Atom_Type::carbon) {
                 exotic = true;
               }
-              else if (atom_type[temp2] == 6) {
+              else if (atom_type[temp2] == Atom_Type::carbon) {
                 carbon[c] = temp2;
                 c++;
               }
@@ -619,14 +623,14 @@ bool Molecule::add_nitrogen()
             cand = 0;
             for(j=0; j<6; ++j) {
               if (rings[6*the_ring+j] != temp1 && rings[6*the_ring+j] != carb1 && rings[6*the_ring+j] != carb2) {
-                if (atom_type[rings[6*the_ring+j]] != 6) continue;
+                if (atom_type[rings[6*the_ring+j]] != Atom_Type::carbon) continue;
                 hh = -1;
                 c1 = -1;
                 c2 = -1;
                 for(k=0; k<4; ++k) {
                   temp = bonds[4*rings[6*the_ring+j]+k];
                   if (temp < 0) continue;
-                  if (atom_type[temp] == 1) {
+                  if (atom_type[temp] == Atom_Type::hydrogen) {
                     hh = temp;
                   }
                   else if (get_rindex(temp,the_ring) != -1) {
@@ -649,7 +653,7 @@ bool Molecule::add_nitrogen()
             }
             if (cand < 1) continue;
             alpha = RND.irandom(cand);
-            atom_type[temp1] = 7;
+            atom_type[temp1] = Atom_Type::nitrogen;
             drop.clear();
             drop.insert(candidate[alpha]);
             drop.insert(candidate_hneighbours[alpha][0]);
@@ -674,7 +678,7 @@ bool Molecule::add_nitrogen()
           }
           else if (h == 1) {
             // Let's make the conversion...
-            atom_type[temp1] = 7;
+            atom_type[temp1] = Atom_Type::nitrogen;
             drop.clear();
             drop.insert(hydrogen[0]);
             eliminate_atoms(drop);
@@ -689,11 +693,11 @@ bool Molecule::add_nitrogen()
         temp2 = bonds[4*temp1+j];
         if (temp2 > 0) {
           nb++;
-          if (atom_type[temp2] == 1) {
+          if (atom_type[temp2] == Atom_Type::hydrogen) {
             hydrogen[h] = temp2;
             h++;
           }
-          else if (atom_type[temp2] != 6) {
+          else if (atom_type[temp2] != Atom_Type::carbon) {
             exotic = true;
           }
         }
@@ -703,7 +707,7 @@ bool Molecule::add_nitrogen()
       }
       if (h >= 1 && !exotic && nb >= 3) {
         // Let's make the conversion...
-        atom_type[temp1] = 7;
+        atom_type[temp1] = Atom_Type::nitrogen;
         drop.clear();
         drop.insert(hydrogen[0]);
         eliminate_atoms(drop);
@@ -731,7 +735,7 @@ bool Molecule::add_sulfur()
   RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
-    if (atom_type[temp1] == 6) {
+    if (atom_type[temp1] == Atom_Type::carbon) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
       if (in_ring(temp1)) {
         // Check to make sure there aren't too many heteroatoms in these ring(s)
@@ -743,7 +747,7 @@ bool Molecule::add_sulfur()
             tt = rings[6*j+k];
             if (tt == temp1) con = 1;
             if (tt >= 0) {
-              if (atom_type[tt] != 6) hcount++;
+              if (atom_type[tt] != Atom_Type::carbon) hcount++;
             }
           }
           if (con == 1 && hcount >= 2) {
@@ -760,11 +764,11 @@ bool Molecule::add_sulfur()
         temp2 = bonds[4*temp1+j];
         if (temp2 > 0) {
           nb++;
-          if (atom_type[temp2] == 1) {
+          if (atom_type[temp2] == Atom_Type::hydrogen) {
             hydrogen[h] = temp2;
             h++;
           }
-          else if (atom_type[temp2] != 6) {
+          else if (atom_type[temp2] != Atom_Type::carbon) {
             exotic = true;
           }
         }
@@ -774,7 +778,7 @@ bool Molecule::add_sulfur()
       }
       if (h >= 2 && !exotic && nb == 4) {
         // Let's make the conversion...
-        atom_type[temp1] = 16;
+        atom_type[temp1] = Atom_Type::sulfur;
         drop.insert(hydrogen[0]); drop.insert(hydrogen[1]);
         eliminate_atoms(drop);
         return true;
@@ -801,7 +805,7 @@ bool Molecule::add_oxygen()
   RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
-    if (atom_type[temp1] == 6) {
+    if (atom_type[temp1] == Atom_Type::carbon) {
       // Now let's see how many hydrogen atoms this carbon is bonded to
       if (in_ring(temp1)) {
         // Check to make sure there aren't too many heteroatoms in these ring(s)
@@ -813,7 +817,7 @@ bool Molecule::add_oxygen()
             tt = rings[6*j+k];
             if (tt == temp1) con = 1;
             if (tt >= 0) {
-              if (atom_type[tt] != 6) hcount++;
+              if (atom_type[tt] != Atom_Type::carbon) hcount++;
             }
           }
           if (con == 1 && hcount >= 2) {
@@ -831,11 +835,11 @@ bool Molecule::add_oxygen()
         temp2 = bonds[4*temp1+j];
         if (temp2 > 0) {
           nb++;
-          if (atom_type[temp2] == 1) {
+          if (atom_type[temp2] == Atom_Type::hydrogen) {
             hydrogen[h] = temp2;
             h++;
           }
-          else if (atom_type[temp2] != 6) {
+          else if (atom_type[temp2] != Atom_Type::carbon) {
             exotic = true;
           }
         }
@@ -845,7 +849,7 @@ bool Molecule::add_oxygen()
       }
       if (h >= 2 && !exotic && nb == 4) {
         // Let's make the conversion...
-        atom_type[temp1] = 8;
+        atom_type[temp1] = Atom_Type::oxygen;
         drop.insert(hydrogen[0]); drop.insert(hydrogen[1]);
         eliminate_atoms(drop);
         return true;
@@ -865,12 +869,12 @@ bool Molecule::create_tbond()
 
   // First see if we can find any carbon-carbon double bonds
   for(i=0; i<natoms; ++i) {
-    if (atom_type[i] == 6) {
+    if (atom_type[i] == Atom_Type::carbon) {
       found = false;
       for(j=0; j<4; ++j) {
         temp = bonds[4*i+j];
         if (temp >= 0) {
-          if (atom_type[j] == 6 && btype[4*i+j] == 2) {
+          if (atom_type[j] == Atom_Type::carbon && btype[4*i+j] == 2) {
             // It's a carbon-carbon double bond, so let's see if each carbon has
             // at least one hydrogen
             candidate = j;
@@ -884,7 +888,7 @@ bool Molecule::create_tbond()
       for(j=0; j<4; ++j) {
         temp = bonds[4*i+j];
         if (temp >= 0) {
-          if (atom_type[temp] == 1) {
+          if (atom_type[temp] == Atom_Type::hydrogen) {
             hydro1[h1] = temp;
             h1++;
           }
@@ -896,7 +900,7 @@ bool Molecule::create_tbond()
         temp = bonds[4*a+j];
         if (temp >= 0) {
           if (temp == i) in1 = j;
-          if (atom_type[temp] == 1) {
+          if (atom_type[temp] == Atom_Type::hydrogen) {
             hydro2[h2] = temp;
             h2++;
           }
@@ -949,10 +953,10 @@ int Molecule::aromatize(std::vector<int>& axial)
         }
         else {
 #ifdef VERBOSE
-          std::cout << i << "  " << atom_type[axial[6*i+j]] << std::endl;
+          std::cout << i << "  " << Molecule::atom_names[static_cast<int>(atom_type[axial[6*i+j]])] << std::endl;
 #endif
         }
-        if (atom_type[axial[6*i+j]] != 1) {
+        if (atom_type[axial[6*i+j]] != Atom_Type::hydrogen) {
           good = false;
           break;
         }
@@ -1110,23 +1114,23 @@ bool Molecule::fungrp()
   RND.shuffle(indices);
   for(i=0; i<natoms; ++i) {
     temp1 = indices[i];
-    if (atom_type[temp1] == 1) {
+    if (atom_type[temp1] == Atom_Type::hydrogen) {
       // Now see if this hydrogen is bonded to a carbon
       temp2 = bonds[4*temp1];
-      if (atom_type[temp2] == 6) {
+      if (atom_type[temp2] == Atom_Type::carbon) {
         // Do the conversion...
         alpha = RND.irandom(3);
         if (alpha == 0) {
-          atom_type[temp1] = 9;
+          atom_type[temp1] = Atom_Type::fluorine;
         }
         else if (alpha == 1) {
-          atom_type[temp1] = 17;
+          atom_type[temp1] = Atom_Type::chlorine;
         }
         else {
           // Phosphorus - so we need to add two hydrogens that will bond to this
           // P atom, since it has a valence of three, like nitrogen.
           // Something broken here with the bonds I think!!!
-          atom_type[temp1] = 15;
+          atom_type[temp1] = Atom_Type::phosphorus;
 
           p1[0] = coords[3*temp2];
           p1[1] = coords[3*temp2+1];
@@ -1138,13 +1142,13 @@ bool Molecule::fungrp()
           xc[0] = p1[0] + 2.2*p2[0];
           xc[1] = p1[1] + 2.2*p2[1] + 0.3;
           xc[2] = p1[2] + 2.2*p2[2];
-          add_atom(1,xc,0);
+          add_atom(Atom_Type::hydrogen,xc,0);
           add_bond(temp1,natoms-1,1);
 
           xc[0] = p1[0] + 2.2*p2[0];
           xc[1] = p1[1] + 2.2*p2[1] - 0.3;
           xc[2] = p1[2] + 2.2*p2[2];
-          add_atom(1,xc,0);
+          add_atom(Atom_Type::hydrogen,xc,0);
           add_bond(temp1,natoms-1,1);
         }
         return true;
@@ -1171,11 +1175,11 @@ bool Molecule::create_dbond()
   // in the molecule
   for(i=0; i<natoms; ++i) {
     temp = indices[i];
-    if (atom_type[temp] == 6) {
+    if (atom_type[temp] == Atom_Type::carbon) {
       for(j=0; j<4; ++j) {
         q = bonds[4*temp+j];
         if (q >= 0) {
-          if (atom_type[q] == 6 && btype[4*temp+j] == 1) {
+          if (atom_type[q] == Atom_Type::carbon && btype[4*temp+j] == 1) {
             if (temp < q) {
               done = false;
               for(k=0; k<candidate.size(); k+=2) {
@@ -1237,7 +1241,7 @@ bool Molecule::create_dbond()
     for(j=0; j<4; ++j) {
       temp = bonds[4*candidate[i]+j];
       if (temp >= 0) {
-        if (atom_type[temp] == 1) {
+        if (atom_type[temp] == Atom_Type::hydrogen) {
           h1.push_back(temp);
         }
         if (btype[4*candidate[i]+j] != 1) problem = true;
@@ -1246,7 +1250,7 @@ bool Molecule::create_dbond()
     for(j=0; j<4; ++j) {
       temp = bonds[4*candidate[i+1]+j];
       if (temp >= 0) {
-        if (atom_type[temp] == 1) {
+        if (atom_type[temp] == Atom_Type::hydrogen) {
           h2.push_back(temp);
         }
         if (btype[4*candidate[i+1]+j] != 1) problem = true;
@@ -1349,7 +1353,7 @@ bool Molecule::create_penta1()
       // Check to see if this ring contains zero, one or two nitrogen atoms
       nitro = 0;
       for(j=0; j<6; ++j) {
-        if (atom_type[rings[6*i+j]] == 7) nitro++;
+        if (atom_type[rings[6*i+j]] == Atom_Type::nitrogen) nitro++;
       }
       if (nitro == 0) {
         // Benzene: convert to furan or thiophene
@@ -1363,7 +1367,7 @@ bool Molecule::create_penta1()
           for(k=0; k<4; ++k) {
             temp = bonds[4*rings[6*i+j]+k];
             if (temp >= 0) {
-              if (atom_type[temp] == 1) {
+              if (atom_type[temp] == Atom_Type::hydrogen) {
                 h = temp;
               }
               else if (get_rindex(temp,i) != -1) {
@@ -1396,10 +1400,10 @@ bool Molecule::create_penta1()
         drop.insert(candidate_hneighbours[alpha2][0]);
         alpha = RND.irandom(2);
         if (alpha == 0) {
-          atom_type[candidates[alpha1]] = 8;
+          atom_type[candidates[alpha1]] = Atom_Type::oxygen;
         }
         else {
-          atom_type[candidates[alpha1]] = 16;
+          atom_type[candidates[alpha1]] = Atom_Type::sulfur;
         }
         in1 = get_bindex(candidates[alpha2],candidate_rneighbours[alpha2][0]);
         in2 = get_bindex(candidates[alpha2],candidate_rneighbours[alpha2][1]);
@@ -1413,14 +1417,14 @@ bool Molecule::create_penta1()
         cand = 0;
         the_nitro = -1;
         for(j=0; j<6; ++j) {
-          if (atom_type[rings[6*i+j]] == 7) the_nitro = rings[6*i+j];
+          if (atom_type[rings[6*i+j]] == Atom_Type::nitrogen) the_nitro = rings[6*i+j];
           h = 0;
           c1 = -1;
           c2 = -1;
           for(k=0; k<4; ++k) {
             temp = bonds[4*rings[6*i+j]+k];
             if (temp >= 0) {
-              if (atom_type[temp] == 1) {
+              if (atom_type[temp] == Atom_Type::hydrogen) {
                 h = temp;
               }
               else if (get_rindex(temp,i) != -1) {
@@ -1473,7 +1477,7 @@ bool Molecule::create_penta1()
         xc[1] = rcentre[1] + 2.2*p2[1];
         xc[2] = rcentre[2] + 2.2*p2[2];
         // Now add a hydrogen to this lone nitrogen atom
-        add_atom(1,xc,0);
+        add_atom(Atom_Type::hydrogen,xc,0);
         add_bond(the_nitro,natoms-1,1);
         in1 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][0]);
         in2 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][1]);
@@ -1490,7 +1494,7 @@ bool Molecule::create_penta1()
         cand = 0;
         n = 0;
         for(j=0; j<6; ++j) {
-          if (atom_type[rings[6*i+j]] == 7) {
+          if (atom_type[rings[6*i+j]] == Atom_Type::nitrogen) {
             n_atoms[n] = rings[6*i+j];
             n++;
           }
@@ -1500,7 +1504,7 @@ bool Molecule::create_penta1()
           for(k=0; k<4; ++k) {
             temp = bonds[4*rings[6*i+j]+k];
             if (temp >= 0) {
-              if (atom_type[temp] == 1) {
+              if (atom_type[temp] == Atom_Type::hydrogen) {
                 h = temp;
               }
               else if (get_rindex(temp,i) != -1) {
@@ -1563,7 +1567,7 @@ bool Molecule::create_penta1()
         xc[1] = rcentre[1] + 2.2*p2[1];
         xc[2] = rcentre[2] + 2.2*p2[2];
         // Now add a hydrogen to this lone nitrogen atom
-        add_atom(1,xc,0);
+        add_atom(Atom_Type::hydrogen,xc,0);
         add_bond(n_atoms[alpha2],natoms-1,1);
 
         in1 = get_bindex(candidates[alpha1],candidate_rneighbours[alpha1][0]);
@@ -1578,14 +1582,14 @@ bool Molecule::create_penta1()
       // Just find a carbon with two hydrogen neighbours and kill it
       cand = 0;
       for(j=0; j<6; ++j) {
-        if (atom_type[rings[6*i+j]] != 6) continue;
+        if (atom_type[rings[6*i+j]] != Atom_Type::carbon) continue;
         h = 0;
         c1 = 0;
         c2 = 0;
         for(k=0; k<4; ++k) {
           temp = bonds[4*rings[6*i+j]+k];
           if (temp >= 0) {
-            if (atom_type[temp] == 1) {
+            if (atom_type[temp] == Atom_Type::hydrogen) {
               hydro[h] = temp;
               h++;
             }
@@ -1649,11 +1653,11 @@ bool Molecule::create_amide()
 
   // First see if we can find any carbon-carbon double bonds
   for(i=0; i<natoms; ++i) {
-    if (atom_type[i] == 6) {
+    if (atom_type[i] == Atom_Type::carbon) {
       candidate = -1;
       for(j=0; j<4; ++j) {
         if (bonds[4*i+j] < 0) continue;
-        if (atom_type[j] == 6 && btype[4*i+j] == 2) {
+        if (atom_type[j] == Atom_Type::carbon && btype[4*i+j] == 2) {
           // It's a carbon-carbon double bond, so let's see if each carbon has
           // at least one hydrogen
           candidate = j;
@@ -1665,11 +1669,11 @@ bool Molecule::create_amide()
       a = bonds[4*i+candidate];
       for(j=0; j<4; ++j) {
         if (bonds[4*i+j] < 0 || bonds[4*i+j] == a) continue;
-        if (atom_type[bonds[4*i+j]] == 1) {
+        if (atom_type[bonds[4*i+j]] == Atom_Type::hydrogen) {
           hydro1[h1] = bonds[4*i+j];
           h1++;
         }
-        else if (atom_type[bonds[4*i+j]] == 6) {
+        else if (atom_type[bonds[4*i+j]] == Atom_Type::carbon) {
           c1++;
         }
       }
@@ -1677,11 +1681,11 @@ bool Molecule::create_amide()
       c2 = 0;
       for(j=0; j<4; ++j) {
         if (bonds[4*a+j] < 0 || bonds[4*a+j] == i) continue;
-        if (atom_type[bonds[4*a+j]] == 1) {
+        if (atom_type[bonds[4*a+j]] == Atom_Type::hydrogen) {
           hydro2[h2] = bonds[4*a+j];
           h2++;
         }
-        else if (atom_type[bonds[4*a+j]] == 6) {
+        else if (atom_type[bonds[4*a+j]] == Atom_Type::carbon) {
           c2++;
         }
       }
@@ -1693,8 +1697,8 @@ bool Molecule::create_amide()
           alpha = RND.irandom(2);
           if (alpha == 0) {
             if (h1 > 0) {
-              atom_type[a] = 7;
-              atom_type[hydro1[0]] = 8;
+              atom_type[a] = Atom_Type::nitrogen;
+              atom_type[hydro1[0]] = Atom_Type::oxygen;
               in1 = get_bindex(hydro1[0],i);
               btype[4*i+in1] = 2;
               btype[4*hydro1[0]] = 2;
@@ -1704,8 +1708,8 @@ bool Molecule::create_amide()
               btype[4*a+in1] = 1;
             }
             else {
-              atom_type[i] = 7;
-              atom_type[hydro2[0]] = 8;
+              atom_type[i] = Atom_Type::nitrogen;
+              atom_type[hydro2[0]] = Atom_Type::oxygen;
               in1 = get_bindex(hydro2[0],a);
               btype[4*a+in1] = 2;
               btype[4*hydro2[0]+0] = 2;
@@ -1719,8 +1723,8 @@ bool Molecule::create_amide()
           else {
             // Sulfonamide
             if (h1 > 0) {
-              atom_type[a] = 7;
-              atom_type[hydro1[0]] = 16;
+              atom_type[a] = Atom_Type::nitrogen;
+              atom_type[hydro1[0]] = Atom_Type::sulfur;
               in1 = get_bindex(hydro1[0],i);
               btype[4*i+in1] = 2;
               btype[4*hydro1[0]] = 2;
@@ -1730,8 +1734,8 @@ bool Molecule::create_amide()
               btype[4*a+in1] = 1;
             }
             else {
-              atom_type[i] = 7;
-              atom_type[hydro2[0]] = 16;
+              atom_type[i] = Atom_Type::nitrogen;
+              atom_type[hydro2[0]] = Atom_Type::sulfur;
               in1 = get_bindex(hydro2[0],a);
               btype[4*a+in1] = 2;
               btype[4*hydro2[0]] = 2;
@@ -1746,8 +1750,8 @@ bool Molecule::create_amide()
         else if ((h1 + h2) == 2) {
           alpha = RND.irandom(3);
           if (alpha == 0) {
-            atom_type[a] = 7;
-            atom_type[hydro1[0]] = 16;
+            atom_type[a] = Atom_Type::nitrogen;
+            atom_type[hydro1[0]] = Atom_Type::sulfur;
             in1 = get_bindex(hydro1[0],i);
             btype[4*i+in1] = 2;
             btype[4*hydro1[0]] = 2;
@@ -1757,8 +1761,8 @@ bool Molecule::create_amide()
             btype[4*a+in1] = 1;
           }
           else if (alpha == 1) {
-            atom_type[a] = 7;
-            atom_type[hydro1[0]] = 8;
+            atom_type[a] = Atom_Type::nitrogen;
+            atom_type[hydro1[0]] = Atom_Type::oxygen;
             in1 = get_bindex(hydro1[0],i);
             btype[4*i+in1] = 2;
             btype[4*hydro1[0]] = 2;
@@ -1772,8 +1776,8 @@ bool Molecule::create_amide()
 #ifdef DEBUG
             assert(h1 > 0 && h2 > 0);
 #endif
-            atom_type[a] = 8;
-            atom_type[hydro1[0]] = 8;
+            atom_type[a] = Atom_Type::oxygen;
+            atom_type[hydro1[0]] = Atom_Type::oxygen;
             in1 = get_bindex(hydro1[0],i);
             btype[4*i+in1] = 2;
             btype[4*hydro1[0]] = 2;
@@ -1979,12 +1983,12 @@ bool Molecule::decorate(const bool* ornaments)
       for(i=0; i<nrings; ++i) {
         for(j=0; j<6; ++j) {
           temp = axial[6*i+j];
-          if (atom_type[temp] == 6) {
+          if (atom_type[temp] == Atom_Type::carbon) {
             // See if it's a methyl
             h = 0;
             for(k=0; k<4; ++k) {
               if (bonds[4*temp+k] >= 0) {
-                if (atom_type[bonds[4*temp+k]] == 1) {
+                if (atom_type[bonds[4*temp+k]] == Atom_Type::hydrogen) {
                   hydrogen[h] = bonds[4*temp+k];
                   h++;
                 }
@@ -2004,7 +2008,7 @@ bool Molecule::decorate(const bool* ornaments)
 #ifdef VERBOSE
         std::cout << "Eliminating axial methyl..." << std::endl;
 #endif
-        atom_type[temp] = 1;
+        atom_type[temp] = Atom_Type::hydrogen;
         drop.clear();
         drop.insert(hydrogen[0]); drop.insert(hydrogen[1]); drop.insert(hydrogen[2]);
         eliminate_atoms(drop);
@@ -2112,16 +2116,16 @@ void Molecule::normalize_free_ring(int the_aring)
     nit = 0;
     rn = 0;
     for(i=0; i<5; ++i) {
-      if (atom_type[rings[6*the_aring+i]] == 8) oxy++;
-      if (atom_type[rings[6*the_aring+i]] == 16) sul++;
-      if (atom_type[rings[6*the_aring+i]] == 7) nit++;
+      if (atom_type[rings[6*the_aring+i]] == Atom_Type::oxygen) oxy++;
+      if (atom_type[rings[6*the_aring+i]] == Atom_Type::sulfur) sul++;
+      if (atom_type[rings[6*the_aring+i]] == Atom_Type::nitrogen) nit++;
     }
 #ifdef DEBUG
     assert(oxy < 2 && sul < 2);
 #endif
     if (oxy == 1) {
       for(i=0; i<5; ++i) {
-        if (atom_type[rings[6*the_aring+i]] == 8) {
+        if (atom_type[rings[6*the_aring+i]] == Atom_Type::oxygen) {
           oxygen = rings[6*the_aring+i];
           break;
         }
@@ -2171,7 +2175,7 @@ void Molecule::normalize_free_ring(int the_aring)
     }
     else if (sul == 1) {
       for(i=0; i<5; ++i) {
-        if (atom_type[rings[6*the_aring+i]] == 16) {
+        if (atom_type[rings[6*the_aring+i]] == Atom_Type::sulfur) {
           sulfur = rings[6*the_aring+i];
           break;
         }
@@ -2220,7 +2224,7 @@ void Molecule::normalize_free_ring(int the_aring)
       // Need to find the nitrogen with three bonds
       nitrogen = -1;
       for(i=0; i<5; ++i) {
-        if (atom_type[rings[6*the_aring+i]] == 7) {
+        if (atom_type[rings[6*the_aring+i]] == Atom_Type::nitrogen) {
           test = rings[6*the_aring+i];
           kount = 0;
           for(j=0; j<4; ++j) {
@@ -2367,9 +2371,10 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
   // This routine will go searching for aromatic bonds to convert from 4 to
   // 1 or 2, but in a very careful manner to make sure that no contradictions
   // arise - if so, return false.
-  int i,j,k,l,atype,winner,test1,test2,ratom,atom,atom2,btype1,btype2;
+  int i,j,k,l,winner,test1,test2,ratom,atom,atom2,btype1,btype2;
   int valence,nringp,ring_partners[2];
   bool found,change;
+  Atom_Type atype;
 
   do {
     winner = -1;
@@ -2444,7 +2449,7 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
             }
           }
 #ifdef VERBOSE
-          std::cout << "For atom " << atom << " type = " << atom_type[atom] << " we have nringp " << nringp << " and valence " << valence << std::endl;
+          std::cout << "For atom " << atom << " type = " << Molecule::atom_names[static_cast<int>(atom_type[atom])] << " we have nringp " << nringp << " and valence " << valence << std::endl;
 #endif
 #ifdef DEBUG
           assert(nringp == 2);
@@ -2456,12 +2461,12 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
           if (btype1 == 4) {
             if (btype2 == 1) {
               change = true;
-              if (valence == 1 && atype == 6) {
+              if (valence == 1 && atype == Atom_Type::carbon) {
                 btype[4*atom+ring_partners[0]] = 2;
                 atom2 = bonds[4*atom+ring_partners[0]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 2;
               }
-              else if (valence == 1 && atype == 7) {
+              else if (valence == 1 && atype == Atom_Type::nitrogen) {
                 btype[4*atom+ring_partners[0]] = 1;
                 atom2 = bonds[4*atom+ring_partners[0]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
@@ -2471,12 +2476,12 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
                 atom2 = bonds[4*atom+ring_partners[0]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
               }
-              else if (valence == 0 && atype == 7) {
+              else if (valence == 0 && atype == Atom_Type::nitrogen) {
                 btype[4*atom+ring_partners[0]] = 2;
                 atom2 = bonds[4*atom+ring_partners[0]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 2;
               }
-              else if (valence == 0 && (atype == 8 || atype == 16)) {
+              else if (valence == 0 && (atype == Atom_Type::oxygen || atype == Atom_Type::sulfur)) {
                 btype[4*atom+ring_partners[0]] = 1;
                 atom2 = bonds[4*atom+ring_partners[0]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
@@ -2504,12 +2509,12 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
           if (btype2 == 4) {
             if (btype1 == 1) {
               change = true;
-              if (valence == 1 && atype == 6) {
+              if (valence == 1 && atype == Atom_Type::carbon) {
                 btype[4*atom+ring_partners[1]] = 2;
                 atom2 = bonds[4*atom+ring_partners[1]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 2;
               }
-              else if (valence == 1 && atype == 7) {
+              else if (valence == 1 && atype == Atom_Type::nitrogen) {
                 btype[4*atom+ring_partners[1]] = 1;
                 atom2 = bonds[4*atom+ring_partners[1]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
@@ -2519,12 +2524,12 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
                 atom2 = bonds[4*atom+ring_partners[1]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
               }
-              else if (valence == 0 && atype == 7) {
+              else if (valence == 0 && atype == Atom_Type::nitrogen) {
                 btype[4*atom+ring_partners[1]] = 2;
                 atom2 = bonds[4*atom+ring_partners[1]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 2;
               }
-              else if (valence == 0 && (atype == 8 || atype == 16)) {
+              else if (valence == 0 && (atype == Atom_Type::oxygen || atype == Atom_Type::sulfur)) {
                 btype[4*atom+ring_partners[1]] = 1;
                 atom2 = bonds[4*atom+ring_partners[1]];
                 btype[4*atom2+get_bindex(atom,atom2)] = 1;
@@ -2562,10 +2567,10 @@ bool Molecule::normalize_safe(const std::vector<int>& aromatic,bool* done)
         for(k=0; k<4; ++k) {
           if (bonds[4*atom+k] >= 0) valence += btype[4*atom+k];
         }
-        if (atype == 6 && valence != 4) return false;
-        if (atype == 7 && valence != 3) return false;
-        if (atype == 8 && valence != 2) return false;
-        if (atype == 16 && valence != 2) return false;
+        if (atype == Atom_Type::carbon && valence != 4) return false;
+        if (atype == Atom_Type::nitrogen && valence != 3) return false;
+        if (atype == Atom_Type::oxygen && valence != 2) return false;
+        if (atype == Atom_Type::sulfur && valence != 2) return false;
       }
     }
     else {
@@ -2854,7 +2859,6 @@ std::string Molecule::to_MDLMol() const
   long seconds = long(std::time(nullptr));
   std::string atom;
   std::ostringstream s;
-  std::map<int,std::string>::const_iterator it;
 
 #ifdef DEBUG
   assert(consistent());
@@ -2870,11 +2874,7 @@ std::string Molecule::to_MDLMol() const
   }
   s << std::setw(3) << natoms << std::setw(3) << bnumber << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
   for(i=0; i<natoms; ++i) {
-    it = element_table.find(atom_type[i]);
-#ifdef DEBUG
-    assert(it != element_table.end());
-#endif
-    atom = it->second; 
+    atom = Molecule::atom_names[static_cast<int>(atom_type[i])]; 
     s << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+1] << std::setw(10) << std::setprecision(4) << std::setiosflags(std::ios::fixed) << coords[3*i+2] << " " << std::setw(3) << std::setiosflags(std::ios::left) << atom << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;
   }
   for(i=0; i<natoms; ++i) {

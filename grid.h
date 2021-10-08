@@ -10,7 +10,7 @@ class Summary {
   /// This property stores a vector containing the index of the node in the Grid::nodes property for each node with a positive locale.
   std::vector<int> index;
   /// This property stores a vector containing the Node::atomic_number property of the grid nodes with a positive locale.
-  std::vector<int> atom;
+  std::vector<Atom_Type> atom;
   /// This property stores a vector containing the Node::locale property of the grid nodes with a positive locale.
   std::vector<int> locale;
 };
@@ -126,7 +126,7 @@ inline void Grid::clear()
 {
   for(int i=0; i<total; ++i) {
     nodes[i].locale = 0;
-    nodes[i].atomic_number = 0;
+    nodes[i].atomic_number = Atom_Type::empty;
   }
 }
 

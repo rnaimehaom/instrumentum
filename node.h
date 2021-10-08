@@ -15,7 +15,8 @@ class Node {
   int state = 0;
   /// This integer property stores the atomic number of the atom which is located at this node,
   /// based on the value from the periodic table. A value of zero indicates that the node is empty.
-  int atomic_number = 0;
+  //int atomic_number = 0;
+  Atom_Type atomic_number = Atom_Type::empty;
   /// This integer property is used to distinguish boundary nodes and pharmacophoric nodes from 
   /// "regular" nodes when building the molecular skeleton. 
   int locale = 0;

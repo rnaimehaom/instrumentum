@@ -20,7 +20,8 @@ class Molecule {
   std::string opstring = "";
   /// This property is a vector of the element of each atom in the molecule, 
   /// by atomic number.
-  std::vector<int> atom_type;
+  //std::vector<int> atom_type;
+  std::vector<Atom_Type> atom_type;
   /// This property is a vector of the mutability of each atom in the molecule, 
   /// distinguishing pharmacophoric atoms (which cannot be changed) for example. 
   std::vector<int> locale;
@@ -51,6 +52,7 @@ class Molecule {
   /// These are the letters of the alphabet which is used to write the value of the 
   /// Molecule::opstring parameter.    
   static const char ops[7];
+  static const std::string atom_names[12];
 
   /// Given a pair of atoms in the molecule, specified by the method's two arguments, this method returns the index of this bond in the property Molecule::bonds and -1 if no such bond can be found. 
   int get_bindex(int,int) const;
@@ -124,7 +126,7 @@ class Molecule {
   /// This method calls the clear() method and then reads the properties Molecule::natoms, Molecule::opstring, Molecule::bonds, Molecule::btype and Molecule::coords in binary form from an input stream (the method's argument) and returns the number of bytes read from the stream.  
   int read(std::ifstream&);
   /// This method adds an atom to the molecule - the first argument is the atom's type (by atomic number), the second is the atom's geometric coordinates and the final argument is the atom's locale (e.g. whether it is a pharmacophoric atom).
-  void add_atom(int,const double*,int);
+  void add_atom(const Atom_Type&,const double*,int);
   /// This method adds a bond, the type of which is the method's final argument, between the two atoms specified by the method's first two arguments.
   void add_bond(int,int,int);
   /// This method writes the content of the molecule to a string corresponding to the MDL MOL format for the molecule, which is how the molecule is stored in an SQLite database. 

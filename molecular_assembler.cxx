@@ -437,6 +437,10 @@ void Molecular_Assembler::run(int thread_id,int pid) const
   std::string filename = "scratch/molecules_" + std::to_string(pid) + "_" + std::to_string(1 + thread_id) + ".dat";
   std::ofstream ofile(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
+  // October 6, 2021
+  // Given that there is a single instance of this class Random in this software project 
+  // and that it has no mutex constructs, the use of RND here and in the Grid and Molecule 
+  // classes is clearly a race condition in the program.
   s *= (1 + thread_id);
   RND.initialize_generator(s);
 

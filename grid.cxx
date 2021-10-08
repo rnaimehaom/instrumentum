@@ -221,7 +221,7 @@ void Grid::initialize()
         nodes[in1].neighbours.reserve(12);
         nodes[in1].locale = 0;
         nodes[in1].state = 0;
-        nodes[in1].atomic_number = 0;
+        nodes[in1].atomic_number = Atom_Type::empty;
         nodes[in1].x = 0.0;
         nodes[in1].y = 0.0;
         nodes[in1].z = 0.0;
@@ -495,21 +495,21 @@ void Grid::blank_pharmacophore(double radius)
 
 void Grid::fill_interior()
 {
-  int i,j,k,in1,kount = 0;
+  int i,j,k,in1,ccount = 0;
 
   for(i=-rs1; i<=rs1; ++i) {
     for(j=-rs2; j<=rs2; ++j) {
       for(k=-rs3; k<=rs3; ++k) {
         in1 = index1(i,j,k);
         if (nodes[in1].locale == 2) {
-          nodes[in1].atomic_number = 6;
-          kount++;
+          nodes[in1].atomic_number = Atom_Type::carbon;
+          ccount++;
         }
       }
     }
   }
 #ifdef VERBOSE
-  std::cout << "Created " << kount << " carbon nodes" << std::endl;
+  std::cout << "Created " << ccount << " carbon nodes" << std::endl;
 #endif
 }
 
@@ -533,7 +533,7 @@ bool Grid::connect_pharmacophores()
   }
 
   for(i=0; i<total; ++i) {
-    if (nodes[i].atomic_number == 6 || nodes[i].locale == 5) visited[i] = 0;
+    if (nodes[i].atomic_number == Atom_Type::carbon || nodes[i].locale == 5) visited[i] = 0;
   }
 
   // Now choose one of the pharmacophoric nodes to begin the process...
@@ -560,7 +560,7 @@ bool Grid::connect_pharmacophores()
     if (visited[pharma_nodes[l]] != 1) return false;
   }
   for(i=0; i<total; ++i) {
-    if (nodes[i].atomic_number == 6 && visited[i] == 0) nodes[i].atomic_number = 47;
+    if (nodes[i].atomic_number == Atom_Type::carbon && visited[i] == 0) nodes[i].atomic_number = Atom_Type::silver;
   }
 
   return true;
@@ -610,10 +610,10 @@ bool Grid::initial_deletion(double percent,int max_attempts)
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].locale != 2 || nodes[in1].atomic_number == 0) continue;
+          if (nodes[in1].locale != 2 || nodes[in1].atomic_number == Atom_Type::empty) continue;
           delta = distance(in1,target);
           if (delta <= r2) {
-            nodes[in1].atomic_number = 47;
+            nodes[in1].atomic_number = Atom_Type::silver;
             nkill++;
           }
         }
@@ -632,8 +632,8 @@ bool Grid::initial_deletion(double percent,int max_attempts)
         for(j=-rs2; j<=rs2; ++j) {
           for(k=-rs3; k<=rs3; ++k) {
             in1 = index1(i,j,k);
-            if (nodes[in1].atomic_number == 47) {
-              nodes[in1].atomic_number = 0;
+            if (nodes[in1].atomic_number == Atom_Type::silver) {
+              nodes[in1].atomic_number = Atom_Type::empty;
               kount++;
             }
           }
@@ -651,7 +651,7 @@ bool Grid::initial_deletion(double percent,int max_attempts)
         for(j=-rs2; j<=rs2; ++j) {
           for(k=-rs3; k<=rs3; ++k) {
             in1 = index1(i,j,k);
-            if (nodes[in1].atomic_number == 47) nodes[in1].atomic_number = 6;
+            if (nodes[in1].atomic_number == Atom_Type::silver) nodes[in1].atomic_number = Atom_Type::carbon;
           }
         }
       }
@@ -677,12 +677,12 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number > 0 && nodes[in1].locale == 2) {
+        if (nodes[in1].atomic_number != Atom_Type::empty && nodes[in1].locale == 2) {
           // See if exactly one neighbour is carbon
           ncarbon = 0;
           for(l=0; l<nodes[in1].neighbours.size(); ++l) {
             in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].atomic_number == 6) ncarbon++;
+            if (nodes[in2].atomic_number == Atom_Type::carbon) ncarbon++;
           }
           if (ncarbon == 1) methyl.push_back(in1);
         }
@@ -695,8 +695,8 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
     do {
       alpha = RND.irandom(methyl.size());
       in1 = methyl[alpha];
-      if (nodes[in1].atomic_number > 0) {
-        nodes[in1].atomic_number = 0;
+      if (nodes[in1].atomic_number != Atom_Type::empty) {
+        nodes[in1].atomic_number = Atom_Type::empty;
         kount++;
       }
       if (kount == nkill) break;
@@ -709,12 +709,12 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
       for(j=-D2; j<=D2; ++j) {
         for(k=-D3; k<=D3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].atomic_number == 0) {
+          if (nodes[in1].atomic_number == Atom_Type::empty) {
             // See if more than one neighbour is carbon
             ncarbon = 0;
             for(l=0; l<nodes[in1].neighbours.size(); ++l) {
               in2 = nodes[in1].neighbours[l];
-              if (nodes[in2].atomic_number == 6) ncarbon++;
+              if (nodes[in2].atomic_number == Atom_Type::carbon) ncarbon++;
             }
             if (ncarbon > 1) convert.push_back(in1);
           }
@@ -726,7 +726,7 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
     std::cout << "Converting " << convert.size() << " nodes to carbon" << std::endl;
 #endif
     for(l=0; l<convert.size(); ++l) {
-      nodes[convert[l]].atomic_number = 6;
+      nodes[convert[l]].atomic_number = Atom_Type::carbon;
     }
   } while(true);
 #ifdef DEBUG
@@ -737,7 +737,7 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 47) nodes[in1].atomic_number = 0;
+        if (nodes[in1].atomic_number == Atom_Type::silver) nodes[in1].atomic_number = Atom_Type::empty;
       }
     }
   }
@@ -762,12 +762,12 @@ void Grid::add_hydrogens()
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number == 0) {
+        if (nodes[in1].atomic_number == Atom_Type::empty) {
           // See if at least one neighbour is carbon
           carbon = false;
           for(l=0; l<nodes[in1].neighbours.size(); ++l) {
             in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].atomic_number == 6) {
+            if (nodes[in2].atomic_number == Atom_Type::carbon) {
               carbon = true;
               break;
             }
@@ -781,7 +781,7 @@ void Grid::add_hydrogens()
   std::cout << "Converting " << convert.size() << " nodes to H" << std::endl;
 #endif
   for(l=0; l<convert.size(); ++l) {
-    nodes[convert[l]].atomic_number = 1;
+    nodes[convert[l]].atomic_number = Atom_Type::hydrogen;
   }
 }
 
@@ -800,7 +800,7 @@ int Grid::ring_analysis()
     for(j=-D2; j<=D2; ++j) {
       for(k=-D3; k<=D3; ++k) {
         in1 = index1(i,j,k);
-        if (nodes[in1].atomic_number > 0 || nodes[in1].locale == 5) vertices.push_back(in1);
+        if (nodes[in1].atomic_number != Atom_Type::empty || nodes[in1].locale == 5) vertices.push_back(in1);
       }
     }
   }
@@ -814,7 +814,7 @@ int Grid::ring_analysis()
     nbonds = 0;
     for(l=0; l<nodes[vertices[i]].neighbours.size(); ++l) {
       in2 = nodes[vertices[i]].neighbours[l];
-      if (nodes[in2].atomic_number > 0 || nodes[in2].locale == 5) {
+      if (nodes[in2].atomic_number != Atom_Type::empty || nodes[in2].locale == 5) {
         bonds[4*i+nbonds] = get_index(in2,vertices);
         nbonds++;
       }
@@ -935,10 +935,10 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].locale > 2 || nodes[in1].atomic_number == 0) continue;
+          if (nodes[in1].locale > 2 || nodes[in1].atomic_number == Atom_Type::empty) continue;
           delta = distance(in1,target);
           if (delta <= r2) {
-            nodes[in1].atomic_number = 0;
+            nodes[in1].atomic_number = Atom_Type::empty;
             nkill++;
           }
         }
@@ -948,22 +948,22 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
     // Let's make sure it worked smoothly...
     vertices.clear();
     for(i=0; i<total; ++i) {
-      if (nodes[i].atomic_number > 0 || nodes[i].locale == 5) vertices.push_back(i);
+      if (nodes[i].atomic_number != Atom_Type::empty || nodes[i].locale == 5) vertices.push_back(i);
     }
     for(m=0; m<vertices.size(); ++m) {
       nbonds = 0;
       for(l=0; l<nodes[vertices[m]].neighbours.size(); ++l) {
         in2 = nodes[vertices[m]].neighbours[l];
-        if (nodes[in2].atomic_number > 0 || nodes[in2].locale == 5) nbonds++;
+        if (nodes[in2].atomic_number != Atom_Type::empty || nodes[in2].locale == 5) nbonds++;
       }
-      if (nbonds == 0) nodes[vertices[m]].atomic_number = 0;
+      if (nbonds == 0) nodes[vertices[m]].atomic_number = Atom_Type::empty;
     }
     assert(connect_pharmacophores());
     for(i=-rs1; i<=rs1; ++i) {
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].atomic_number == 47) nodes[in1].atomic_number = 0;
+          if (nodes[in1].atomic_number == Atom_Type::silver) nodes[in1].atomic_number = Atom_Type::empty;
         }
       }
     }
@@ -973,12 +973,12 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].atomic_number <= 0) continue;
+          if (nodes[in1].atomic_number == Atom_Type::empty) continue;
           // See if more than neighbour is carbon
           ncarbon = 0;
           for(l=0; l<nodes[in1].neighbours.size(); ++l) {
             in2 = nodes[in1].neighbours[l];
-            if (nodes[in2].atomic_number == 6) ncarbon++;
+            if (nodes[in2].atomic_number == Atom_Type::carbon) ncarbon++;
           }
           if (ncarbon == 4) c4.push_back(in1);
         }
@@ -1031,7 +1031,7 @@ bool Grid::path_selection(bool random)
       for(j=-rs2; j<=rs2; ++j) {
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
-          if (nodes[in1].atomic_number > 0) candidate.push_back(in1);
+          if (nodes[in1].atomic_number != Atom_Type::empty) candidate.push_back(in1);
         }
       }
     }
@@ -1047,7 +1047,7 @@ bool Grid::path_selection(bool random)
         for(k=-rs3; k<=rs3; ++k) {
           in1 = index1(i,j,k);
           if (path_hop[in1] < 0) {
-            if (nodes[in1].atomic_number > 0 || nodes[in1].locale == 5) {
+            if (nodes[in1].atomic_number != Atom_Type::empty || nodes[in1].locale == 5) {
               for(l=0; l<nodes[in1].neighbours.size(); ++l) {
                 in2 = nodes[in1].neighbours[l];
                 if (path_hop[in2] >= 0) convert.insert(in1);
@@ -1145,7 +1145,7 @@ void Grid::write_scaffold(Molecule* output) const
 
   // First add the atoms...
   for(i=0; i<total; ++i) {
-    if (nodes[i].atomic_number <= 0) continue;
+    if (nodes[i].atomic_number == Atom_Type::empty) continue;
     xc[0] = nodes[i].x;
     xc[1] = nodes[i].y;
     xc[2] = nodes[i].z;
@@ -1154,14 +1154,14 @@ void Grid::write_scaffold(Molecule* output) const
   }
   // Now do the bonds...
   for(i=0; i<total; ++i) {
-    if (nodes[i].atomic_number <= 0) continue;
-    if (nodes[i].atomic_number == 1) {
+    if (nodes[i].atomic_number == Atom_Type::empty) continue;
+    if (nodes[i].atomic_number == Atom_Type::hydrogen) {
       // Hydrogen - among your four neighbours, which contains
       // a heavy atom?
       cc = 0;
       for(l=0; l<nodes[i].neighbours.size(); ++l) {
         in1 = nodes[i].neighbours[l];
-        if (nodes[in1].atomic_number == 6) {
+        if (nodes[in1].atomic_number == Atom_Type::carbon) {
           cc = in1;
           break;
         }
@@ -1174,7 +1174,7 @@ void Grid::write_scaffold(Molecule* output) const
       carbon.clear();
       for(l=0; l<nodes[i].neighbours.size(); ++l) {
         in1 = nodes[i].neighbours[l];
-        if (nodes[in1].atomic_number > 0) carbon.push_back(in1);
+        if (nodes[in1].atomic_number != Atom_Type::empty) carbon.push_back(in1);
       }
       for(l=0; l<carbon.size(); ++l) {
         output->add_bond(atom_index[i],atom_index[carbon[l]],1);

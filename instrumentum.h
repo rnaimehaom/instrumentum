@@ -22,6 +22,22 @@
 
 #ifndef _globalh
 #define _globalh
+enum class Atom_Type 
+{
+    empty,
+    hydrogen,
+    carbon,
+    nitrogen,
+    oxygen,
+    fluorine,
+    phosphorus,
+    sulfur,
+    chlorine,
+    bromine,
+    silver,
+    iodine
+};
+
 bool file_exists(const std::string&);
 bool connected(const std::vector<int>&);
 void ring_perception(const std::vector<int>&,std::vector<int>&);
