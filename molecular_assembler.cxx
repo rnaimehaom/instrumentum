@@ -1,9 +1,8 @@
 #include "molecular_assembler.h"
-
-Random RND;
-std::mutex global_lock;
-unsigned long mol_created = 0;
  
+//std::mutex global_lock;
+//unsigned long mol_created = 0;
+
 Molecular_Assembler::Molecular_Assembler(const std::string& filename)
 {
   // This method reads in the parameters from a file, the name
@@ -34,8 +33,8 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
     else if (name == "DatabaseFile") {
       database = value;
     }
-    else if (name == "RandomSeed") {
-      seed = (unsigned) std::stol(value);
+    else if (name == "GridSize") {
+      grid_size = std::stoi(value);
     }
     else if (name == "NumberThreads") {
       nthread = std::stoi(value);
@@ -171,6 +170,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   }
 
   // Sanity checks...
+  assert(grid_size > 0);
   assert(n_mols > 0);
   assert(nthread > 0);
   assert(n_rationalize > 0);
@@ -187,8 +187,6 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   assert(pharmacophore_radius > std::numeric_limits<double>::epsilon());
   assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
   assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
-
-  if (seed == 0) seed = (unsigned) std::time(nullptr);
 
   // Check if the database exists, if not the tables need to be created!
   if (!file_exists(database)) create_database();
@@ -270,7 +268,7 @@ void Molecular_Assembler::create_database() const
   query += "percent_methyl REAL,";
   query += "bond_length REAL,";
   query += "pharmacophore_radius REAL,";
-  query += "rng_seed INTEGER,";
+  query += "grid_size INTEGER,";
   query += "nthread INTEGER,";
   query += "timestamp DATETIME,";
   query += "parameter_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL);";
@@ -372,50 +370,61 @@ void Molecular_Assembler::create_parameter_string(std::string& output) const
   s << percent_methyl << ",";
   s << bond_length << ",";
   s << pharmacophore_radius << ",";
-  s << seed << ",";
+  s << grid_size << ",";
   s << nthread << ",";
   s << "\'DATETIME(\'NOW\')\')";
   output = s.str();
 }
 
-void Molecular_Assembler::assemble() const
+void Molecular_Assembler::assemble()
 {
-  int i,pid = getpid();
+  int i,s;
+  unsigned long M,nc;
   std::string query,filename;
   Molecule* m = new Molecule;
   sqlite3* dbase;
 
   if (std::system("mkdir -p scratch") < 0) throw std::runtime_error("Unable to create scratch directory!");
 
+  process_id = getpid();
+  M = n_mols/long(nthread);
+  s = int(n_mols%long(nthread));
+
+#ifdef VERBOSE
   auto start = std::chrono::high_resolution_clock::now();
+#endif
   if (nthread == 1) {
-    run(0,pid);
+    run(0,n_mols);
   }
   else {
     std::vector<std::thread> pool;
     for(i=0; i<nthread; ++i) {
-      pool.emplace_back(&Molecular_Assembler::run,this,i,pid);
+      nc = (i < s) ? M + 1 : M;
+      pool.emplace_back(&Molecular_Assembler::run,this,i,nc);
     }
     for(auto& entry: pool) {
       entry.join();
     }
   }
-  auto finish = std::chrono::high_resolution_clock::now();
 #ifdef VERBOSE
+  auto finish = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = finish - start;
-  std::cout << "The total number of molecules created is " << mol_created << std::endl;
-  std::cout << "Elapsed time: " << elapsed.count() << " seconds." << std::endl;
+  std::cout << "Elapsed time for molecular assembly: " << elapsed.count() << " seconds." << std::endl;
 #endif
+
   // Now write all these molecules to the SQLite database...
+  nc = 0;
   sqlite3_open(database.c_str(),&dbase);
   for(i=0; i<nthread; ++i) {
-    filename = "scratch/molecules_" + std::to_string(pid) + "_" + std::to_string(1+i) + ".dat";
+    filename = "scratch/molecules_" + std::to_string(process_id) + "_" + std::to_string(1+i) + ".dat";
     std::ifstream s(filename,std::ios::binary);
     while(s.peek() != EOF) {
       m->read(s);
       query = "INSERT INTO Compound (parameter_id,op_string,raw_structure) VALUES (" + std::to_string(parameter_id) + ",";
       query += "\'" + m->get_opstring() + "\',\'" + m->to_MDLMol() + "\');";
-      sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr); 
+      sqlite3_exec(dbase,query.c_str(),nullptr,nullptr,nullptr);
+      nc++;
+      if (nc == n_mols) break; 
     }
     s.close();  
   }
@@ -423,29 +432,23 @@ void Molecular_Assembler::assemble() const
   delete m;
 }
 
-void Molecular_Assembler::run(int thread_id,int pid) const
+void Molecular_Assembler::run(int thread_id,unsigned long M) const
 {
-  int i,j,k,l,q,ncreated;
-  unsigned long s = seed;
-  bool test,done = false;
+  unsigned long s = (unsigned) std::time(nullptr);
+  s *= (1 + thread_id);
+  int i,j,k,l,q = grid_size/2; 
+  unsigned long t,ncreated,mol_created = 0;
+  bool test;
   bool ornaments[] = {kill_axial,create_penta,create_double,create_triple,create_exotic,subs_oxygen,subs_sulfur,subs_nitrogen,subs_functional};
   std::string mstring,ops;
-  Grid* g = new Grid(17,17,9,bond_length,npharmacophore);
-  Molecule m;
+  Grid* g = new Grid(grid_size,grid_size,q + grid_size%q,s,bond_length,npharmacophore);
+  Molecule m(s);
   std::vector<Molecule> mvector;
 
-  std::string filename = "scratch/molecules_" + std::to_string(pid) + "_" + std::to_string(1 + thread_id) + ".dat";
+  std::string filename = "scratch/molecules_" + std::to_string(process_id) + "_" + std::to_string(1 + thread_id) + ".dat";
   std::ofstream ofile(filename,std::ios::out | std::ios::trunc | std::ios::binary);
 
-  // October 6, 2021
-  // Given that there is a single instance of this class Random in this software project 
-  // and that it has no mutex constructs, the use of RND here and in the Grid and Molecule 
-  // classes is clearly a race condition in the program.
-  s *= (1 + thread_id);
-  RND.initialize_generator(s);
-
   do {
-    ncreated = 0;
 #if VERBOSE
     std::cout << "Putting pharmacophore..." << std::endl;
 #endif
@@ -513,12 +516,6 @@ void Molecular_Assembler::run(int thread_id,int pid) const
       g->restore_state(0);
     }
     g->clear();
-    ncreated = long(mvector.size());
-    {
-      std::lock_guard<std::mutex> guard(global_lock);
-      mol_created += long(ncreated);
-      if (mol_created >= n_mols) done = true;
-    }
     // November 2, 2019
     // The real bottleneck for the performance of this code lies here - when creating 
     // 10000 molecules with a single thread, if this loop is commented out the runtime 
@@ -528,11 +525,14 @@ void Molecular_Assembler::run(int thread_id,int pid) const
     // the essential properties of a Molecule instance to a binary file for some sort 
     // of post-processing, including conversion to an MDL MOL string and insertion into 
     // a relational database.
-    for(i=0; i<ncreated; ++i) {
-      mvector[i].write(ofile);
+    ncreated = long(mvector.size());
+    mol_created += ncreated;
+    for(t=0; t<ncreated; ++t) {
+      mvector[t].write(ofile);
     }
     mvector.clear();
-  } while(!done);
+    if (mol_created >= M) break;
+  } while(true);
 
   delete g;
   ofile.close();

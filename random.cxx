@@ -13,9 +13,8 @@ Random::~Random()
   delete VRG;
 }
 
-void Random::initialize_generator(long seed)
+void Random::initialize_generator(unsigned long seed)
 {
-  assert(seed > 0);
   gen->seed(seed);
 }
 

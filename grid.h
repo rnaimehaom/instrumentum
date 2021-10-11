@@ -69,6 +69,11 @@ class Grid {
   /// The main property of this class, a pointer of type Node which 
   /// stores the ensemble of nodes associated with the tetrahedral mesh. 
   Node* nodes;
+  /// This property, a pointer to an instance of the Random class, is used 
+  /// to handle all of the random number operations for generating the hydrocarbon 
+  /// skeleton of the molecule. It uses an initial seed value based on the current 
+  /// time and, if relevant, the thread index. 
+  Random* RND;
 
   /// This method accepts the three mesh coordinates of a node and returns the index to this node in the array Grid::nodes. 
   int index1(int,int,int) const;
@@ -109,8 +114,8 @@ class Grid {
   /// This method writes the hydrocarbon scaffold in the current grid to an instance of the Molecule class.
   void write_scaffold(Molecule*) const;
  public:
-  /// The standard constructor for this class - the first three arguments are the grid dimensions D1, D2 and D3, while the remaining two are the bond_length and number of pharmacophore nodes.
-  Grid(int,int,int,double = 1.4,int = 0);
+  /// The standard constructor for this class - the first three arguments are the grid dimensions D1, D2 and D3, the fourth is the seed for the random number generator (Grid::RND), while the remaining two are the bond_length and number of pharmacophore nodes.
+  Grid(int,int,int,unsigned long,double = 1.4,int = 0);
   /// The destructor for this class which frees the memory associated with the Grid::nodes property.
   ~Grid();
   friend class Molecular_Assembler;

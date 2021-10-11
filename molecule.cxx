@@ -1,15 +1,14 @@
 #include "molecule.h"
 
-extern Random RND;
-
 // Molecular operations...
 const char Molecule::ops[7] = {'P','N','S','O','T','F','A'};
 // Element symbols...
 const std::string Molecule::atom_names[12] = {"","C","H","N","O","F","P","S","Cl","Br","Ag","I"};
 
-Molecule::Molecule()
+Molecule::Molecule(unsigned long s)
 {
-
+  if (s == 0) s = (unsigned) std::time(nullptr);
+  RND.initialize_generator(s);
 }
 
 Molecule::Molecule(const Molecule& source)

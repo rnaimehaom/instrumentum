@@ -45,6 +45,10 @@ class Molecule {
   /// This array of integer vectors stores the atom indices by connected ring component 
   /// of the molecule.
   std::vector<int>* pieces;
+  /// This property, an instance of the Random class, is used to handle all of the random 
+  /// number operations for generating the molecule. It typically uses an initial seed value 
+  /// which is based on the current time and, if relevant, the thread index. 
+  Random RND;
   /// This character array lists the seven different "decorating" operations that 
   /// can be performed on a molecule: O (oxygen substitution), N (nitrogen substitution), 
   /// S (sulfur substitution), T (creation of a triple bond), F (halogen substitution), 
@@ -52,6 +56,10 @@ class Molecule {
   /// These are the letters of the alphabet which is used to write the value of the 
   /// Molecule::opstring parameter.    
   static const char ops[7];
+  /// This contains a list of the atomic symbols (e.g. C, H, O, N, S and so forth) for the 
+  /// elements used to assemble the small organic molecules; the property is needed by the 
+  /// to_MDLMol() method, converting the enumerated class instances in Molecule::atom_type to 
+  /// chemical symbols.   
   static const std::string atom_names[12];
 
   /// Given a pair of atoms in the molecule, specified by the method's two arguments, this method returns the index of this bond in the property Molecule::bonds and -1 if no such bond can be found. 
@@ -109,8 +117,8 @@ class Molecule {
   /// This method removes all reference to the atom whose index is the method's argument, reindexing internal arrays to correspond to the fact that the Molecule::natoms property has been decremented. It returns false if the atom doesn't exist and true otherwise.
   bool drop_atom(int);
  public:
-  /// The default constructor for this class, which does nothing.
-  Molecule();
+  /// The default constructor for this class, which does nothing apart from initialize the random number seed used by Molecule::RND, the constructor's unique argument; if zero, the seed is initialized using the current time.
+  Molecule(unsigned long = 0);
   /// The copy constructor, which copies over all of the properties of the source instance, deleting and re-allocating the Molecule::pieces property if necessary.
   Molecule(const Molecule&);
   /// The destructor for this class - if Molecule::p_allocted is greater than zero then the memory associated with the Molecule::pieces array is returned. 

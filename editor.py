@@ -54,7 +54,7 @@ class instrumentum:
         label21 = tkinter.Label(masm_group,text='Number of Desaturation/Heteroatom Substitution Iterations:',wraplength=250,justify=tkinter.LEFT)
         label24 = tkinter.Label(global_group,text='Bond Length (Å):',wraplength=250,justify=tkinter.LEFT)
         label45 = tkinter.Label(button_group,text='Parameter Filename:',wraplength=250,justify=tkinter.LEFT)
-        label46 = tkinter.Label(global_group,text='Random Number Seed',wraplength=250,justify=tkinter.LEFT)
+        label46 = tkinter.Label(global_group,text='Grid Size:',wraplength=250,justify=tkinter.LEFT)
         label47 = tkinter.Label(global_group,text='Number of Threads:',wraplength=250,justify=tkinter.LEFT)
 
         chem_label1 = tkinter.Label(ratio_group,text='Percentage of Methyl Groups to Prune:',wraplength=250,justify=tkinter.LEFT)
@@ -69,7 +69,7 @@ class instrumentum:
         self.min_rings = tkinter.IntVar()
         self.max_rings = tkinter.IntVar()
         self.percent = tkinter.DoubleVar()
-        self.rng_seed = tkinter.IntVar()
+        self.grid_size = tkinter.IntVar()
         self.nattempts1 = tkinter.IntVar()
         self.nattempts2 = tkinter.IntVar()
         self.pharm_radius = tkinter.DoubleVar()
@@ -116,7 +116,7 @@ class instrumentum:
         entry24 = tkinter.Entry(global_group,width=7,textvariable=self.blength)
         entry45 = tkinter.Entry(button_group,width=18,textvariable=self.parameter_filename,state=tkinter.DISABLED)
         entry46 = tkinter.Entry(global_group,width=18,textvariable=self.database)
-        entry47 = tkinter.Entry(global_group,width=7,textvariable=self.rng_seed)
+        entry47 = tkinter.Entry(global_group,width=7,textvariable=self.grid_size)
         entry48 = tkinter.Entry(global_group,width=7,textvariable=self.nthread)
 
         axial_methyl_check = tkinter.Checkbutton(desat_group,text='Strip Axial Methyls from Rings',variable=self.strip_axial_methyls)
@@ -242,7 +242,7 @@ class instrumentum:
         self.parameter_filename.set('')
         self.nmol.set(50000)
         self.nthread.set(1)
-        self.rng_seed.set(0)
+        self.grid_size.set(17)
         self.blength.set(1.52)
         self.pharm_radius.set(3.5)
         self.nattempts1.set(100)
@@ -287,8 +287,8 @@ class instrumentum:
                 self.nthread.set(int(value))
             elif (name == 'DatabaseFile'):
                 self.database.set(value)
-            elif (name == 'RandomSeed'):
-                self.rng_seed.set(int(value))
+            elif (name == 'GridSize'):
+                self.grid_size.set(int(value))
             elif (name == 'BondLength'):
                 self.blength.set(float(value))
 
@@ -378,8 +378,8 @@ class instrumentum:
         if not self.database.get():
             messagebox.showerror('Illegal Value','The database filename must not be empty!')
             return
-        if self.rng_seed.get() < 0:
-            messagebox.showerror('Illegal Value','The random number seed must be non-negative!')
+        if self.grid_size.get() < 1:
+            messagebox.showerror('Illegal Value','The grid size must be positive!')
             return
         if self.nthread.get() < 1:
             messagebox.showerror('Illegal Value','The number of threads must be greater than zero!')
@@ -448,8 +448,8 @@ class instrumentum:
         ptype.text = self.database.get()
         ptype = ET.SubElement(global_params,'BondLength')
         ptype.text = str(self.blength.get())
-        ptype = ET.SubElement(global_params,'RandomSeed')
-        ptype.text = str(self.rng_seed.get())
+        ptype = ET.SubElement(global_params,'GridSize')
+        ptype.text = str(self.grid_size.get())
         ptype = ET.SubElement(global_params,'NumberThreads')
         ptype.text = str(self.nthread.get())
 

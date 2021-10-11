@@ -4,7 +4,7 @@
 		<NumberMolecules>10000</NumberMolecules>
 		<DatabaseFile>alchemy.sqlite3</DatabaseFile>
 		<BondLength>1.4</BondLength>
-		<RandomSeed>0</RandomSeed>
+		<GridSize>17</GridSize>
 		<NumberThreads>2</NumberThreads>
 	</Global>
 	<Pharmacophore>

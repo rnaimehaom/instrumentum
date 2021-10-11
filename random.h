@@ -24,7 +24,7 @@ class Random {
   /// The destructor for this class, freeing the memory associated with the Random::gen and Random::VRG properties.
   ~Random();
   /// This method sets the seed for the pseudo-random number process to the argument, which must be positive. 
-  void initialize_generator(long);
+  void initialize_generator(unsigned long);
   /// This method returns a uniform random variate on the interval [0,1).  
   double drandom();
   /// This method returns a uniform random variate on the interval [0,n) where n is the method's argument, which must be positive.

@@ -1,7 +1,5 @@
 #include "grid.h"
 
-extern Random RND;
-
 void Grid::next_door(int m,int n,int k,int i,const double* deltas)
 {
   int in1,in2,x_new,y_new,z_new,n_state;
@@ -178,9 +176,10 @@ void Grid::next_door(int m,int n,int k,int i,const double* deltas)
 Grid::~Grid()
 {
   if (total > 0) delete[] nodes;
+  delete RND;
 }
 
-Grid::Grid(int i,int j,int k,double lambda,int np)
+Grid::Grid(int i,int j,int k,unsigned long s,double lambda,int np)
 {
   assert(i >= 1 && j >= 1 && k >= 1);
   assert(lambda > std::numeric_limits<double>::epsilon());
@@ -190,6 +189,7 @@ Grid::Grid(int i,int j,int k,double lambda,int np)
   bond_length = lambda;
 
   allocate(np);
+  RND->initialize_generator(s);
   initialize();
 }
 
@@ -200,6 +200,7 @@ void Grid::allocate(int np)
   }
   total = (2*D3 + 1)*(2*D2 + 1)*(2*D1 + 1);
   nodes = new Node[total];
+  RND = new Random;
 }
 
 void Grid::initialize()
@@ -462,7 +463,7 @@ void Grid::blank_pharmacophore(double radius)
   // "must have" nodes, to aid in constructing connected
   // molecules
   while(kt < pharma_nodes.size()) {
-    in1 = RND.irandom(frontier_nodes.size());
+    in1 = RND->irandom(frontier_nodes.size());
     candidate = frontier_nodes[in1];
     found = false;
     for(l=0; l<kt; ++l) {
@@ -599,11 +600,11 @@ bool Grid::initial_deletion(double percent,int max_attempts)
     return false;
   }
   do {
-    alpha1 = -rs1 + RND.irandom(2*rs1);
-    alpha2 = -rs2 + RND.irandom(2*rs2);
-    alpha3 = -rs3 + RND.irandom(2*rs3);
+    alpha1 = -rs1 + RND->irandom(2*rs1);
+    alpha2 = -rs2 + RND->irandom(2*rs2);
+    alpha3 = -rs3 + RND->irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 1.0 + RND.drandom();
+    radius = 1.0 + RND->drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
@@ -693,7 +694,7 @@ bool Grid::rationalize(double percent_methyl,int rings_min,int rings_max)
 
   if (nkill > 0) {
     do {
-      alpha = RND.irandom(methyl.size());
+      alpha = RND->irandom(methyl.size());
       in1 = methyl[alpha];
       if (nodes[in1].atomic_number != Atom_Type::empty) {
         nodes[in1].atomic_number = Atom_Type::empty;
@@ -924,11 +925,11 @@ bool Grid::secondary_deletion(int nc4,int nc4rings,int nrings,int attempts)
   assert(attempts > 0);
 
   do {
-    alpha1 = -rs1 + RND.irandom(2*rs1);
-    alpha2 = -rs2 + RND.irandom(2*rs2);
-    alpha3 = -rs3 + RND.irandom(2*rs3);
+    alpha1 = -rs1 + RND->irandom(2*rs1);
+    alpha2 = -rs2 + RND->irandom(2*rs2);
+    alpha3 = -rs3 + RND->irandom(2*rs3);
     target = index1(alpha1,alpha2,alpha3);
-    radius = 2.0 + 2.5*RND.drandom();
+    radius = 2.0 + 2.5*RND->drandom();
     r2 = radius*radius;
     nkill = 0;
     for(i=-rs1; i<=rs1; ++i) {
@@ -1024,7 +1025,7 @@ bool Grid::path_selection(bool random)
   }
 
   if (random) {
-    inode = pharma_nodes[RND.irandom(pharma_nodes.size())];
+    inode = pharma_nodes[RND->irandom(pharma_nodes.size())];
   }
   else {
     for(i=-rs1; i<=rs1; ++i) {
@@ -1035,7 +1036,7 @@ bool Grid::path_selection(bool random)
         }
       }
     }
-    inode = candidate[RND.irandom(candidate.size())];
+    inode = candidate[RND->irandom(candidate.size())];
   }
   path_hop[inode] = 0;
 
@@ -1085,7 +1086,7 @@ bool Grid::path_selection(bool random)
         }
       }
       if (winner.empty()) return false;
-      next_node = winner[RND.irandom(winner.size())];
+      next_node = winner[RND->irandom(winner.size())];
       if (nodes[next_node].locale == 6 || next_node == inode) {
         for(l=0; l<pathback.size(); ++l) {
           if (nodes[pathback[l]].locale == 2) nodes[pathback[l]].locale = 6;
