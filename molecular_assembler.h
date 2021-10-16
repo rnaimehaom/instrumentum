@@ -58,7 +58,7 @@ class Molecular_Assembler {
   /// The dimension of the grid used to build the hydrocarbon skeleton of the molecule; the value 
   /// of this property sets the size of the \f$x\f$ and \f$y\f$ dimensions, while the \f$z\f$ dimension 
   /// has the value \f$ N/2 + q\f$ where \f$q \equiv N \pmod {N/2}\f$ and \f$N\f$ is the grid size.  
-  int grid_size = 0;
+  int grid_size = 17;
   /// The Unix process ID for this instance of the Molecular_Assembler, which is used to identify 
   /// the binary file in which the output molecules are written.
   int process_id = -1;
