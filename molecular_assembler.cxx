@@ -429,6 +429,7 @@ void Molecular_Assembler::assemble()
     s.close();  
   }
   sqlite3_close(dbase);
+  if (std::system("rm -rf scratch") < 0) throw std::runtime_error("Unable to delete scratch directory!");
   delete m;
 }
 
