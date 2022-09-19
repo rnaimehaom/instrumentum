@@ -13,6 +13,7 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   pugi::xml_document pfile;
   pugi::xml_node global,skeleton,assembly,rationalization,desaturation,pharmacophore;
   std::string name,value,parameter_string;
+  const double epsilon = std::numeric_limits<double>::epsilon();
 
   // Open the file
   if (!(pfile.load_file(filename.c_str()))) throw std::invalid_argument("Unable to parse parameter file!");
@@ -173,20 +174,24 @@ Molecular_Assembler::Molecular_Assembler(const std::string& filename)
   assert(grid_size > 0);
   assert(n_mols > 0);
   assert(nthread > 0);
+  assert(npharmacophore >= 0);
   assert(n_rationalize > 0);
   assert(n_desaturate > 0);
   assert(n_path > 0);
   assert(n_secondary > 0);
   assert(n_initial > 0);
+  assert(nrings >= 0);
   assert(min_rings >= 0);
   assert(max_rings >= min_rings);
   assert(max_attempts > 0);
+  assert(max_secondary > 0);
   assert(nc4 >= 0);
   assert(nc4rings >= 0);
+  assert(!database.empty());
   assert(bond_length > std::numeric_limits<double>::epsilon());
   assert(pharmacophore_radius > std::numeric_limits<double>::epsilon());
-  assert(percent_methyl > std::numeric_limits<double>::epsilon() && percent_methyl < 1.0);
-  assert(percent > std::numeric_limits<double>::epsilon() && percent < 1.0);
+  assert(percent_methyl > -epsilon && (percent_methyl - 1.0) < epsilon);
+  assert(percent > -epsilon && (percent - 1.0) < epsilon);
 
   // Check if the database exists, if not the tables need to be created!
   if (!file_exists(database)) create_database();

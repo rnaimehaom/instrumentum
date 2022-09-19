@@ -399,11 +399,11 @@ class instrumentum:
         if self.max_rings.get() < self.min_rings.get():
             messagebox.showerror('Illegal Value','The maximum ring number must not be less than the minimum ring number!')
             return
-        if self.npharm.get() <= 0:
-            messagebox.showerror('Illegal Value','The number of pharmacophores must be positive!')
+        if self.npharm.get() < 0:
+            messagebox.showerror('Illegal Value','The number of pharmacophores must be non-negative!')
             return
-        if not(self.pharm_radius.get() > 0.0):
-            messagebox.showerror('Illegal Value','The pharmacophore radius must be positive!')
+        if self.pharm_radius.get() < 0.0:
+            messagebox.showerror('Illegal Value','The pharmacophore radius must be non-negative!')
             return
         if self.nmol.get() <= 0:
             messagebox.showerror('Illegal Value','The number of molecules must be positive!')

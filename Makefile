@@ -2,7 +2,7 @@ OBJECTS = instrumentum.o global.o random.o node.o grid.o molecule.o molecule_dis
 
 CXX = g++ -std=c++11
 
-OPT = -O3 -march=native -fstrict-aliasing -ffast-math -ftree-vectorize -funroll-loops
+OPT = -march=native -O3 -fstrict-aliasing -ftree-vectorize -funroll-loops
 
 DEBUG = -g -Wall -DDEBUG -DVERBOSE
 
